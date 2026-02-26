@@ -1,0 +1,3002 @@
+blessings:
+  B-MOD-01:
+    name: 심장 코어 보호막
+    type: BLESSING
+    weight: 1.0
+    archetype: COMBAT
+    runtime:
+      detail_ko:
+      - '원본ID: B-MOD-01'
+      - 'Trigger: PASSIVE + PERIODIC(10s)'
+      - 'T1: MaxHP=1HP(0.5하트) 고정, 10초마다 흡수 40HP(20하트) 리필'
+      - 'T2: 주기 8s, 흡수 44HP(22하트) 리필'
+      - 'T3: 리필 시 부정효과 1개 정화 + 흡수 47HP'
+      - 'T4: 흡수 50HP + 보호막 완전 파괴 시 2s 넉백면역'
+      - '구현 포인트: `GENERIC_MAX_HEALTH` 고정 + Absorption overwrite(누적 금지) + 만료 시 원복'
+      - '엔진적용 공격 피해: T1 +3.0%, T2 +6.0%, T3 +9.0%, T4 +12.0% (발동 시작 T1)'
+      modifiers:
+      - type: DAMAGE_DEALT_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.03
+        min_total_tier: 1
+        world: ANY
+  B-MOD-02:
+    name: 시간 역행
+    type: BLESSING
+    weight: 1.0
+    archetype: DEFENSE
+    runtime:
+      detail_ko:
+      - '원본ID: B-MOD-02'
+      - 'Trigger: ACTIVE(TOKEN_DEFENSE+SNEAK), (T4) EVENT(ON_FATAL_DAMAGE)'
+      - 'T1: 120s 쿨, 6s 전 상태 롤백(좌표/체력/포션/화상/낙하)'
+      - 'T2: 100s, 7s 롤백 + 디버프 1개 추가 롤백'
+      - 'T3: 90s, 8s + 허기/포화도 상태도 롤백'
+      - 'T4: 사망 확정 1회 자동 역행(공유쿨 180s) + 역행 후 3s 시간 멀미(슬로우/약점)'
+      - '구현 포인트: 링버퍼 스냅샷 + 안전 위치 보정 + 인벤 롤백 금지'
+      - '엔진적용 받는 피해: T1 -3.0%, T2 -6.0%, T3 -9.0%, T4 -12.0% (발동 시작 T1)'
+      modifiers:
+      - type: DAMAGE_TAKEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: -0.03
+        min_total_tier: 1
+        world: ANY
+  B-MOD-03:
+    name: 일섬 인력선
+    type: BLESSING
+    weight: 1.0
+    archetype: COMBAT
+    runtime:
+      detail_ko:
+      - '원본ID: B-MOD-03'
+      - 'Trigger: EVENT(ON_MELEE_HIT, 검), 내부쿨 1.0s'
+      - 'T1: 전방 8b×1.5b 라인에 최대 4개를 1.5b 끌어당김'
+      - 'T2: 10b×2.0b, 2.5b 당김 + 0.5s 슬로우'
+      - 'T3: 라인 내 정렬 + 2s 넉백저항↓(몰이)'
+      - 'T4: 12b×2.5b, 3.5b 당김 + 10s에 1회 약점I 1s'
+      - '구현 포인트: ray/line 거리 판정(점-선 거리) + 대상 수 cap'
+      - '엔진적용 공격 피해: T1 +3.0%, T2 +6.0%, T3 +9.0%, T4 +12.0% (발동 시작 T1)'
+      modifiers:
+      - type: DAMAGE_DEALT_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.03
+        min_total_tier: 1
+        world: ANY
+  B-MOD-04:
+    name: 트리 캡 벌목
+    type: BLESSING
+    weight: 1.0
+    archetype: GATHERING
+    runtime:
+      detail_ko:
+      - '원본ID: B-MOD-04'
+      - 'Trigger: EVENT(ON_BLOCK_BREAK, 도끼+통나무)'
+      - 'T1: 연결 로그 32개 연쇄 파괴(내부쿨 1.5s) + 내구 추가 소모'
+      - 'T2: 상한 64 + 드랍 3b 자동 흡입'
+      - 'T3: 네더 균류/거대버섯 적용 + 잎 일부 정리(캡)'
+      - 'T4: 버스트(60s): 상한 128, 대신 3s 채굴피로'
+      - '구현 포인트: BFS/DFS로 로그 탐색, 1틱 분할 파괴(렉 방지)'
+      - '엔진적용 채굴 속도: T1 +4.0%, T2 +8.0%, T3 +12.0%, T4 +16.0% (발동 시작 T1)'
+      modifiers:
+      - type: BLOCK_BREAK_SPEED_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.04
+        min_total_tier: 1
+        world: NETHER
+  B-MOD-05:
+    name: 지각 연금술(돌→광물)
+    type: BLESSING
+    weight: 1.0
+    archetype: GATHERING
+    runtime:
+      detail_ko:
+      - '원본ID: B-MOD-05'
+      - 'Trigger: PERIODIC(30s)'
+      - 'T1: 샘플 24, 0.10%, cap1, 저급 테이블'
+      - 'T2: 샘플 30, 0.18%, 중급 일부(레드스톤/청금석), 네더 잔해 1% 테이블'
+      - 'T3: 샘플 36, 0.30%, 희귀(다이아/잔해) 극소량 개방'
+      - 'T4: 샘플 42, 0.45%, cap2, 고급 테이블 확장'
+      - '구현 포인트: placed bitset + 6방향 air/액체 접촉 체크 + chunk 로드 체크'
+      - '엔진적용 채굴 속도: T1 +4.0%, T2 +8.0%, T3 +12.0%, T4 +16.0% (발동 시작 T1)'
+      modifiers:
+      - type: BLOCK_BREAK_SPEED_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.04
+        min_total_tier: 1
+        world: NETHER
+  B-MOD-06:
+    name: 탄도 흡수막
+    type: BLESSING
+    weight: 1.0
+    archetype: COMBAT
+    runtime:
+      detail_ko:
+      - '원본ID: B-MOD-06'
+      - 'Trigger: PERIODIC(12s 윈도우 1.0s) + ACTIVE(TOKEN_OFFENSE+NORMAL)'
+      - 'T1: 반경 4b 투사체 4개 저장(정지) → 방출(피해 70%)'
+      - 'T2: 반경 5b, 저장 6개, 방출 산포↓'
+      - 'T3: 마지막 공격자 방향 약한 유도(짧게)'
+      - 'T4: 저장 8개 + (선택) 화염구 등 1개 약화 반사(긴 쿨)'
+      - '구현 포인트: Projectile velocity=0 저장 + 엔티티 UUID 추적 + 방출 시 재가속'
+      - '엔진적용 공격 피해: T1 +3.0%, T2 +6.0%, T3 +9.0%, T4 +12.0% (발동 시작 T1)'
+      modifiers:
+      - type: DAMAGE_DEALT_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.03
+        min_total_tier: 1
+        world: NETHER
+  B-MOD-07:
+    name: 차원 점멸
+    type: BLESSING
+    weight: 1.0
+    archetype: MOBILITY
+    runtime:
+      detail_ko:
+      - '원본ID: B-MOD-07'
+      - 'Trigger: ACTIVE(TOKEN_MOBILITY+NORMAL)'
+      - 'T1: 45s, 10b 점멸(안전 탐색)'
+      - 'T2: 40s, 14b + 수직 보정(4b)'
+      - 'T3: 점멸 후 2s 낙하 무시 + 2s 신속'
+      - 'T4: 2차지(각 45s) + 잔상/파티클 강화(추적 리스크)'
+      - '구현 포인트: raycast로 목표점 찾고 주변 안전 블록 검색'
+      - '엔진적용 이동 속도: T1 +3.0%, T2 +6.0%, T3 +9.0%, T4 +12.0% (발동 시작 T1)'
+      modifiers:
+      - type: WALK_SPEED_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.03
+        min_total_tier: 1
+        world: ANY
+  B-MOD-08:
+    name: 유령 걸음
+    type: BLESSING
+    weight: 1.0
+    archetype: MOBILITY
+    runtime:
+      detail_ko:
+      - '원본ID: B-MOD-08'
+      - 'Trigger: ACTIVE(TOKEN_DEFENSE+NORMAL)'
+      - 'T1: 90s, 전방 4b “위상 이동”(빈 공간으로 텔포), 1.5s 공격/설치 불가'
+      - 'T2: 6b + 2블록 두께 장애물 통과(빈 공간 필요)'
+      - 'T3: 위상 후 1s 투사체 무효'
+      - 'T4: 2차지 + 사용 후 2s 슬로우(대가)'
+      - '구현 포인트: “벽 통과” 대신 “빈 공간 텔포”로 구현(안전/동기화)'
+      - '엔진적용 이동 속도: T1 +3.0%, T2 +6.0%, T3 +9.0%, T4 +12.0% (발동 시작 T1)'
+      modifiers:
+      - type: WALK_SPEED_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.03
+        min_total_tier: 1
+        world: ANY
+  B-MOD-09:
+    name: 영혼 분신
+    type: BLESSING
+    weight: 1.0
+    archetype: MOBILITY
+    runtime:
+      detail_ko:
+      - '원본ID: B-MOD-09'
+      - 'Trigger: ACTIVE(TOKEN_UTILITY+SNEAK)'
+      - 'T1: 90s, 6s 분신(몹 타겟 유도 + 시각/사운드)'
+      - 'T2: 8s + 분신이 소폭 이동(경로)'
+      - 'T3: 종료 시 연막(몹에게만 1s 실명/다크니스)'
+      - 'T4: 유지 중 재시전=분신과 위치 교환 1회(쿨 공유)'
+      - '구현 포인트: ArmorStand/Display + 가짜 발소리 + 몹 목표 변경(가능한 경우)'
+      - '엔진적용 이동 속도: T1 +3.0%, T2 +6.0%, T3 +9.0%, T4 +12.0% (발동 시작 T1)'
+      modifiers:
+      - type: WALK_SPEED_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.03
+        min_total_tier: 1
+        world: ANY
+  B-MOD-10:
+    name: 중력 사다리
+    type: BLESSING
+    weight: 1.0
+    archetype: MOBILITY
+    runtime:
+      detail_ko:
+      - '원본ID: B-MOD-10'
+      - 'Trigger: PASSIVE (+ EVENT)'
+      - 'T1: 벽 밀착+점프 유지 시 등반(느림)'
+      - 'T2: 등반 속도↑ + 허기소모 없음'
+      - 'T3: 벽 점프(쿨 3s)로 도약'
+      - 'T4: 공중 1회 벽 붙잡기 2s(재충전 12s)'
+      - '구현 포인트: 조건 충족 시 velocityY 부여 + anti-cheat 고려'
+      - '엔진적용 이동 속도: T1 +3.0%, T2 +6.0%, T3 +9.0%, T4 +12.0% (발동 시작 T1)'
+      modifiers:
+      - type: WALK_SPEED_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.03
+        min_total_tier: 1
+        world: ANY
+  B-MOD-11:
+    name: 굴착 파동
+    type: BLESSING
+    weight: 1.0
+    archetype: MOBILITY
+    runtime:
+      detail_ko:
+      - '원본ID: B-MOD-11'
+      - 'Trigger: EVENT(ON_BLOCK_BREAK, 곡괭이+자연석), (T4) ACTIVE(TOKEN_UTILITY+SPRINT)'
+      - 'T1: 자연석 25개 채굴마다 주변 자연석 12개 추가 파괴(광물 제외)'
+      - 'T2: 20개마다 18개'
+      - 'T3: 파동 후 광물 힌트 파티클 1회'
+      - 'T4: 충전≥10이면 능동 파동(쿨 90s) + 상한 24개'
+      - '구현 포인트: 블록 파괴는 틱 분할 + 보호구역 예외'
+      - '엔진적용 이동 속도: T1 +3.0%, T2 +6.0%, T3 +9.0%, T4 +12.0% (발동 시작 T1)'
+      modifiers:
+      - type: WALK_SPEED_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.03
+        min_total_tier: 1
+        world: ANY
+  B-MOD-12:
+    name: 즉석 제작대
+    type: BLESSING
+    weight: 1.0
+    archetype: COMBAT
+    runtime:
+      detail_ko:
+      - '원본ID: B-MOD-12'
+      - 'Trigger: ACTIVE(TOKEN_UTILITY+NORMAL)'
+      - 'T1: 60s, 어디서나 3×3 제작(전투 중 제한)'
+      - 'T2: 전투 중 사용 가능(대신 2s 약점/슬로우)'
+      - 'T3: 레시피 기억 1개(자동 배치)'
+      - 'T4: 하루 1회 즉시 제작 1회 + 10% 재료 환급'
+      - '구현 포인트: virtual workbench 또는 커스텀 GUI'
+      - '엔진적용 공격 피해: T1 +3.0%, T2 +6.0%, T3 +9.0%, T4 +12.0% (발동 시작 T1)'
+      modifiers:
+      - type: DAMAGE_DEALT_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.03
+        min_total_tier: 1
+        world: ANY
+  B-MOD-13:
+    name: 전투 건축 버스트
+    type: BLESSING
+    weight: 1.0
+    archetype: COMBAT
+    runtime:
+      detail_ko:
+      - '원본ID: B-MOD-13'
+      - 'Trigger: ACTIVE(TOKEN_BUILD+NORMAL)'
+      - 'T1: 60s, 8s 설치 딜레이↓'
+      - 'T2: 55s, 10s + 웅크림 설치 자동 2-high 벽'
+      - 'T3: 설치 블록 10s 폭발 넉백 내성'
+      - 'T4: 시작 시 즉시 벽 1회 + 종료 후 3s 피로'
+      - '구현 포인트: BlockPlace 후 메타데이터로 강화/내성 처리(폭발 이벤트에서 감쇄)'
+      - '엔진적용 공격 피해: T1 +3.0%, T2 +6.0%, T3 +9.0%, T4 +12.0% (발동 시작 T1)'
+      modifiers:
+      - type: DAMAGE_DEALT_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.03
+        min_total_tier: 1
+        world: ANY
+  B-MOD-14:
+    name: 응급 전이
+    type: BLESSING
+    weight: 1.0
+    archetype: MOBILITY
+    runtime:
+      detail_ko:
+      - '원본ID: B-MOD-14'
+      - 'Trigger: EVENT(ON_DAMAGE_TAKEN, 조건), 쿨'
+      - 'T1: 120s, HP<30%면 후방 8b 전이 + 3s 저항'
+      - 'T2: 110s, 10b + 4s 저항'
+      - 'T3: 전이 시 화상/낙하거리 초기화 + 2s 신속'
+      - 'T4: 사망급 1회 대체(쿨 300s) + 이후 6s 약점'
+      - '구현 포인트: 피해 후 계산 단계에서 teleport 예약(배타 액션)'
+      - '엔진적용 이동 속도: T1 +3.0%, T2 +6.0%, T3 +9.0%, T4 +12.0% (발동 시작 T1)'
+      modifiers:
+      - type: WALK_SPEED_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.03
+        min_total_tier: 1
+        world: ANY
+  B-MOD-15:
+    name: 차원 귀환 앵커
+    type: BLESSING
+    weight: 1.0
+    archetype: MOBILITY
+    runtime:
+      detail_ko:
+      - '원본ID: B-MOD-15'
+      - 'Trigger: ACTIVE(TOKEN_UTILITY+SNEAK=설정, TOKEN_UTILITY+SPRINT=귀환)'
+      - 'T1: 180s 귀환(동일 차원)'
+      - 'T2: 150s + 디버프 1개 정화'
+      - 'T3: 앵커 2개(순환) + 귀환 후 2s 무소음'
+      - 'T4: 귀환 후 3s 저항 + 1회 낙사/용암 즉사 완충'
+      - '구현 포인트: 앵커 좌표 DB 저장 + 안전 검사'
+      - '엔진적용 이동 속도: T1 +3.0%, T2 +6.0%, T3 +9.0%, T4 +12.0% (발동 시작 T1)'
+      modifiers:
+      - type: WALK_SPEED_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.03
+        min_total_tier: 1
+        world: NETHER
+  B-MOD-16:
+    name: 공명 스캐너
+    type: BLESSING
+    weight: 1.0
+    archetype: GATHERING
+    runtime:
+      detail_ko:
+      - '원본ID: B-MOD-16'
+      - 'Trigger: PERIODIC(30s) + ACTIVE(TOKEN_UTILITY+NORMAL)'
+      - 'T1: 30s마다 랜덤 힌트 1개(광물/유적/플레이어)'
+      - 'T2: 방향+거리 구간 제공'
+      - 'T3: 차원별 우선 힌트(네더: 잔해/석영, 엔드: 출구)'
+      - 'T4: 정밀 스캔(300s): 3개 목표 동시 핑 + 8s Glowing(대가)'
+      - '구현 포인트: 액션바/보스바/파티클 핑'
+      - '엔진적용 채굴 속도: T1 +4.0%, T2 +8.0%, T3 +12.0%, T4 +16.0% (발동 시작 T1)'
+      modifiers:
+      - type: BLOCK_BREAK_SPEED_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.04
+        min_total_tier: 1
+        world: END
+  B-MOD-17:
+    name: 오라 역상
+    type: BLESSING
+    weight: 1.0
+    archetype: MOBILITY
+    runtime:
+      detail_ko:
+      - '원본ID: B-MOD-17'
+      - 'Trigger: PASSIVE + (T4) ACTIVE(TOKEN_DEFENSE+SPRINT)'
+      - 'T1: 반경 12b 오라몹 버프 약화(캡)'
+      - 'T2: 16b + 약화↑'
+      - 'T3: 오라몹을 본인 시야에만 표식'
+      - 'T4: 능동 “오라 반전” 6s + 종료 후 10s 약점(대가)'
+      - '구현 포인트: 오라 적용 로직 훅(몹 버프에 상쇄 디버프 추가)'
+      - '엔진적용 이동 속도: T1 +3.0%, T2 +6.0%, T3 +9.0%, T4 +12.0% (발동 시작 T1)'
+      modifiers:
+      - type: WALK_SPEED_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.03
+        min_total_tier: 1
+        world: ANY
+  B-MOD-18:
+    name: 추격자 굴복
+    type: BLESSING
+    weight: 1.0
+    archetype: MOBILITY
+    runtime:
+      detail_ko:
+      - '원본ID: B-MOD-18'
+      - 'Trigger: PASSIVE + ACTIVE(TOKEN_DEFENSE+SPRINT)'
+      - 'T1: 추격자 스폰 5s 경고 + 3s 슬로우'
+      - 'T2: 경고 8s + 4s 슬로우'
+      - 'T3: 능동(180s): 1마리 혼란 6s(타겟 끊김)'
+      - 'T4: 하루 1회 30s 중립화 + 사용 시 10s Glowing(대가)'
+      - '구현 포인트: 추격자 엔티티 태그/metadata로 식별'
+      - '엔진적용 이동 속도: T1 +3.0%, T2 +6.0%, T3 +9.0%, T4 +12.0% (발동 시작 T1)'
+      modifiers:
+      - type: WALK_SPEED_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.03
+        min_total_tier: 1
+        world: ANY
+  B-MOD-19:
+    name: 레이드 면역막
+    type: BLESSING
+    weight: 1.0
+    archetype: COMBAT
+    runtime:
+      detail_ko:
+      - '원본ID: B-MOD-19'
+      - 'Trigger: PASSIVE(End) + EVENT(페이즈 전환/피격)'
+      - 'T1: 브레스/추가몹 피해 -10% + 30s마다 디버프 1개 정화'
+      - 'T2: 피해 -15% + 페이즈 전환마다 3s 저항'
+      - 'T3: 페이즈당 1회 치명 완충(1HP + 1s 무적)'
+      - 'T4: 레이드 전체 1회 사망 무효 + 벡스 접근 표시'
+      - '구현 포인트: End 체크 + DamageCause 기반 감쇄'
+      - '엔진적용 공격 피해: T1 +3.0%, T2 +6.0%, T3 +9.0%, T4 +12.0% (발동 시작 T1)'
+      modifiers:
+      - type: DAMAGE_DEALT_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.03
+        min_total_tier: 1
+        world: END
+  B-MOD-20:
+    name: 전리품 포탈
+    type: BLESSING
+    weight: 1.0
+    archetype: DEFENSE
+    runtime:
+      detail_ko:
+      - '원본ID: B-MOD-20'
+      - 'Trigger: ACTIVE(TOKEN_UTILITY+NORMAL=흡수, TOKEN_UTILITY+SNEAK=회수)'
+      - 'T1: 60s, 반경 6b 드랍 흡수 → 임시창고 27칸(10분)'
+      - 'T2: 8b + 36칸 + 자동 스택'
+      - 'T3: XP 오브 흡수(옵션) + 필터 토글'
+      - 'T4: 사망 시에도 임시창고 유지(3분 내 회수) + 회수 시 노출'
+      - '구현 포인트: Item 엔티티 remove 후 DB/메모리에 저장, GUI로 회수'
+      - '엔진적용 받는 피해: T1 -3.0%, T2 -6.0%, T3 -9.0%, T4 -12.0% (발동 시작 T1)'
+      modifiers:
+      - type: DAMAGE_TAKEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: -0.03
+        min_total_tier: 1
+        world: ANY
+  X-MOD-01-B:
+    name: 무차별 반발장
+    type: BLESSING
+    weight: 1.0
+    archetype: COMBAT
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-01'
+      - 'Trigger: PERIODIC(12s)'
+      - 'T1: 6b 넉백 파동(피아무시)'
+      - 'T2: 8b + 1s 슬로우'
+      - 'T3: 투사체도 약간 튕김'
+      - 'T4: 10b 강력 + 2s 전 예고 파티클(노출)'
+      - '구현 포인트: 주변 엔티티 조회는 반경 내 cap + 12s 주기 유지'
+      - '엔진적용 공격 피해: T1 +3.5%, T2 +7.0%, T3 +10.5%, T4 +14.0% (발동 시작 T1)'
+      - '엔진적용 받는 피해: T1 +0.0%, T2 +5.0%, T3 +7.5%, T4 +10.0% (발동 시작 T2)'
+      modifiers:
+      - type: DAMAGE_DEALT_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.035
+        min_total_tier: 1
+        world: ANY
+      - type: DAMAGE_TAKEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.025
+        min_total_tier: 2
+        world: ANY
+  X-MOD-02-B:
+    name: 피의 계약
+    type: BLESSING
+    weight: 1.0
+    archetype: COMBAT
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-02'
+      - 'Trigger: PASSIVE + EVENT(ON_KILL)'
+      - 'T1: 자연회복 OFF, 처치 1하트 회복'
+      - 'T2: 처치 회복↑ + 전투 흡혈(소형)'
+      - 'T3: 30s 무처치 시 약점 3s'
+      - 'T4: 킬 연속 시 폭주, 무처치 페널티 강화'
+      - '구현 포인트: 전투 상태 머신(최근 피해)와 결합하면 재미↑'
+      - '엔진적용 공격 피해: T1 +3.5%, T2 +7.0%, T3 +10.5%, T4 +14.0% (발동 시작 T1)'
+      - '엔진적용 받는 피해: T1 +0.0%, T2 +5.0%, T3 +7.5%, T4 +10.0% (발동 시작 T2)'
+      modifiers:
+      - type: DAMAGE_DEALT_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.035
+        min_total_tier: 1
+        world: ANY
+      - type: DAMAGE_TAKEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.025
+        min_total_tier: 2
+        world: ANY
+  X-MOD-03-B:
+    name: 자석 심장
+    type: BLESSING
+    weight: 1.0
+    archetype: UTILITY
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-03'
+      - 'Trigger: PERIODIC(1s) + EVENT(ON_ITEM_PICKUP)'
+      - 'T1: 6b 자동 흡입 + 흡입 노출'
+      - 'T2: 10b + 자동 스택'
+      - 'T3: 흡입 사운드↑ + 어그로↑'
+      - 'T4: 14b + 주기 Glowing'
+      - '구현 포인트: 아이템 흡입은 매틱 엔티티 전수 금지(근거리만)'
+      - '엔진적용 허기 소모: T1 -3.0%, T2 -6.0%, T3 -9.0%, T4 -12.0% (발동 시작 T1)'
+      - '엔진적용 내구도 소모: T1 +0.0%, T2 +6.0%, T3 +9.0%, T4 +12.0% (발동 시작 T2)'
+      modifiers:
+      - type: HUNGER_DRAIN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: -0.03
+        min_total_tier: 1
+        world: ANY
+      - type: ITEM_DURABILITY_LOSS_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.03
+        min_total_tier: 2
+        world: ANY
+  X-MOD-04-B:
+    name: 점수 방패
+    type: BLESSING
+    weight: 1.0
+    archetype: SCORE
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-04'
+      - 'Trigger: EVENT(ON_DAMAGE_TAKEN)'
+      - 'T1: 큰 피해 20% 점수 소모 상쇄'
+      - 'T2: 30%'
+      - 'T3: 점수 부족 시 역패널티'
+      - 'T4: 치명 1회 자동 상쇄 + 10s 약점'
+      - '구현 포인트: DamageEvent에서 최종 피해 조정 + score 원자적 차감'
+      - '엔진적용 생존 점수: T1 +6.0%, T2 +12.0%, T3 +18.0%, T4 +24.0% (발동 시작 T1)'
+      - '엔진적용 분당 점수 감쇠: T1 +0.0%, T2 +4.0%, T3 +6.0%, T4 +8.0% (발동 시작 T2)'
+      modifiers:
+      - type: SURVIVAL_SCORE_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.06
+        min_total_tier: 1
+        world: ANY
+      - type: SCORE_DECAY_PER_MINUTE_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.02
+        min_total_tier: 2
+        world: ANY
+  X-MOD-05-B:
+    name: 불꽃 치유/물 취약
+    type: BLESSING
+    weight: 1.0
+    archetype: MOBILITY
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-05'
+      - 'Trigger: PERIODIC(2s)'
+      - 'T1: 불=재생, 젖음=슬로우'
+      - 'T2: 불 회복↑, 젖음 추가 피해'
+      - 'T3: 불=저항, 젖음=스프린트 봉인'
+      - 'T4: 불=강보호, 젖음=위더'
+      - '구현 포인트: FireTicks/Water 상태 체크(비 포함)'
+      - '엔진적용 이동 속도: T1 +3.0%, T2 +6.0%, T3 +9.0%, T4 +12.0% (발동 시작 T1)'
+      - '엔진적용 받는 피해: T1 +0.0%, T2 +4.0%, T3 +6.0%, T4 +8.0% (발동 시작 T2)'
+      modifiers:
+      - type: WALK_SPEED_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.03
+        min_total_tier: 1
+        world: ANY
+      - type: DAMAGE_TAKEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.02
+        min_total_tier: 2
+        world: ANY
+  X-MOD-06-B:
+    name: 물 치유/불 취약
+    type: BLESSING
+    weight: 1.0
+    archetype: SURVIVAL
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-06'
+      - 'Trigger: PERIODIC(2s)'
+      - 'T1: 물/비=재생, 불=추가 피해'
+      - 'T2: 물 회복↑, 불=약점'
+      - 'T3: 물 닿으면 즉시 힐(작게) 대신 3s 슬로우'
+      - 'T4: 물=강보호, 불=치명 도트'
+      - '구현 포인트: “물병”까지 포함하려면 ItemConsume 체크'
+      - '엔진적용 자연 회복: T1 +4.0%, T2 +8.0%, T3 +12.0%, T4 +16.0% (발동 시작 T1)'
+      - '엔진적용 허기 소모: T1 +0.0%, T2 +8.0%, T3 +12.0%, T4 +16.0% (발동 시작 T2)'
+      modifiers:
+      - type: NATURAL_REGEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.04
+        min_total_tier: 1
+        world: ANY
+      - type: HUNGER_DRAIN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.04
+        min_total_tier: 2
+        world: ANY
+  X-MOD-07-B:
+    name: 도박 제작
+    type: BLESSING
+    weight: 1.0
+    archetype: GATHERING
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-07'
+      - 'Trigger: EVENT(ON_CRAFT)'
+      - 'T1: 10% 2배 / 10% 2배 소모'
+      - 'T2: 15/15'
+      - 'T3: 20/20 + 실패 시 노출'
+      - 'T4: 하루 1회 확정 2배(대신 다음 확정 손해)'
+      - '구현 포인트: CraftItemEvent에서 결과/재료 조정'
+      - '엔진적용 채굴 속도: T1 +4.0%, T2 +8.0%, T3 +12.0%, T4 +16.0% (발동 시작 T1)'
+      - '엔진적용 받는 피해: T1 +0.0%, T2 +4.0%, T3 +6.0%, T4 +8.0% (발동 시작 T2)'
+      modifiers:
+      - type: BLOCK_BREAK_SPEED_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.04
+        min_total_tier: 1
+        world: ANY
+      - type: DAMAGE_TAKEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.02
+        min_total_tier: 2
+        world: ANY
+  X-MOD-08-B:
+    name: 위치 교환 타격
+    type: BLESSING
+    weight: 1.0
+    archetype: MOBILITY
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-08'
+      - 'Trigger: EVENT(ON_MELEE_HIT), 내부쿨 12s'
+      - 'T1: 8% 위치 교환'
+      - 'T2: 12% + 1s 저항(양쪽)'
+      - 'T3: 타겟 슬로우, 자신 Glowing'
+      - 'T4: 능동 발동(60s) 가능, 실패 시 자기만 텔포'
+      - '구현 포인트: teleport 배타 액션 규칙 준수'
+      - '엔진적용 이동 속도: T1 +3.0%, T2 +6.0%, T3 +9.0%, T4 +12.0% (발동 시작 T1)'
+      - '엔진적용 받는 피해: T1 +0.0%, T2 +4.0%, T3 +6.0%, T4 +8.0% (발동 시작 T2)'
+      modifiers:
+      - type: WALK_SPEED_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.03
+        min_total_tier: 1
+        world: ANY
+      - type: DAMAGE_TAKEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.02
+        min_total_tier: 2
+        world: ANY
+  X-MOD-09-B:
+    name: 유령화
+    type: BLESSING
+    weight: 1.0
+    archetype: MOBILITY
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-09'
+      - 'Trigger: ACTIVE(TOKEN_DEFENSE+NORMAL)'
+      - 'T1: 90s, 2s 비접촉(공격/설치 불가)'
+      - 'T2: 3s'
+      - 'T3: 유령 중 투사체 무시, 종료 후 2s 약점'
+      - 'T4: 2차지, 종료 후 5s 노출'
+      - '구현 포인트: 무적=대미지 cancel, 대신 공격/설치도 cancel'
+      - '엔진적용 이동 속도: T1 +3.0%, T2 +6.0%, T3 +9.0%, T4 +12.0% (발동 시작 T1)'
+      - '엔진적용 받는 피해: T1 +0.0%, T2 +4.0%, T3 +6.0%, T4 +8.0% (발동 시작 T2)'
+      modifiers:
+      - type: WALK_SPEED_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.03
+        min_total_tier: 1
+        world: ANY
+      - type: DAMAGE_TAKEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.02
+        min_total_tier: 2
+        world: ANY
+  X-MOD-10-B:
+    name: 폭주 엔진
+    type: BLESSING
+    weight: 1.0
+    archetype: COMBAT
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-10'
+      - 'Trigger: EVENT(전투 Enter/Exit)'
+      - 'T1: 전투 버프 + 종료 피로'
+      - 'T2: 버프↑ 피로↑'
+      - 'T3: 킬로 연장, 피로 누적'
+      - 'T4: 극강 전투, 종료 후 회복 봉인'
+      - '구현 포인트: “전투 상태”는 최근 8초 피해 주고받음 기준'
+      - '엔진적용 공격 피해: T1 +3.5%, T2 +7.0%, T3 +10.5%, T4 +14.0% (발동 시작 T1)'
+      - '엔진적용 받는 피해: T1 +0.0%, T2 +5.0%, T3 +7.5%, T4 +10.0% (발동 시작 T2)'
+      modifiers:
+      - type: DAMAGE_DEALT_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.035
+        min_total_tier: 1
+        world: ANY
+      - type: DAMAGE_TAKEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.025
+        min_total_tier: 2
+        world: ANY
+  X-MOD-11-B:
+    name: 추격자 현상금
+    type: BLESSING
+    weight: 1.0
+    archetype: SCORE
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-11'
+      - 'Trigger: PASSIVE + EVENT(ON_KILL, 추격자)'
+      - 'T1: 추격자 스폰↑ + 보상↑'
+      - 'T2: 더 자주 + 더 큰 보상'
+      - 'T3: overflow 강화도 같이↑'
+      - 'T4: 능동 도발(300s)로 즉시 호출(큰 위험/큰 보상)'
+      - '구현 포인트: 추격자 태그 기반 식별 + 보상 테이블'
+      - '엔진적용 생존 점수: T1 +6.0%, T2 +12.0%, T3 +18.0%, T4 +24.0% (발동 시작 T1)'
+      - '엔진적용 분당 점수 감쇠: T1 +0.0%, T2 +4.0%, T3 +6.0%, T4 +8.0% (발동 시작 T2)'
+      modifiers:
+      - type: SURVIVAL_SCORE_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.06
+        min_total_tier: 1
+        world: ANY
+      - type: SCORE_DECAY_PER_MINUTE_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.02
+        min_total_tier: 2
+        world: ANY
+  X-MOD-12-B:
+    name: 오라 공명
+    type: BLESSING
+    weight: 1.0
+    archetype: SCORE
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-12'
+      - 'Trigger: PASSIVE'
+      - 'T1: 오라몹 강해짐 + 점수 +30%'
+      - 'T2: +50%'
+      - 'T3: 오라 안 재생(약) + 오라 반경 체감↑'
+      - 'T4: 반전 1회(긴 쿨) + 이후 2분 오라 강화(반동)'
+      - '구현 포인트: 오라 시스템 훅(난이도/보상 동시)'
+      - '엔진적용 생존 점수: T1 +6.0%, T2 +12.0%, T3 +18.0%, T4 +24.0% (발동 시작 T1)'
+      - '엔진적용 분당 점수 감쇠: T1 +0.0%, T2 +4.0%, T3 +6.0%, T4 +8.0% (발동 시작 T2)'
+      modifiers:
+      - type: SURVIVAL_SCORE_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.06
+        min_total_tier: 1
+        world: ANY
+      - type: SCORE_DECAY_PER_MINUTE_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.02
+        min_total_tier: 2
+        world: ANY
+  X-MOD-13-B:
+    name: 보더 도박사
+    type: BLESSING
+    weight: 1.0
+    archetype: SCORE
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-13'
+      - 'Trigger: EVENT(ON_BORDER_OUTSIDE_TICK)'
+      - 'T1: 점수 +25% / 위더 +1단 취급'
+      - 'T2: +40% / +2단'
+      - 'T3: +60% / +3단 + 노출'
+      - 'T4: +90% / +4단 + 가프 효율 저하'
+      - '구현 포인트: score multiplier는 “생성 점수”에만 적용 권장'
+      - '엔진적용 생존 점수: T1 +6.0%, T2 +12.0%, T3 +18.0%, T4 +24.0% (발동 시작 T1)'
+      - '엔진적용 분당 점수 감쇠: T1 +0.0%, T2 +4.0%, T3 +6.0%, T4 +8.0% (발동 시작 T2)'
+      modifiers:
+      - type: SURVIVAL_SCORE_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.06
+        min_total_tier: 1
+        world: ANY
+      - type: SCORE_DECAY_PER_MINUTE_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.02
+        min_total_tier: 2
+        world: ANY
+  X-MOD-14-B:
+    name: 광산 반향
+    type: BLESSING
+    weight: 1.0
+    archetype: GATHERING
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-14'
+      - 'Trigger: EVENT(ON_BLOCK_BREAK)'
+      - 'T1: 힌트(약) + 소음↑'
+      - 'T2: 힌트↑ 소음↑↑'
+      - 'T3: 광물 채굴 시 2s Glowing'
+      - 'T4: 정밀 핑(쿨) 가능 대신 10s Glowing'
+      - '구현 포인트: 광물 힌트는 “방향/거리 구간”으로 단순화'
+      - '엔진적용 채굴 속도: T1 +4.0%, T2 +8.0%, T3 +12.0%, T4 +16.0% (발동 시작 T1)'
+      - '엔진적용 받는 피해: T1 +0.0%, T2 +4.0%, T3 +6.0%, T4 +8.0% (발동 시작 T2)'
+      modifiers:
+      - type: BLOCK_BREAK_SPEED_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.04
+        min_total_tier: 1
+        world: ANY
+      - type: DAMAGE_TAKEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.02
+        min_total_tier: 2
+        world: ANY
+  X-MOD-15-B:
+    name: 임시 요새
+    type: BLESSING
+    weight: 1.0
+    archetype: COMBAT
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-15'
+      - 'Trigger: EVENT(ON_BLOCK_PLACE) (+선택 ACTIVE)'
+      - 'T1: 설치 블록 10s 강화(폭발/넉백 내성)'
+      - 'T2: 강화 15s + 60s 후 사라짐(임시화)'
+      - 'T3: 전투 중 설치=20s 후 사라짐'
+      - 'T4: 능동 요새 모드(120s): 10s 초강화 후 붕괴 시작'
+      - '구현 포인트: “사라짐”은 placed 블록만 대상(자연 블록 금지)'
+      - '엔진적용 공격 피해: T1 +3.5%, T2 +7.0%, T3 +10.5%, T4 +14.0% (발동 시작 T1)'
+      - '엔진적용 받는 피해: T1 +0.0%, T2 +5.0%, T3 +7.5%, T4 +10.0% (발동 시작 T2)'
+      modifiers:
+      - type: DAMAGE_DEALT_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.035
+        min_total_tier: 1
+        world: ANY
+      - type: DAMAGE_TAKEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.025
+        min_total_tier: 2
+        world: ANY
+  X-MOD-16-B:
+    name: 검기 방출
+    type: BLESSING
+    weight: 1.0
+    archetype: COMBAT
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-16'
+      - 'Trigger: ACTIVE(TOKEN_OFFENSE+NORMAL, 검)'
+      - 'T1: 45s, 8b 검기(관통1) + 내구/허기 소모'
+      - 'T2: 10b 관통2'
+      - 'T3: 적중 시 끌어당김(약) + 노출'
+      - 'T4: 12b 강검기(쿨 60s) + 사용 후 4s 약점'
+      - '구현 포인트: raycast hit + 피해 적용(투사체 대신 광선)'
+      - '엔진적용 공격 피해: T1 +3.5%, T2 +7.0%, T3 +10.5%, T4 +14.0% (발동 시작 T1)'
+      - '엔진적용 받는 피해: T1 +0.0%, T2 +5.0%, T3 +7.5%, T4 +10.0% (발동 시작 T2)'
+      modifiers:
+      - type: DAMAGE_DEALT_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.035
+        min_total_tier: 1
+        world: ANY
+      - type: DAMAGE_TAKEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.025
+        min_total_tier: 2
+        world: ANY
+  X-MOD-17-B:
+    name: 역중력 피질
+    type: BLESSING
+    weight: 1.0
+    archetype: MOBILITY
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-17'
+      - 'Trigger: PASSIVE'
+      - 'T1: 기동↑ 넉백 취약↑'
+      - 'T2: 공중제어↑↑'
+      - 'T3: 공중 대시(쿨) + 공중 피격 경직'
+      - 'T4: 2차지 + 착지 슬로우 1s'
+      - '구현 포인트: air 상태 감지 + velocity 보정'
+      - '엔진적용 이동 속도: T1 +3.0%, T2 +6.0%, T3 +9.0%, T4 +12.0% (발동 시작 T1)'
+      - '엔진적용 받는 피해: T1 +0.0%, T2 +4.0%, T3 +6.0%, T4 +8.0% (발동 시작 T2)'
+      modifiers:
+      - type: WALK_SPEED_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.03
+        min_total_tier: 1
+        world: ANY
+      - type: DAMAGE_TAKEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.02
+        min_total_tier: 2
+        world: ANY
+  X-MOD-18-B:
+    name: 전리품 룰렛
+    type: BLESSING
+    weight: 1.0
+    archetype: GATHERING
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-18'
+      - 'Trigger: EVENT(ON_LOOT_GENERATE)'
+      - 'T1: 보상 약간↑, 10% 변질'
+      - 'T2: 보상↑, 15% 변질'
+      - 'T3: 변질 시 노출/소음'
+      - 'T4: 리롤(쿨) 가능, 실패 시 큰 손해'
+      - '구현 포인트: Paper LootGenerateEvent 권장, Spigot은 드랍/상자 열기 훅 필요'
+      - '엔진적용 채굴 속도: T1 +4.0%, T2 +8.0%, T3 +12.0%, T4 +16.0% (발동 시작 T1)'
+      - '엔진적용 받는 피해: T1 +0.0%, T2 +4.0%, T3 +6.0%, T4 +8.0% (발동 시작 T2)'
+      modifiers:
+      - type: BLOCK_BREAK_SPEED_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.04
+        min_total_tier: 1
+        world: ANY
+      - type: DAMAGE_TAKEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.02
+        min_total_tier: 2
+        world: ANY
+  X-MOD-19-B:
+    name: 약탈자의 향기
+    type: BLESSING
+    weight: 1.0
+    archetype: GATHERING
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-19'
+      - 'Trigger: PERIODIC(20s) + PASSIVE'
+      - 'T1: 구조물/상자 힌트 + 어그로↑'
+      - 'T2: 힌트↑ 어그로↑'
+      - 'T3: 추격자/오라 타겟↑ + 루팅 점수↑'
+      - 'T4: 확정 힌트(쿨) + 주기 Glowing'
+      - '구현 포인트: 힌트는 “가까운 구조물 방향” 정도로 단순화'
+      - '엔진적용 채굴 속도: T1 +4.0%, T2 +8.0%, T3 +12.0%, T4 +16.0% (발동 시작 T1)'
+      - '엔진적용 받는 피해: T1 +0.0%, T2 +4.0%, T3 +6.0%, T4 +8.0% (발동 시작 T2)'
+      modifiers:
+      - type: BLOCK_BREAK_SPEED_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.04
+        min_total_tier: 1
+        world: ANY
+      - type: DAMAGE_TAKEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.02
+        min_total_tier: 2
+        world: ANY
+  X-MOD-20-B:
+    name: 검은 성소
+    type: BLESSING
+    weight: 1.0
+    archetype: COMBAT
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-20'
+      - 'Trigger: PERIODIC(30s) + EVENT(ON_KILL)'
+      - 'T1: 주변 몹 밀도↑(약) + 처치 점수↑'
+      - 'T2: 더 몰림/보상↑'
+      - 'T3: 테마몹 비중↑'
+      - 'T4: 능동 제물 정화(쿨): 10s 난이도↓ 대신 점수 소모'
+      - '구현 포인트: 스폰 추가는 “내 주변 스폰 가중치”로 구현'
+      - '엔진적용 공격 피해: T1 +3.5%, T2 +7.0%, T3 +10.5%, T4 +14.0% (발동 시작 T1)'
+      - '엔진적용 받는 피해: T1 +0.0%, T2 +5.0%, T3 +7.5%, T4 +10.0% (발동 시작 T2)'
+      modifiers:
+      - type: DAMAGE_DEALT_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.035
+        min_total_tier: 1
+        world: ANY
+      - type: DAMAGE_TAKEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.025
+        min_total_tier: 2
+        world: ANY
+  X-MOD-21-B:
+    name: 생명-허기 교환
+    type: BLESSING
+    weight: 1.0
+    archetype: SURVIVAL
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-21'
+      - 'Trigger: EVENT(ON_DAMAGE_TAKEN / food change)'
+      - 'T1: 피해 15%를 허기로 전환, 허기0=슬로우'
+      - 'T2: 25%, 허기0=약 위더'
+      - 'T3: 음식 섭취 후 2s 약점(대가), 전환율↑'
+      - 'T4: 40%, 허기0=강 위더'
+      - '구현 포인트: Damage 후 foodLevel 조정'
+      - '엔진적용 자연 회복: T1 +4.0%, T2 +8.0%, T3 +12.0%, T4 +16.0% (발동 시작 T1)'
+      - '엔진적용 허기 소모: T1 +0.0%, T2 +8.0%, T3 +12.0%, T4 +16.0% (발동 시작 T2)'
+      modifiers:
+      - type: NATURAL_REGEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.04
+        min_total_tier: 1
+        world: ANY
+      - type: HUNGER_DRAIN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.04
+        min_total_tier: 2
+        world: ANY
+  X-MOD-22-B:
+    name: 포션 양날
+    type: BLESSING
+    weight: 1.0
+    archetype: COMBAT
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-22'
+      - 'Trigger: EVENT(ON_ITEM_CONSUME/ON_POTION_APPLY)'
+      - 'T1: 긍정 +1단, 15% 부정'
+      - 'T2: 강화↑, 25% 부정'
+      - 'T3: 강화 크게↑, 35% 부정(전투 중 가속)'
+      - 'T4: 긍정 극강, 항상 부정 1개'
+      - '구현 포인트: 포션 효과 목록을 재작성(기존 효과 연장/강화)'
+      - '엔진적용 공격 피해: T1 +3.5%, T2 +7.0%, T3 +10.5%, T4 +14.0% (발동 시작 T1)'
+      - '엔진적용 받는 피해: T1 +0.0%, T2 +5.0%, T3 +7.5%, T4 +10.0% (발동 시작 T2)'
+      modifiers:
+      - type: DAMAGE_DEALT_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.035
+        min_total_tier: 1
+        world: ANY
+      - type: DAMAGE_TAKEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.025
+        min_total_tier: 2
+        world: ANY
+  X-MOD-23-B:
+    name: 방어구 희생
+    type: BLESSING
+    weight: 1.0
+    archetype: DEFENSE
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-23'
+      - 'Trigger: EVENT(ON_DAMAGE_TAKEN)'
+      - 'T1: 피해 15%를 내구로 지불'
+      - 'T2: 25%'
+      - 'T3: 35% + 내구0이면 10s 약점'
+      - 'T4: 45% + 치명 1회는 장비 파손으로 무효'
+      - '구현 포인트: damage 감소 + armor damage 증가(파손 이벤트 주의)'
+      - '엔진적용 받는 피해: T1 -3.0%, T2 -6.0%, T3 -9.0%, T4 -12.0% (발동 시작 T1)'
+      - '엔진적용 이동 속도: T1 +0.0%, T2 -4.0%, T3 -6.0%, T4 -8.0% (발동 시작 T2)'
+      modifiers:
+      - type: DAMAGE_TAKEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: -0.03
+        min_total_tier: 1
+        world: ANY
+      - type: WALK_SPEED_RATIO
+        scaling: CARD_TIER
+        value_per_tier: -0.02
+        min_total_tier: 2
+        world: ANY
+  X-MOD-24-B:
+    name: 탄도 왜곡
+    type: BLESSING
+    weight: 1.0
+    archetype: COMBAT
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-24'
+      - 'Trigger: EVENT(Projectile near) + (T3+) ACTIVE'
+      - 'T1: 주변 투사체 궤도 소폭 왜곡(양날)'
+      - 'T2: 반경↑'
+      - 'T3: 능동 정렬(90s): 5s 내 투사체 직진 강화'
+      - 'T4: 능동 반사(180s): 1s 반사, 실패 시 노출'
+      - '구현 포인트: 투사체 velocity vector 조정(과하면 부자연)'
+      - '엔진적용 공격 피해: T1 +3.5%, T2 +7.0%, T3 +10.5%, T4 +14.0% (발동 시작 T1)'
+      - '엔진적용 받는 피해: T1 +0.0%, T2 +5.0%, T3 +7.5%, T4 +10.0% (발동 시작 T2)'
+      modifiers:
+      - type: DAMAGE_DEALT_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.035
+        min_total_tier: 1
+        world: ANY
+      - type: DAMAGE_TAKEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.025
+        min_total_tier: 2
+        world: ANY
+  X-MOD-25-B:
+    name: 악몽 시야
+    type: BLESSING
+    weight: 1.0
+    archetype: ENDGAME
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-25'
+      - 'Trigger: PASSIVE + PERIODIC(60~120s)'
+      - 'T1: 야시(약) + 가짜 경고'
+      - 'T2: 시야↑ 경고↑'
+      - 'T3: 네더/엔드 시야↑↑ + 주기 다크니스'
+      - 'T4: 윤곽(쿨) 후 3s 실명(대가)'
+      - '구현 포인트: 클라이언트 환청/연출(사운드/파티클)로 체감 강화'
+      - '엔진적용 드래곤 기여 피해: T1 +5.0%, T2 +10.0%, T3 +15.0%, T4 +20.0% (발동 시작 T1)'
+      - '엔진적용 엔드 받는 피해: T1 +0.0%, T2 +8.0%, T3 +12.0%, T4 +16.0% (발동 시작 T2)'
+      modifiers:
+      - type: DRAGON_DAMAGE_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.05
+        min_total_tier: 1
+        world: END
+      - type: END_DAMAGE_TAKEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.04
+        min_total_tier: 2
+        world: END
+  X-MOD-26-B:
+    name: 지각 연금술 쌍방향
+    type: BLESSING
+    weight: 1.0
+    archetype: GATHERING
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-26'
+      - 'Trigger: PERIODIC(30s)'
+      - 'T1: 돌→광물(아주 낮음) + 광물→돌(저급 위주)'
+      - 'T2: 돌 확률↑ + 붕괴도↑'
+      - 'T3: 희귀 개방(아주 낮음), 고급 붕괴는 극저확률'
+      - 'T4: cap2 + 강한 연출(노출)'
+      - '구현 포인트: 같은 pulse에서 “둘 다” 돌릴 때 cap 합산'
+      - '엔진적용 채굴 속도: T1 +4.0%, T2 +8.0%, T3 +12.0%, T4 +16.0% (발동 시작 T1)'
+      - '엔진적용 받는 피해: T1 +0.0%, T2 +4.0%, T3 +6.0%, T4 +8.0% (발동 시작 T2)'
+      modifiers:
+      - type: BLOCK_BREAK_SPEED_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.04
+        min_total_tier: 1
+        world: ANY
+      - type: DAMAGE_TAKEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.02
+        min_total_tier: 2
+        world: ANY
+  X-MOD-27-B:
+    name: 네더 균열
+    type: BLESSING
+    weight: 1.0
+    archetype: UTILITY
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-27'
+      - 'Trigger: PERIODIC(30s, Nether) + PASSIVE(네더 위험)'
+      - 'T1: 네더랙→석영/네더금 소량 + 화염취약'
+      - 'T2: 변환↑ 화염취약↑'
+      - 'T3: 잔해 극희귀 + 멀미/피로'
+      - 'T4: 파밍 폭발 + 받피/디버프 크게↑'
+      - '구현 포인트: “네더에서만” 케이스 분기'
+      - '엔진적용 허기 소모: T1 -3.0%, T2 -6.0%, T3 -9.0%, T4 -12.0% (발동 시작 T1)'
+      - '엔진적용 내구도 소모: T1 +0.0%, T2 +6.0%, T3 +9.0%, T4 +12.0% (발동 시작 T2)'
+      modifiers:
+      - type: HUNGER_DRAIN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: -0.03
+        min_total_tier: 1
+        world: NETHER
+      - type: ITEM_DURABILITY_LOSS_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.03
+        min_total_tier: 2
+        world: NETHER
+  X-MOD-28-B:
+    name: 충격 연쇄
+    type: BLESSING
+    weight: 1.0
+    archetype: COMBAT
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-28'
+      - 'Trigger: EVENT(ON_MELEE_HIT), 내부쿨 3s'
+      - 'T1: 반경 3b 광역 넉백(피아무시)'
+      - 'T2: 반경 4b'
+      - 'T3: 대상 슬로우 + 본인 공격속도↓'
+      - 'T4: 강넉백 + 본인 0.5s 경직'
+      - '구현 포인트: 광역 대상 수 cap'
+      - '엔진적용 공격 피해: T1 +3.5%, T2 +7.0%, T3 +10.5%, T4 +14.0% (발동 시작 T1)'
+      - '엔진적용 받는 피해: T1 +0.0%, T2 +5.0%, T3 +7.5%, T4 +10.0% (발동 시작 T2)'
+      modifiers:
+      - type: DAMAGE_DEALT_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.035
+        min_total_tier: 1
+        world: ANY
+      - type: DAMAGE_TAKEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.025
+        min_total_tier: 2
+        world: ANY
+  X-MOD-29-B:
+    name: 유리 대포
+    type: BLESSING
+    weight: 1.0
+    archetype: UTILITY
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-29'
+      - 'Trigger: PASSIVE'
+      - 'T1: 주는 +15% / 받는 +10%'
+      - 'T2: +25 / +20'
+      - 'T3: +35 / +35 + 저체력 추가딜'
+      - 'T4: +50 / +50'
+      - '구현 포인트: Damage modifier는 multiplicative 권장, cap 필요'
+      - '엔진적용 허기 소모: T1 -3.0%, T2 -6.0%, T3 -9.0%, T4 -12.0% (발동 시작 T1)'
+      - '엔진적용 내구도 소모: T1 +0.0%, T2 +6.0%, T3 +9.0%, T4 +12.0% (발동 시작 T2)'
+      modifiers:
+      - type: HUNGER_DRAIN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: -0.03
+        min_total_tier: 1
+        world: ANY
+      - type: ITEM_DURABILITY_LOSS_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.03
+        min_total_tier: 2
+        world: ANY
+  X-MOD-30-B:
+    name: 점수 투자
+    type: BLESSING
+    weight: 1.0
+    archetype: SCORE
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-30'
+      - 'Trigger: PERIODIC(300s) + 만기 처리'
+      - 'T1: 5% 잠금→5분 후 7% 반환'
+      - 'T2: 8%→11%'
+      - 'T3: 10%→14% + 반환 시 노출 6s'
+      - 'T4: 12%→18% + 0 반환 확률(도박)'
+      - '구현 포인트: 점수 “잠금”은 별도 ledger로 관리(스틸/감점과 분리)'
+      - '엔진적용 생존 점수: T1 +6.0%, T2 +12.0%, T3 +18.0%, T4 +24.0% (발동 시작 T1)'
+      - '엔진적용 분당 점수 감쇠: T1 +0.0%, T2 +4.0%, T3 +6.0%, T4 +8.0% (발동 시작 T2)'
+      modifiers:
+      - type: SURVIVAL_SCORE_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.06
+        min_total_tier: 1
+        world: ANY
+      - type: SCORE_DECAY_PER_MINUTE_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.02
+        min_total_tier: 2
+        world: ANY
+  X-MOD-31-B:
+    name: 무기 독주
+    type: BLESSING
+    weight: 1.0
+    archetype: UTILITY
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-31'
+      - 'Trigger: EVENT(ON_ITEM_HELD_CHANGE)'
+      - 'T1: 주무기군 선택 강화, 타무기 약화'
+      - 'T2: 더 극단'
+      - 'T3: 주무기 전용 스킬(짧은 쿨), 타무기 거의 봉인'
+      - 'T4: 주무기 극강 + 주기 피로'
+      - '구현 포인트: “무기군”은 태그로 판정, 선택 UI는 토큰+모드로 가능'
+      - '엔진적용 허기 소모: T1 -3.0%, T2 -6.0%, T3 -9.0%, T4 -12.0% (발동 시작 T1)'
+      - '엔진적용 내구도 소모: T1 +0.0%, T2 +6.0%, T3 +9.0%, T4 +12.0% (발동 시작 T2)'
+      modifiers:
+      - type: HUNGER_DRAIN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: -0.03
+        min_total_tier: 1
+        world: ANY
+      - type: ITEM_DURABILITY_LOSS_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.03
+        min_total_tier: 2
+        world: ANY
+  X-MOD-32-B:
+    name: 신호탄
+    type: BLESSING
+    weight: 1.0
+    archetype: MOBILITY
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-32'
+      - 'Trigger: ACTIVE(TOKEN_UTILITY+SPRINT)'
+      - 'T1: 120s 목표 핑, 노출 6s'
+      - 'T2: 90s 정확도↑, 노출 8s'
+      - 'T3: 차원별 목표 선택, 노출 10s Glowing'
+      - 'T4: 확정 핑 + 15s Glowing'
+      - '구현 포인트: 핑은 “파티클 화살표/보스바 방향”로 구현'
+      - '엔진적용 이동 속도: T1 +3.0%, T2 +6.0%, T3 +9.0%, T4 +12.0% (발동 시작 T1)'
+      - '엔진적용 받는 피해: T1 +0.0%, T2 +4.0%, T3 +6.0%, T4 +8.0% (발동 시작 T2)'
+      modifiers:
+      - type: WALK_SPEED_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.03
+        min_total_tier: 1
+        world: ANY
+      - type: DAMAGE_TAKEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.02
+        min_total_tier: 2
+        world: ANY
+  X-MOD-33-B:
+    name: 엔더 궤도
+    type: BLESSING
+    weight: 1.0
+    archetype: MOBILITY
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-33'
+      - 'Trigger: EVENT(ON_TELEPORT, ENDER_PEARL)'
+      - 'T1: 진주 피해↓ + 잔상 2s'
+      - 'T2: 잔상 3s + 연막(약)'
+      - 'T3: 잔상이 투사체 굴절(약) + 흔적 선명'
+      - 'T4: 2연속(긴 쿨) + 노출 강함'
+      - '구현 포인트: 잔상은 파티클/사운드/가짜 엔티티로 연출'
+      - '엔진적용 이동 속도: T1 +3.0%, T2 +6.0%, T3 +9.0%, T4 +12.0% (발동 시작 T1)'
+      - '엔진적용 받는 피해: T1 +0.0%, T2 +4.0%, T3 +6.0%, T4 +8.0% (발동 시작 T2)'
+      modifiers:
+      - type: WALK_SPEED_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.03
+        min_total_tier: 1
+        world: END
+      - type: DAMAGE_TAKEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.02
+        min_total_tier: 2
+        world: END
+  X-MOD-34-B:
+    name: 분신 계약
+    type: BLESSING
+    weight: 1.0
+    archetype: UTILITY
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-34'
+      - 'Trigger: ACTIVE(TOKEN_UTILITY+SNEAK)'
+      - 'T1: 분신 + 받은피해 10% 공유'
+      - 'T2: 공유 12%'
+      - 'T3: 혼란 연출 강화, 공유 15%'
+      - 'T4: 분신 2개, 공유 20%'
+      - '구현 포인트: 공유 피해는 DamageEvent 후 추가 damage(무한루프 방지)'
+      - '엔진적용 허기 소모: T1 -3.0%, T2 -6.0%, T3 -9.0%, T4 -12.0% (발동 시작 T1)'
+      - '엔진적용 내구도 소모: T1 +0.0%, T2 +6.0%, T3 +9.0%, T4 +12.0% (발동 시작 T2)'
+      modifiers:
+      - type: HUNGER_DRAIN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: -0.03
+        min_total_tier: 1
+        world: ANY
+      - type: ITEM_DURABILITY_LOSS_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.03
+        min_total_tier: 2
+        world: ANY
+  X-MOD-35-B:
+    name: 반사 피부
+    type: BLESSING
+    weight: 1.0
+    archetype: COMBAT
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-35'
+      - 'Trigger: EVENT(ON_DAMAGE_TAKEN)'
+      - 'T1: 피해 10% 반사 + 1s 슬로우'
+      - 'T2: 15% 반사'
+      - 'T3: 20% 반사 + 작은 넉백(피아무시)'
+      - 'T4: 25% 반사 + 반사 후 4s 받피 +10%'
+      - '구현 포인트: 반사는 attacker 존재 시만, true damage 금지'
+      - '엔진적용 공격 피해: T1 +3.5%, T2 +7.0%, T3 +10.5%, T4 +14.0% (발동 시작 T1)'
+      - '엔진적용 받는 피해: T1 +0.0%, T2 +5.0%, T3 +7.5%, T4 +10.0% (발동 시작 T2)'
+      modifiers:
+      - type: DAMAGE_DEALT_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.035
+        min_total_tier: 1
+        world: ANY
+      - type: DAMAGE_TAKEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.025
+        min_total_tier: 2
+        world: ANY
+  X-MOD-36-B:
+    name: 폭발 설계자
+    type: BLESSING
+    weight: 1.0
+    archetype: COMBAT
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-36'
+      - 'Trigger: EVENT(Explosion damage)'
+      - 'T1: 폭발 딜 +20% / 받피 +15%'
+      - 'T2: +35 / +25'
+      - 'T3: 넉백↑ + 폭발 킬 점수↑'
+      - 'T4: 극단 폭발, 대신 자기 주변 폭발은 치명'
+      - '구현 포인트: Explosion event에서 피해/넉백 조정(버전 API 확인)'
+      - '엔진적용 공격 피해: T1 +3.5%, T2 +7.0%, T3 +10.5%, T4 +14.0% (발동 시작 T1)'
+      - '엔진적용 받는 피해: T1 +0.0%, T2 +5.0%, T3 +7.5%, T4 +10.0% (발동 시작 T2)'
+      modifiers:
+      - type: DAMAGE_DEALT_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.035
+        min_total_tier: 1
+        world: ANY
+      - type: DAMAGE_TAKEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.025
+        min_total_tier: 2
+        world: ANY
+  X-MOD-37-B:
+    name: 침묵 서약
+    type: BLESSING
+    weight: 1.0
+    archetype: MOBILITY
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-37'
+      - 'Trigger: PASSIVE + EVENT(ON_MELEE_HIT)'
+      - 'T1: 소음↓, 공격 후 3s 스프린트 봉인'
+      - 'T2: 더 조용, 4s 봉인'
+      - 'T3: 은신 재생(약), 공격 후 6s Glowing'
+      - 'T4: 거의 무소음, 공격 시 강제 노출+약점'
+      - '구현 포인트: “소음↓”는 발소리/파티클 억제 연출로 대체 가능'
+      - '엔진적용 이동 속도: T1 +3.0%, T2 +6.0%, T3 +9.0%, T4 +12.0% (발동 시작 T1)'
+      - '엔진적용 받는 피해: T1 +0.0%, T2 +4.0%, T3 +6.0%, T4 +8.0% (발동 시작 T2)'
+      modifiers:
+      - type: WALK_SPEED_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.03
+        min_total_tier: 1
+        world: ANY
+      - type: DAMAGE_TAKEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.02
+        min_total_tier: 2
+        world: ANY
+  X-MOD-38-B:
+    name: 고요한 굶주림
+    type: BLESSING
+    weight: 1.0
+    archetype: SURVIVAL
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-38'
+      - 'Trigger: PASSIVE'
+      - 'T1: 허기 -40%, 음식 힐 -50%'
+      - 'T2: 허기 -60%, 음식 힐 -70%'
+      - 'T3: 허기 거의 없음, 자연회복 봉인'
+      - 'T4: 허기 무시급, 힐 불가급'
+      - '구현 포인트: FoodLevelChangeEvent에서 소모율 조정'
+      - '엔진적용 자연 회복: T1 +4.0%, T2 +8.0%, T3 +12.0%, T4 +16.0% (발동 시작 T1)'
+      - '엔진적용 허기 소모: T1 +0.0%, T2 +8.0%, T3 +12.0%, T4 +16.0% (발동 시작 T2)'
+      modifiers:
+      - type: NATURAL_REGEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.04
+        min_total_tier: 1
+        world: ANY
+      - type: HUNGER_DRAIN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.04
+        min_total_tier: 2
+        world: ANY
+  X-MOD-39-B:
+    name: 시간 세금
+    type: BLESSING
+    weight: 1.0
+    archetype: MOBILITY
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-39'
+      - 'Trigger: ACTIVE(TOKEN_DEFENSE+SPRINT)'
+      - 'T1: 120s, 반경 6b 2s 감속장 + 자기 1s 경직'
+      - 'T2: 8b 2.5s + 1.5s 경직'
+      - 'T3: 투사체도 느려짐 + 2s 경직'
+      - 'T4: 3s 강정지급 + 종료 후 6s 약점/슬로우'
+      - '구현 포인트: 감속장은 주변 엔티티에 slowness + projectile velocity scale'
+      - '엔진적용 이동 속도: T1 +3.0%, T2 +6.0%, T3 +9.0%, T4 +12.0% (발동 시작 T1)'
+      - '엔진적용 받는 피해: T1 +0.0%, T2 +4.0%, T3 +6.0%, T4 +8.0% (발동 시작 T2)'
+      modifiers:
+      - type: WALK_SPEED_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.03
+        min_total_tier: 1
+        world: ANY
+      - type: DAMAGE_TAKEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.02
+        min_total_tier: 2
+        world: ANY
+  X-MOD-40-B:
+    name: 정령 교환
+    type: BLESSING
+    weight: 1.0
+    archetype: COMBAT
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-40'
+      - 'Trigger: EVENT(ON_TIME_CHECK/ON_WEATHER_CHANGE/ON_DIMENSION_CHANGE)'
+      - 'T1: 환경별 버프1+디버프1 교체'
+      - 'T2: 2개씩'
+      - 'T3: 전환 시 작은 넉백 파동(피아무시)'
+      - 'T4: 유리 환경 점수배율↑ / 불리 환경 점수배율↓'
+      - '구현 포인트: 환경 상태 머신 + 전환 이벤트 시 단 한 번만 발동(중복 방지)'
+      - '엔진적용 공격 피해: T1 +3.5%, T2 +7.0%, T3 +10.5%, T4 +14.0% (발동 시작 T1)'
+      - '엔진적용 받는 피해: T1 +0.0%, T2 +5.0%, T3 +7.5%, T4 +10.0% (발동 시작 T2)'
+      modifiers:
+      - type: DAMAGE_DEALT_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.035
+        min_total_tier: 1
+        world: ANY
+      - type: DAMAGE_TAKEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.025
+        min_total_tier: 2
+        world: ANY
+curses:
+  C-MOD-01:
+    name: 광맥 붕괴(광물→돌)
+    type: CURSE
+    weight: 1.0
+    archetype: GATHERING
+    runtime:
+      detail_ko:
+      - '원본ID: C-MOD-01'
+      - 'Trigger: PERIODIC(30s)'
+      - 'T1: 샘플 24, base 0.16% × 등급계수, cap1'
+      - 'T2: 샘플 30, base 0.26%'
+      - 'T3: 샘플 36, base 0.38%, cap2'
+      - 'T4: 샘플 42, base 0.55% + 불길한 개인 알림'
+      - '구현 포인트: 고급 광물 multiplier(다이아×0.10, 잔해×0.03 등) 필수'
+      - '엔진적용 채굴 속도: T1 -4.0%, T2 -8.0%, T3 -12.0%, T4 -16.0% (발동 시작 T1)'
+      modifiers:
+      - type: BLOCK_BREAK_SPEED_RATIO
+        scaling: CARD_TIER
+        value_per_tier: -0.04
+        min_total_tier: 1
+        world: ANY
+  C-MOD-02:
+    name: 핫바 윤회
+    type: CURSE
+    weight: 1.0
+    archetype: COMBAT
+    runtime:
+      detail_ko:
+      - '원본ID: C-MOD-02'
+      - 'Trigger: PERIODIC(90s→60s)'
+      - 'T1: 90s마다 1칸 회전'
+      - 'T2: 60s'
+      - 'T3: 회전 또는 랜덤 스왑 1회'
+      - 'T4: 전투 중 45s(예고 2s)'
+      - '구현 포인트: Inventory API로 hotbar swap, 아이템 손실/복사 방지'
+      - '엔진적용 공격 피해: T1 -3.0%, T2 -6.0%, T3 -9.0%, T4 -12.0% (발동 시작 T1)'
+      modifiers:
+      - type: DAMAGE_DEALT_RATIO
+        scaling: CARD_TIER
+        value_per_tier: -0.03
+        min_total_tier: 1
+        world: ANY
+  C-MOD-03:
+    name: 회복 역전
+    type: CURSE
+    weight: 1.0
+    archetype: DEFENSE
+    runtime:
+      detail_ko:
+      - '원본ID: C-MOD-03'
+      - 'Trigger: EVENT(ON_POTION_APPLY/ON_ITEM_CONSUME/regen tick)'
+      - 'T1: 회복 50% 반전(피해)'
+      - 'T2: 75% + 흡수 일부 손실'
+      - 'T3: 회복 시 3s 약점'
+      - 'T4: 100% + 회복 시도=공황(나우지아)'
+      - '구현 포인트: Heal 이벤트 감지(가능하면) 또는 포션/섭취에 후처리'
+      - '엔진적용 받는 피해: T1 +3.0%, T2 +6.0%, T3 +9.0%, T4 +12.0% (발동 시작 T1)'
+      modifiers:
+      - type: DAMAGE_TAKEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.03
+        min_total_tier: 1
+        world: ANY
+  C-MOD-04:
+    name: 전투 조작 왜곡
+    type: CURSE
+    weight: 1.0
+    archetype: COMBAT
+    runtime:
+      detail_ko:
+      - '원본ID: C-MOD-04'
+      - 'Trigger: EVENT(ON_DAMAGE_TAKEN)'
+      - 'T1: 피격 시 2s 멀미+카메라 소형 회전'
+      - 'T2: 3s + 흔들림↑'
+      - 'T3: 전투 중 확률로 yaw 180° 플립'
+      - 'T4: 6s 동안 주기적 yaw 드리프트'
+      - '구현 포인트: “진짜 조작 반전 불가” → yaw 강제/멀미로 대체'
+      - '엔진적용 공격 피해: T1 -3.0%, T2 -6.0%, T3 -9.0%, T4 -12.0% (발동 시작 T1)'
+      modifiers:
+      - type: DAMAGE_DEALT_RATIO
+        scaling: CARD_TIER
+        value_per_tier: -0.03
+        min_total_tier: 1
+        world: ANY
+  C-MOD-05:
+    name: 손아귀 균열
+    type: CURSE
+    weight: 1.0
+    archetype: COMBAT
+    runtime:
+      detail_ko:
+      - '원본ID: C-MOD-05'
+      - 'Trigger: PERIODIC(90s) + EVENT(ON_MELEE_HIT)'
+      - 'T1: 랜덤 핫바 1칸 20s 잠금'
+      - 'T2: 30s'
+      - 'T3: 2칸 + 공격 시 잠금 대상 변동'
+      - 'T4: 공격 3회 누적 시 강제 스왑'
+      - '구현 포인트: 잠금 슬롯은 Interact/Use/Swap을 cancel'
+      - '엔진적용 공격 피해: T1 -3.0%, T2 -6.0%, T3 -9.0%, T4 -12.0% (발동 시작 T1)'
+      modifiers:
+      - type: DAMAGE_DEALT_RATIO
+        scaling: CARD_TIER
+        value_per_tier: -0.03
+        min_total_tier: 1
+        world: ANY
+  C-MOD-06:
+    name: 도구 금단 주기
+    type: CURSE
+    weight: 1.0
+    archetype: COMBAT
+    runtime:
+      detail_ko:
+      - '원본ID: C-MOD-06'
+      - 'Trigger: PERIODIC(120s)'
+      - 'T1: 20s 랜덤 도구군 봉인'
+      - 'T2: 30s'
+      - 'T3: 봉인 중 약점/슬로우'
+      - 'T4: 전투 중 발동 가능(예고 1s)'
+      - '구현 포인트: 도구군 태그(#es:axes 등)로 판정하여 이벤트 cancel'
+      - '엔진적용 공격 피해: T1 -3.0%, T2 -6.0%, T3 -9.0%, T4 -12.0% (발동 시작 T1)'
+      modifiers:
+      - type: DAMAGE_DEALT_RATIO
+        scaling: CARD_TIER
+        value_per_tier: -0.03
+        min_total_tier: 1
+        world: ANY
+  C-MOD-07:
+    name: 건축 붕괴
+    type: CURSE
+    weight: 1.0
+    archetype: COMBAT
+    runtime:
+      detail_ko:
+      - '원본ID: C-MOD-07'
+      - 'Trigger: EVENT(ON_BLOCK_PLACE)'
+      - 'T1: 30s 후 설치 블록 파괴(드랍 유지)'
+      - 'T2: 20s'
+      - 'T3: 전투 중 설치=10s'
+      - 'T4: 인접 설치 블록 1~2개로 전염'
+      - '구현 포인트: placed 트래킹 + scheduled removal + 보호구역 제외'
+      - '엔진적용 공격 피해: T1 -3.0%, T2 -6.0%, T3 -9.0%, T4 -12.0% (발동 시작 T1)'
+      modifiers:
+      - type: DAMAGE_DEALT_RATIO
+        scaling: CARD_TIER
+        value_per_tier: -0.03
+        min_total_tier: 1
+        world: ANY
+  C-MOD-08:
+    name: 연금술 오염
+    type: CURSE
+    weight: 1.0
+    archetype: DEFENSE
+    runtime:
+      detail_ko:
+      - '원본ID: C-MOD-08'
+      - 'Trigger: EVENT(ON_ITEM_CONSUME/ON_POTION_APPLY)'
+      - 'T1: 15% 부정 1개 추가'
+      - 'T2: 25%'
+      - 'T3: 스플래시/잔류 포함'
+      - 'T4: 항상 부정 1개 동반'
+      - '구현 포인트: 적용 직후 부정효과 랜덤 부여(중복/면역 고려)'
+      - '엔진적용 받는 피해: T1 +3.0%, T2 +6.0%, T3 +9.0%, T4 +12.0% (발동 시작 T1)'
+      modifiers:
+      - type: DAMAGE_TAKEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.03
+        min_total_tier: 1
+        world: ANY
+  C-MOD-09:
+    name: 불길한 점멸
+    type: CURSE
+    weight: 1.0
+    archetype: MOBILITY
+    runtime:
+      detail_ko:
+      - '원본ID: C-MOD-09'
+      - 'Trigger: EVENT(ON_TELEPORT)'
+      - 'T1: 산포 ±2b + 2s 나우지아'
+      - 'T2: ±4b'
+      - 'T3: 텔포 후 2s 스프린트 봉인'
+      - 'T4: 6s 동안 간헐적 1b 튐 재발'
+      - '구현 포인트: teleport destination에 노이즈, 안전 검사 필수'
+      - '엔진적용 이동 속도: T1 -3.0%, T2 -6.0%, T3 -9.0%, T4 -12.0% (발동 시작 T1)'
+      modifiers:
+      - type: WALK_SPEED_RATIO
+        scaling: CARD_TIER
+        value_per_tier: -0.03
+        min_total_tier: 1
+        world: ANY
+  C-MOD-10:
+    name: 지각 붕괴(낙석)
+    type: CURSE
+    weight: 1.0
+    archetype: GATHERING
+    runtime:
+      detail_ko:
+      - '원본ID: C-MOD-10'
+      - 'Trigger: EVENT(ON_BLOCK_BREAK, 자연석)'
+      - 'T1: 10% 주변 자연석 자갈화'
+      - 'T2: 18%'
+      - 'T3: 낙석 시 2s 다크니스'
+      - 'T4: 연속 채굴 시 확률 가속'
+      - '구현 포인트: 파괴 범위 cap + tick budget'
+      - '엔진적용 채굴 속도: T1 -4.0%, T2 -8.0%, T3 -12.0%, T4 -16.0% (발동 시작 T1)'
+      modifiers:
+      - type: BLOCK_BREAK_SPEED_RATIO
+        scaling: CARD_TIER
+        value_per_tier: -0.04
+        min_total_tier: 1
+        world: ANY
+  C-MOD-11:
+    name: 밀실 공포
+    type: CURSE
+    weight: 1.0
+    archetype: GATHERING
+    runtime:
+      detail_ko:
+      - '원본ID: C-MOD-11'
+      - 'Trigger: PERIODIC(3s) + 밀폐 판정'
+      - 'T1: 12s 밀폐 시 다크니스'
+      - 'T2: 10s + 약점'
+      - 'T3: 8s + 채굴피로'
+      - 'T4: 6s + 위더(짧게)'
+      - '구현 포인트: 주변 공기 블록 샘플링으로 밀폐 추정(전수 스캔 금지)'
+      - '엔진적용 채굴 속도: T1 -4.0%, T2 -8.0%, T3 -12.0%, T4 -16.0% (발동 시작 T1)'
+      modifiers:
+      - type: BLOCK_BREAK_SPEED_RATIO
+        scaling: CARD_TIER
+        value_per_tier: -0.04
+        min_total_tier: 1
+        world: ANY
+  C-MOD-12:
+    name: 야간 악몽
+    type: CURSE
+    weight: 1.0
+    archetype: MOBILITY
+    runtime:
+      detail_ko:
+      - '원본ID: C-MOD-12'
+      - 'Trigger: PERIODIC(10s) + 밤 조건'
+      - 'T1: 밤 다크니스 주기'
+      - 'T2: 가짜 경고/환청'
+      - 'T3: 스프린트 주기 봉인'
+      - 'T4: 전투 진입 시 실명 1s'
+      - '구현 포인트: 월드 시간 구간 체크 + 액션바 연출'
+      - '엔진적용 이동 속도: T1 -3.0%, T2 -6.0%, T3 -9.0%, T4 -12.0% (발동 시작 T1)'
+      modifiers:
+      - type: WALK_SPEED_RATIO
+        scaling: CARD_TIER
+        value_per_tier: -0.03
+        min_total_tier: 1
+        world: ANY
+  C-MOD-13:
+    name: 추격자 집착
+    type: CURSE
+    weight: 1.0
+    archetype: COMBAT
+    runtime:
+      detail_ko:
+      - '원본ID: C-MOD-13'
+      - 'Trigger: PASSIVE(추격자 스폰/전투 룰 변조)'
+      - 'T1: 경고 제거 + 더 가까운 스폰'
+      - 'T2: 첫 타 강화(슬로우)'
+      - 'T3: 개인 스폰 간격 가중(더 잦음)'
+      - 'T4: overflow 강화가 더 강하게 적용'
+      - '구현 포인트: 추격자 스폰 매니저가 플레이어 효과를 참조'
+      - '엔진적용 공격 피해: T1 -3.0%, T2 -6.0%, T3 -9.0%, T4 -12.0% (발동 시작 T1)'
+      modifiers:
+      - type: DAMAGE_DEALT_RATIO
+        scaling: CARD_TIER
+        value_per_tier: -0.03
+        min_total_tier: 1
+        world: ANY
+  C-MOD-14:
+    name: 자기장 중독
+    type: CURSE
+    weight: 1.0
+    archetype: ENDGAME
+    runtime:
+      detail_ko:
+      - '원본ID: C-MOD-14'
+      - 'Trigger: EVENT(ON_BORDER_OUTSIDE_TICK)'
+      - 'T1: 위더 단계 +2 취급'
+      - 'T2: +4'
+      - 'T3: 경계 안쪽 5b도 예열 위더'
+      - 'T4: 위더 상승 주기 단축(30s→20s 취급)'
+      - '구현 포인트: 보더 위더 시스템에 “추가 단계/주기” 훅'
+      - '엔진적용 드래곤 기여 피해: T1 -4.0%, T2 -8.0%, T3 -12.0%, T4 -16.0% (발동 시작 T1)'
+      modifiers:
+      - type: DRAGON_DAMAGE_RATIO
+        scaling: CARD_TIER
+        value_per_tier: -0.04
+        min_total_tier: 1
+        world: ANY
+  C-MOD-15:
+    name: 망각의 나침반
+    type: CURSE
+    weight: 1.0
+    archetype: UTILITY
+    runtime:
+      detail_ko:
+      - '원본ID: C-MOD-15'
+      - 'Trigger: PASSIVE(정보 표시 왜곡)'
+      - 'T1: 힌트 오차 ±30°'
+      - 'T2: ±60°'
+      - 'T3: 확률로 정반대'
+      - 'T4: 대부분 왜곡(가끔 진짜)'
+      - '구현 포인트: “표시 레이어”만 왜곡(실제 위치 데이터는 그대로)'
+      - '엔진적용 허기 소모: T1 +3.0%, T2 +6.0%, T3 +9.0%, T4 +12.0% (발동 시작 T1)'
+      modifiers:
+      - type: HUNGER_DRAIN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.03
+        min_total_tier: 1
+        world: ANY
+  C-MOD-16:
+    name: 소리 폭로
+    type: CURSE
+    weight: 1.0
+    archetype: UTILITY
+    runtime:
+      detail_ko:
+      - '원본ID: C-MOD-16'
+      - 'Trigger: PERIODIC(90s→60s)'
+      - 'T1: 90s마다 4s 소음/파티클'
+      - 'T2: 75s'
+      - 'T3: 시작 시 3s Glowing'
+      - 'T4: 60s마다 8s + 소음 증폭'
+      - '구현 포인트: 주변에 들리는 사운드/파티클, PvP 밸런스 주의'
+      - '엔진적용 허기 소모: T1 +3.0%, T2 +6.0%, T3 +9.0%, T4 +12.0% (발동 시작 T1)'
+      modifiers:
+      - type: HUNGER_DRAIN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.03
+        min_total_tier: 1
+        world: ANY
+  C-MOD-17:
+    name: 드랍 부패
+    type: CURSE
+    weight: 1.0
+    archetype: COMBAT
+    runtime:
+      detail_ko:
+      - '원본ID: C-MOD-17'
+      - 'Trigger: EVENT(ON_LOOT_GENERATE/ON_ITEM_DROP) + PERIODIC(5s)'
+      - 'T1: 내 드랍 디스폰 50% 단축'
+      - 'T2: 65% 단축'
+      - 'T3: 줍기 범위 감소'
+      - 'T4: 전투 중 더 강력'
+      - '구현 포인트: 아이템 엔티티에 커스텀 ttl 기록 후 강제 제거'
+      - '엔진적용 공격 피해: T1 -3.0%, T2 -6.0%, T3 -9.0%, T4 -12.0% (발동 시작 T1)'
+      modifiers:
+      - type: DAMAGE_DEALT_RATIO
+        scaling: CARD_TIER
+        value_per_tier: -0.03
+        min_total_tier: 1
+        world: ANY
+  C-MOD-18:
+    name: 무기 반란
+    type: CURSE
+    weight: 1.0
+    archetype: COMBAT
+    runtime:
+      detail_ko:
+      - '원본ID: C-MOD-18'
+      - 'Trigger: EVENT(ON_MELEE_HIT)'
+      - 'T1: 공격 시 10% 강제 스왑'
+      - 'T2: 18%'
+      - 'T3: 3연타 후 확정 스왑'
+      - 'T4: 피격 시에도 확률 스왑'
+      - '구현 포인트: swap은 “손 아이템 교체”만(인벤 전체 섞기 금지)'
+      - '엔진적용 공격 피해: T1 -3.0%, T2 -6.0%, T3 -9.0%, T4 -12.0% (발동 시작 T1)'
+      modifiers:
+      - type: DAMAGE_DEALT_RATIO
+        scaling: CARD_TIER
+        value_per_tier: -0.03
+        min_total_tier: 1
+        world: ANY
+  C-MOD-19:
+    name: 파멸의 브레스
+    type: CURSE
+    weight: 1.0
+    archetype: MOBILITY
+    runtime:
+      detail_ko:
+      - '원본ID: C-MOD-19'
+      - 'Trigger: EVENT(ON_DAMAGE_TAKEN, End/브레스 원인)'
+      - 'T1: 위더 + 스프린트 봉인'
+      - 'T2: 위더II + 다크니스'
+      - 'T3: 회복 봉인 추가'
+      - 'T4: 공황(나우지아/슬로우) 연쇄'
+      - '구현 포인트: DamageCause/EntityType(드래곤)로 판별'
+      - '엔진적용 이동 속도: T1 -3.0%, T2 -6.0%, T3 -9.0%, T4 -12.0% (발동 시작 T1)'
+      modifiers:
+      - type: WALK_SPEED_RATIO
+        scaling: CARD_TIER
+        value_per_tier: -0.03
+        min_total_tier: 1
+        world: END
+  C-MOD-20:
+    name: 기억 소거
+    type: CURSE
+    weight: 1.0
+    archetype: DEFENSE
+    runtime:
+      detail_ko:
+      - '원본ID: C-MOD-20'
+      - 'Trigger: PERIODIC(120s→60s)'
+      - 'T1: 120s마다 긍정 1개 제거'
+      - 'T2: 90s마다 1개'
+      - 'T3: 90s마다 2개'
+      - 'T4: 60s마다 2개 + 흡수 초기화'
+      - '구현 포인트: 포션/커스텀 버프 모두 리스트로 관리 후 제거'
+      - '엔진적용 받는 피해: T1 +3.0%, T2 +6.0%, T3 +9.0%, T4 +12.0% (발동 시작 T1)'
+      modifiers:
+      - type: DAMAGE_TAKEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.03
+        min_total_tier: 1
+        world: ANY
+  X-MOD-01-C:
+    name: 무차별 반발장
+    type: CURSE
+    weight: 1.0
+    archetype: COMBAT
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-01'
+      - 'Trigger: PERIODIC(12s)'
+      - 'T1: 6b 넉백 파동(피아무시)'
+      - 'T2: 8b + 1s 슬로우'
+      - 'T3: 투사체도 약간 튕김'
+      - 'T4: 10b 강력 + 2s 전 예고 파티클(노출)'
+      - '구현 포인트: 주변 엔티티 조회는 반경 내 cap + 12s 주기 유지'
+      - '엔진적용 공격 피해: T1 +3.5%, T2 +7.0%, T3 +10.5%, T4 +14.0% (발동 시작 T1)'
+      - '엔진적용 받는 피해: T1 +0.0%, T2 +5.0%, T3 +7.5%, T4 +10.0% (발동 시작 T2)'
+      modifiers:
+      - type: DAMAGE_DEALT_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.035
+        min_total_tier: 1
+        world: ANY
+      - type: DAMAGE_TAKEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.025
+        min_total_tier: 2
+        world: ANY
+  X-MOD-02-C:
+    name: 피의 계약
+    type: CURSE
+    weight: 1.0
+    archetype: COMBAT
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-02'
+      - 'Trigger: PASSIVE + EVENT(ON_KILL)'
+      - 'T1: 자연회복 OFF, 처치 1하트 회복'
+      - 'T2: 처치 회복↑ + 전투 흡혈(소형)'
+      - 'T3: 30s 무처치 시 약점 3s'
+      - 'T4: 킬 연속 시 폭주, 무처치 페널티 강화'
+      - '구현 포인트: 전투 상태 머신(최근 피해)와 결합하면 재미↑'
+      - '엔진적용 공격 피해: T1 +3.5%, T2 +7.0%, T3 +10.5%, T4 +14.0% (발동 시작 T1)'
+      - '엔진적용 받는 피해: T1 +0.0%, T2 +5.0%, T3 +7.5%, T4 +10.0% (발동 시작 T2)'
+      modifiers:
+      - type: DAMAGE_DEALT_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.035
+        min_total_tier: 1
+        world: ANY
+      - type: DAMAGE_TAKEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.025
+        min_total_tier: 2
+        world: ANY
+  X-MOD-03-C:
+    name: 자석 심장
+    type: CURSE
+    weight: 1.0
+    archetype: UTILITY
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-03'
+      - 'Trigger: PERIODIC(1s) + EVENT(ON_ITEM_PICKUP)'
+      - 'T1: 6b 자동 흡입 + 흡입 노출'
+      - 'T2: 10b + 자동 스택'
+      - 'T3: 흡입 사운드↑ + 어그로↑'
+      - 'T4: 14b + 주기 Glowing'
+      - '구현 포인트: 아이템 흡입은 매틱 엔티티 전수 금지(근거리만)'
+      - '엔진적용 허기 소모: T1 -3.0%, T2 -6.0%, T3 -9.0%, T4 -12.0% (발동 시작 T1)'
+      - '엔진적용 내구도 소모: T1 +0.0%, T2 +6.0%, T3 +9.0%, T4 +12.0% (발동 시작 T2)'
+      modifiers:
+      - type: HUNGER_DRAIN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: -0.03
+        min_total_tier: 1
+        world: ANY
+      - type: ITEM_DURABILITY_LOSS_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.03
+        min_total_tier: 2
+        world: ANY
+  X-MOD-04-C:
+    name: 점수 방패
+    type: CURSE
+    weight: 1.0
+    archetype: SCORE
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-04'
+      - 'Trigger: EVENT(ON_DAMAGE_TAKEN)'
+      - 'T1: 큰 피해 20% 점수 소모 상쇄'
+      - 'T2: 30%'
+      - 'T3: 점수 부족 시 역패널티'
+      - 'T4: 치명 1회 자동 상쇄 + 10s 약점'
+      - '구현 포인트: DamageEvent에서 최종 피해 조정 + score 원자적 차감'
+      - '엔진적용 생존 점수: T1 +6.0%, T2 +12.0%, T3 +18.0%, T4 +24.0% (발동 시작 T1)'
+      - '엔진적용 분당 점수 감쇠: T1 +0.0%, T2 +4.0%, T3 +6.0%, T4 +8.0% (발동 시작 T2)'
+      modifiers:
+      - type: SURVIVAL_SCORE_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.06
+        min_total_tier: 1
+        world: ANY
+      - type: SCORE_DECAY_PER_MINUTE_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.02
+        min_total_tier: 2
+        world: ANY
+  X-MOD-05-C:
+    name: 불꽃 치유/물 취약
+    type: CURSE
+    weight: 1.0
+    archetype: MOBILITY
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-05'
+      - 'Trigger: PERIODIC(2s)'
+      - 'T1: 불=재생, 젖음=슬로우'
+      - 'T2: 불 회복↑, 젖음 추가 피해'
+      - 'T3: 불=저항, 젖음=스프린트 봉인'
+      - 'T4: 불=강보호, 젖음=위더'
+      - '구현 포인트: FireTicks/Water 상태 체크(비 포함)'
+      - '엔진적용 이동 속도: T1 +3.0%, T2 +6.0%, T3 +9.0%, T4 +12.0% (발동 시작 T1)'
+      - '엔진적용 받는 피해: T1 +0.0%, T2 +4.0%, T3 +6.0%, T4 +8.0% (발동 시작 T2)'
+      modifiers:
+      - type: WALK_SPEED_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.03
+        min_total_tier: 1
+        world: ANY
+      - type: DAMAGE_TAKEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.02
+        min_total_tier: 2
+        world: ANY
+  X-MOD-06-C:
+    name: 물 치유/불 취약
+    type: CURSE
+    weight: 1.0
+    archetype: SURVIVAL
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-06'
+      - 'Trigger: PERIODIC(2s)'
+      - 'T1: 물/비=재생, 불=추가 피해'
+      - 'T2: 물 회복↑, 불=약점'
+      - 'T3: 물 닿으면 즉시 힐(작게) 대신 3s 슬로우'
+      - 'T4: 물=강보호, 불=치명 도트'
+      - '구현 포인트: “물병”까지 포함하려면 ItemConsume 체크'
+      - '엔진적용 자연 회복: T1 +4.0%, T2 +8.0%, T3 +12.0%, T4 +16.0% (발동 시작 T1)'
+      - '엔진적용 허기 소모: T1 +0.0%, T2 +8.0%, T3 +12.0%, T4 +16.0% (발동 시작 T2)'
+      modifiers:
+      - type: NATURAL_REGEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.04
+        min_total_tier: 1
+        world: ANY
+      - type: HUNGER_DRAIN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.04
+        min_total_tier: 2
+        world: ANY
+  X-MOD-07-C:
+    name: 도박 제작
+    type: CURSE
+    weight: 1.0
+    archetype: GATHERING
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-07'
+      - 'Trigger: EVENT(ON_CRAFT)'
+      - 'T1: 10% 2배 / 10% 2배 소모'
+      - 'T2: 15/15'
+      - 'T3: 20/20 + 실패 시 노출'
+      - 'T4: 하루 1회 확정 2배(대신 다음 확정 손해)'
+      - '구현 포인트: CraftItemEvent에서 결과/재료 조정'
+      - '엔진적용 채굴 속도: T1 +4.0%, T2 +8.0%, T3 +12.0%, T4 +16.0% (발동 시작 T1)'
+      - '엔진적용 받는 피해: T1 +0.0%, T2 +4.0%, T3 +6.0%, T4 +8.0% (발동 시작 T2)'
+      modifiers:
+      - type: BLOCK_BREAK_SPEED_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.04
+        min_total_tier: 1
+        world: ANY
+      - type: DAMAGE_TAKEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.02
+        min_total_tier: 2
+        world: ANY
+  X-MOD-08-C:
+    name: 위치 교환 타격
+    type: CURSE
+    weight: 1.0
+    archetype: MOBILITY
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-08'
+      - 'Trigger: EVENT(ON_MELEE_HIT), 내부쿨 12s'
+      - 'T1: 8% 위치 교환'
+      - 'T2: 12% + 1s 저항(양쪽)'
+      - 'T3: 타겟 슬로우, 자신 Glowing'
+      - 'T4: 능동 발동(60s) 가능, 실패 시 자기만 텔포'
+      - '구현 포인트: teleport 배타 액션 규칙 준수'
+      - '엔진적용 이동 속도: T1 +3.0%, T2 +6.0%, T3 +9.0%, T4 +12.0% (발동 시작 T1)'
+      - '엔진적용 받는 피해: T1 +0.0%, T2 +4.0%, T3 +6.0%, T4 +8.0% (발동 시작 T2)'
+      modifiers:
+      - type: WALK_SPEED_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.03
+        min_total_tier: 1
+        world: ANY
+      - type: DAMAGE_TAKEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.02
+        min_total_tier: 2
+        world: ANY
+  X-MOD-09-C:
+    name: 유령화
+    type: CURSE
+    weight: 1.0
+    archetype: MOBILITY
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-09'
+      - 'Trigger: ACTIVE(TOKEN_DEFENSE+NORMAL)'
+      - 'T1: 90s, 2s 비접촉(공격/설치 불가)'
+      - 'T2: 3s'
+      - 'T3: 유령 중 투사체 무시, 종료 후 2s 약점'
+      - 'T4: 2차지, 종료 후 5s 노출'
+      - '구현 포인트: 무적=대미지 cancel, 대신 공격/설치도 cancel'
+      - '엔진적용 이동 속도: T1 +3.0%, T2 +6.0%, T3 +9.0%, T4 +12.0% (발동 시작 T1)'
+      - '엔진적용 받는 피해: T1 +0.0%, T2 +4.0%, T3 +6.0%, T4 +8.0% (발동 시작 T2)'
+      modifiers:
+      - type: WALK_SPEED_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.03
+        min_total_tier: 1
+        world: ANY
+      - type: DAMAGE_TAKEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.02
+        min_total_tier: 2
+        world: ANY
+  X-MOD-10-C:
+    name: 폭주 엔진
+    type: CURSE
+    weight: 1.0
+    archetype: COMBAT
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-10'
+      - 'Trigger: EVENT(전투 Enter/Exit)'
+      - 'T1: 전투 버프 + 종료 피로'
+      - 'T2: 버프↑ 피로↑'
+      - 'T3: 킬로 연장, 피로 누적'
+      - 'T4: 극강 전투, 종료 후 회복 봉인'
+      - '구현 포인트: “전투 상태”는 최근 8초 피해 주고받음 기준'
+      - '엔진적용 공격 피해: T1 +3.5%, T2 +7.0%, T3 +10.5%, T4 +14.0% (발동 시작 T1)'
+      - '엔진적용 받는 피해: T1 +0.0%, T2 +5.0%, T3 +7.5%, T4 +10.0% (발동 시작 T2)'
+      modifiers:
+      - type: DAMAGE_DEALT_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.035
+        min_total_tier: 1
+        world: ANY
+      - type: DAMAGE_TAKEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.025
+        min_total_tier: 2
+        world: ANY
+  X-MOD-11-C:
+    name: 추격자 현상금
+    type: CURSE
+    weight: 1.0
+    archetype: SCORE
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-11'
+      - 'Trigger: PASSIVE + EVENT(ON_KILL, 추격자)'
+      - 'T1: 추격자 스폰↑ + 보상↑'
+      - 'T2: 더 자주 + 더 큰 보상'
+      - 'T3: overflow 강화도 같이↑'
+      - 'T4: 능동 도발(300s)로 즉시 호출(큰 위험/큰 보상)'
+      - '구현 포인트: 추격자 태그 기반 식별 + 보상 테이블'
+      - '엔진적용 생존 점수: T1 +6.0%, T2 +12.0%, T3 +18.0%, T4 +24.0% (발동 시작 T1)'
+      - '엔진적용 분당 점수 감쇠: T1 +0.0%, T2 +4.0%, T3 +6.0%, T4 +8.0% (발동 시작 T2)'
+      modifiers:
+      - type: SURVIVAL_SCORE_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.06
+        min_total_tier: 1
+        world: ANY
+      - type: SCORE_DECAY_PER_MINUTE_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.02
+        min_total_tier: 2
+        world: ANY
+  X-MOD-12-C:
+    name: 오라 공명
+    type: CURSE
+    weight: 1.0
+    archetype: SCORE
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-12'
+      - 'Trigger: PASSIVE'
+      - 'T1: 오라몹 강해짐 + 점수 +30%'
+      - 'T2: +50%'
+      - 'T3: 오라 안 재생(약) + 오라 반경 체감↑'
+      - 'T4: 반전 1회(긴 쿨) + 이후 2분 오라 강화(반동)'
+      - '구현 포인트: 오라 시스템 훅(난이도/보상 동시)'
+      - '엔진적용 생존 점수: T1 +6.0%, T2 +12.0%, T3 +18.0%, T4 +24.0% (발동 시작 T1)'
+      - '엔진적용 분당 점수 감쇠: T1 +0.0%, T2 +4.0%, T3 +6.0%, T4 +8.0% (발동 시작 T2)'
+      modifiers:
+      - type: SURVIVAL_SCORE_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.06
+        min_total_tier: 1
+        world: ANY
+      - type: SCORE_DECAY_PER_MINUTE_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.02
+        min_total_tier: 2
+        world: ANY
+  X-MOD-13-C:
+    name: 보더 도박사
+    type: CURSE
+    weight: 1.0
+    archetype: SCORE
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-13'
+      - 'Trigger: EVENT(ON_BORDER_OUTSIDE_TICK)'
+      - 'T1: 점수 +25% / 위더 +1단 취급'
+      - 'T2: +40% / +2단'
+      - 'T3: +60% / +3단 + 노출'
+      - 'T4: +90% / +4단 + 가프 효율 저하'
+      - '구현 포인트: score multiplier는 “생성 점수”에만 적용 권장'
+      - '엔진적용 생존 점수: T1 +6.0%, T2 +12.0%, T3 +18.0%, T4 +24.0% (발동 시작 T1)'
+      - '엔진적용 분당 점수 감쇠: T1 +0.0%, T2 +4.0%, T3 +6.0%, T4 +8.0% (발동 시작 T2)'
+      modifiers:
+      - type: SURVIVAL_SCORE_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.06
+        min_total_tier: 1
+        world: ANY
+      - type: SCORE_DECAY_PER_MINUTE_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.02
+        min_total_tier: 2
+        world: ANY
+  X-MOD-14-C:
+    name: 광산 반향
+    type: CURSE
+    weight: 1.0
+    archetype: GATHERING
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-14'
+      - 'Trigger: EVENT(ON_BLOCK_BREAK)'
+      - 'T1: 힌트(약) + 소음↑'
+      - 'T2: 힌트↑ 소음↑↑'
+      - 'T3: 광물 채굴 시 2s Glowing'
+      - 'T4: 정밀 핑(쿨) 가능 대신 10s Glowing'
+      - '구현 포인트: 광물 힌트는 “방향/거리 구간”으로 단순화'
+      - '엔진적용 채굴 속도: T1 +4.0%, T2 +8.0%, T3 +12.0%, T4 +16.0% (발동 시작 T1)'
+      - '엔진적용 받는 피해: T1 +0.0%, T2 +4.0%, T3 +6.0%, T4 +8.0% (발동 시작 T2)'
+      modifiers:
+      - type: BLOCK_BREAK_SPEED_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.04
+        min_total_tier: 1
+        world: ANY
+      - type: DAMAGE_TAKEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.02
+        min_total_tier: 2
+        world: ANY
+  X-MOD-15-C:
+    name: 임시 요새
+    type: CURSE
+    weight: 1.0
+    archetype: COMBAT
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-15'
+      - 'Trigger: EVENT(ON_BLOCK_PLACE) (+선택 ACTIVE)'
+      - 'T1: 설치 블록 10s 강화(폭발/넉백 내성)'
+      - 'T2: 강화 15s + 60s 후 사라짐(임시화)'
+      - 'T3: 전투 중 설치=20s 후 사라짐'
+      - 'T4: 능동 요새 모드(120s): 10s 초강화 후 붕괴 시작'
+      - '구현 포인트: “사라짐”은 placed 블록만 대상(자연 블록 금지)'
+      - '엔진적용 공격 피해: T1 +3.5%, T2 +7.0%, T3 +10.5%, T4 +14.0% (발동 시작 T1)'
+      - '엔진적용 받는 피해: T1 +0.0%, T2 +5.0%, T3 +7.5%, T4 +10.0% (발동 시작 T2)'
+      modifiers:
+      - type: DAMAGE_DEALT_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.035
+        min_total_tier: 1
+        world: ANY
+      - type: DAMAGE_TAKEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.025
+        min_total_tier: 2
+        world: ANY
+  X-MOD-16-C:
+    name: 검기 방출
+    type: CURSE
+    weight: 1.0
+    archetype: COMBAT
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-16'
+      - 'Trigger: ACTIVE(TOKEN_OFFENSE+NORMAL, 검)'
+      - 'T1: 45s, 8b 검기(관통1) + 내구/허기 소모'
+      - 'T2: 10b 관통2'
+      - 'T3: 적중 시 끌어당김(약) + 노출'
+      - 'T4: 12b 강검기(쿨 60s) + 사용 후 4s 약점'
+      - '구현 포인트: raycast hit + 피해 적용(투사체 대신 광선)'
+      - '엔진적용 공격 피해: T1 +3.5%, T2 +7.0%, T3 +10.5%, T4 +14.0% (발동 시작 T1)'
+      - '엔진적용 받는 피해: T1 +0.0%, T2 +5.0%, T3 +7.5%, T4 +10.0% (발동 시작 T2)'
+      modifiers:
+      - type: DAMAGE_DEALT_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.035
+        min_total_tier: 1
+        world: ANY
+      - type: DAMAGE_TAKEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.025
+        min_total_tier: 2
+        world: ANY
+  X-MOD-17-C:
+    name: 역중력 피질
+    type: CURSE
+    weight: 1.0
+    archetype: MOBILITY
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-17'
+      - 'Trigger: PASSIVE'
+      - 'T1: 기동↑ 넉백 취약↑'
+      - 'T2: 공중제어↑↑'
+      - 'T3: 공중 대시(쿨) + 공중 피격 경직'
+      - 'T4: 2차지 + 착지 슬로우 1s'
+      - '구현 포인트: air 상태 감지 + velocity 보정'
+      - '엔진적용 이동 속도: T1 +3.0%, T2 +6.0%, T3 +9.0%, T4 +12.0% (발동 시작 T1)'
+      - '엔진적용 받는 피해: T1 +0.0%, T2 +4.0%, T3 +6.0%, T4 +8.0% (발동 시작 T2)'
+      modifiers:
+      - type: WALK_SPEED_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.03
+        min_total_tier: 1
+        world: ANY
+      - type: DAMAGE_TAKEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.02
+        min_total_tier: 2
+        world: ANY
+  X-MOD-18-C:
+    name: 전리품 룰렛
+    type: CURSE
+    weight: 1.0
+    archetype: GATHERING
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-18'
+      - 'Trigger: EVENT(ON_LOOT_GENERATE)'
+      - 'T1: 보상 약간↑, 10% 변질'
+      - 'T2: 보상↑, 15% 변질'
+      - 'T3: 변질 시 노출/소음'
+      - 'T4: 리롤(쿨) 가능, 실패 시 큰 손해'
+      - '구현 포인트: Paper LootGenerateEvent 권장, Spigot은 드랍/상자 열기 훅 필요'
+      - '엔진적용 채굴 속도: T1 +4.0%, T2 +8.0%, T3 +12.0%, T4 +16.0% (발동 시작 T1)'
+      - '엔진적용 받는 피해: T1 +0.0%, T2 +4.0%, T3 +6.0%, T4 +8.0% (발동 시작 T2)'
+      modifiers:
+      - type: BLOCK_BREAK_SPEED_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.04
+        min_total_tier: 1
+        world: ANY
+      - type: DAMAGE_TAKEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.02
+        min_total_tier: 2
+        world: ANY
+  X-MOD-19-C:
+    name: 약탈자의 향기
+    type: CURSE
+    weight: 1.0
+    archetype: GATHERING
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-19'
+      - 'Trigger: PERIODIC(20s) + PASSIVE'
+      - 'T1: 구조물/상자 힌트 + 어그로↑'
+      - 'T2: 힌트↑ 어그로↑'
+      - 'T3: 추격자/오라 타겟↑ + 루팅 점수↑'
+      - 'T4: 확정 힌트(쿨) + 주기 Glowing'
+      - '구현 포인트: 힌트는 “가까운 구조물 방향” 정도로 단순화'
+      - '엔진적용 채굴 속도: T1 +4.0%, T2 +8.0%, T3 +12.0%, T4 +16.0% (발동 시작 T1)'
+      - '엔진적용 받는 피해: T1 +0.0%, T2 +4.0%, T3 +6.0%, T4 +8.0% (발동 시작 T2)'
+      modifiers:
+      - type: BLOCK_BREAK_SPEED_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.04
+        min_total_tier: 1
+        world: ANY
+      - type: DAMAGE_TAKEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.02
+        min_total_tier: 2
+        world: ANY
+  X-MOD-20-C:
+    name: 검은 성소
+    type: CURSE
+    weight: 1.0
+    archetype: COMBAT
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-20'
+      - 'Trigger: PERIODIC(30s) + EVENT(ON_KILL)'
+      - 'T1: 주변 몹 밀도↑(약) + 처치 점수↑'
+      - 'T2: 더 몰림/보상↑'
+      - 'T3: 테마몹 비중↑'
+      - 'T4: 능동 제물 정화(쿨): 10s 난이도↓ 대신 점수 소모'
+      - '구현 포인트: 스폰 추가는 “내 주변 스폰 가중치”로 구현'
+      - '엔진적용 공격 피해: T1 +3.5%, T2 +7.0%, T3 +10.5%, T4 +14.0% (발동 시작 T1)'
+      - '엔진적용 받는 피해: T1 +0.0%, T2 +5.0%, T3 +7.5%, T4 +10.0% (발동 시작 T2)'
+      modifiers:
+      - type: DAMAGE_DEALT_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.035
+        min_total_tier: 1
+        world: ANY
+      - type: DAMAGE_TAKEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.025
+        min_total_tier: 2
+        world: ANY
+  X-MOD-21-C:
+    name: 생명-허기 교환
+    type: CURSE
+    weight: 1.0
+    archetype: SURVIVAL
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-21'
+      - 'Trigger: EVENT(ON_DAMAGE_TAKEN / food change)'
+      - 'T1: 피해 15%를 허기로 전환, 허기0=슬로우'
+      - 'T2: 25%, 허기0=약 위더'
+      - 'T3: 음식 섭취 후 2s 약점(대가), 전환율↑'
+      - 'T4: 40%, 허기0=강 위더'
+      - '구현 포인트: Damage 후 foodLevel 조정'
+      - '엔진적용 자연 회복: T1 +4.0%, T2 +8.0%, T3 +12.0%, T4 +16.0% (발동 시작 T1)'
+      - '엔진적용 허기 소모: T1 +0.0%, T2 +8.0%, T3 +12.0%, T4 +16.0% (발동 시작 T2)'
+      modifiers:
+      - type: NATURAL_REGEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.04
+        min_total_tier: 1
+        world: ANY
+      - type: HUNGER_DRAIN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.04
+        min_total_tier: 2
+        world: ANY
+  X-MOD-22-C:
+    name: 포션 양날
+    type: CURSE
+    weight: 1.0
+    archetype: COMBAT
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-22'
+      - 'Trigger: EVENT(ON_ITEM_CONSUME/ON_POTION_APPLY)'
+      - 'T1: 긍정 +1단, 15% 부정'
+      - 'T2: 강화↑, 25% 부정'
+      - 'T3: 강화 크게↑, 35% 부정(전투 중 가속)'
+      - 'T4: 긍정 극강, 항상 부정 1개'
+      - '구현 포인트: 포션 효과 목록을 재작성(기존 효과 연장/강화)'
+      - '엔진적용 공격 피해: T1 +3.5%, T2 +7.0%, T3 +10.5%, T4 +14.0% (발동 시작 T1)'
+      - '엔진적용 받는 피해: T1 +0.0%, T2 +5.0%, T3 +7.5%, T4 +10.0% (발동 시작 T2)'
+      modifiers:
+      - type: DAMAGE_DEALT_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.035
+        min_total_tier: 1
+        world: ANY
+      - type: DAMAGE_TAKEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.025
+        min_total_tier: 2
+        world: ANY
+  X-MOD-23-C:
+    name: 방어구 희생
+    type: CURSE
+    weight: 1.0
+    archetype: DEFENSE
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-23'
+      - 'Trigger: EVENT(ON_DAMAGE_TAKEN)'
+      - 'T1: 피해 15%를 내구로 지불'
+      - 'T2: 25%'
+      - 'T3: 35% + 내구0이면 10s 약점'
+      - 'T4: 45% + 치명 1회는 장비 파손으로 무효'
+      - '구현 포인트: damage 감소 + armor damage 증가(파손 이벤트 주의)'
+      - '엔진적용 받는 피해: T1 -3.0%, T2 -6.0%, T3 -9.0%, T4 -12.0% (발동 시작 T1)'
+      - '엔진적용 이동 속도: T1 +0.0%, T2 -4.0%, T3 -6.0%, T4 -8.0% (발동 시작 T2)'
+      modifiers:
+      - type: DAMAGE_TAKEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: -0.03
+        min_total_tier: 1
+        world: ANY
+      - type: WALK_SPEED_RATIO
+        scaling: CARD_TIER
+        value_per_tier: -0.02
+        min_total_tier: 2
+        world: ANY
+  X-MOD-24-C:
+    name: 탄도 왜곡
+    type: CURSE
+    weight: 1.0
+    archetype: COMBAT
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-24'
+      - 'Trigger: EVENT(Projectile near) + (T3+) ACTIVE'
+      - 'T1: 주변 투사체 궤도 소폭 왜곡(양날)'
+      - 'T2: 반경↑'
+      - 'T3: 능동 정렬(90s): 5s 내 투사체 직진 강화'
+      - 'T4: 능동 반사(180s): 1s 반사, 실패 시 노출'
+      - '구현 포인트: 투사체 velocity vector 조정(과하면 부자연)'
+      - '엔진적용 공격 피해: T1 +3.5%, T2 +7.0%, T3 +10.5%, T4 +14.0% (발동 시작 T1)'
+      - '엔진적용 받는 피해: T1 +0.0%, T2 +5.0%, T3 +7.5%, T4 +10.0% (발동 시작 T2)'
+      modifiers:
+      - type: DAMAGE_DEALT_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.035
+        min_total_tier: 1
+        world: ANY
+      - type: DAMAGE_TAKEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.025
+        min_total_tier: 2
+        world: ANY
+  X-MOD-25-C:
+    name: 악몽 시야
+    type: CURSE
+    weight: 1.0
+    archetype: ENDGAME
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-25'
+      - 'Trigger: PASSIVE + PERIODIC(60~120s)'
+      - 'T1: 야시(약) + 가짜 경고'
+      - 'T2: 시야↑ 경고↑'
+      - 'T3: 네더/엔드 시야↑↑ + 주기 다크니스'
+      - 'T4: 윤곽(쿨) 후 3s 실명(대가)'
+      - '구현 포인트: 클라이언트 환청/연출(사운드/파티클)로 체감 강화'
+      - '엔진적용 드래곤 기여 피해: T1 +5.0%, T2 +10.0%, T3 +15.0%, T4 +20.0% (발동 시작 T1)'
+      - '엔진적용 엔드 받는 피해: T1 +0.0%, T2 +8.0%, T3 +12.0%, T4 +16.0% (발동 시작 T2)'
+      modifiers:
+      - type: DRAGON_DAMAGE_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.05
+        min_total_tier: 1
+        world: END
+      - type: END_DAMAGE_TAKEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.04
+        min_total_tier: 2
+        world: END
+  X-MOD-26-C:
+    name: 지각 연금술 쌍방향
+    type: CURSE
+    weight: 1.0
+    archetype: GATHERING
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-26'
+      - 'Trigger: PERIODIC(30s)'
+      - 'T1: 돌→광물(아주 낮음) + 광물→돌(저급 위주)'
+      - 'T2: 돌 확률↑ + 붕괴도↑'
+      - 'T3: 희귀 개방(아주 낮음), 고급 붕괴는 극저확률'
+      - 'T4: cap2 + 강한 연출(노출)'
+      - '구현 포인트: 같은 pulse에서 “둘 다” 돌릴 때 cap 합산'
+      - '엔진적용 채굴 속도: T1 +4.0%, T2 +8.0%, T3 +12.0%, T4 +16.0% (발동 시작 T1)'
+      - '엔진적용 받는 피해: T1 +0.0%, T2 +4.0%, T3 +6.0%, T4 +8.0% (발동 시작 T2)'
+      modifiers:
+      - type: BLOCK_BREAK_SPEED_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.04
+        min_total_tier: 1
+        world: ANY
+      - type: DAMAGE_TAKEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.02
+        min_total_tier: 2
+        world: ANY
+  X-MOD-27-C:
+    name: 네더 균열
+    type: CURSE
+    weight: 1.0
+    archetype: UTILITY
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-27'
+      - 'Trigger: PERIODIC(30s, Nether) + PASSIVE(네더 위험)'
+      - 'T1: 네더랙→석영/네더금 소량 + 화염취약'
+      - 'T2: 변환↑ 화염취약↑'
+      - 'T3: 잔해 극희귀 + 멀미/피로'
+      - 'T4: 파밍 폭발 + 받피/디버프 크게↑'
+      - '구현 포인트: “네더에서만” 케이스 분기'
+      - '엔진적용 허기 소모: T1 -3.0%, T2 -6.0%, T3 -9.0%, T4 -12.0% (발동 시작 T1)'
+      - '엔진적용 내구도 소모: T1 +0.0%, T2 +6.0%, T3 +9.0%, T4 +12.0% (발동 시작 T2)'
+      modifiers:
+      - type: HUNGER_DRAIN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: -0.03
+        min_total_tier: 1
+        world: NETHER
+      - type: ITEM_DURABILITY_LOSS_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.03
+        min_total_tier: 2
+        world: NETHER
+  X-MOD-28-C:
+    name: 충격 연쇄
+    type: CURSE
+    weight: 1.0
+    archetype: COMBAT
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-28'
+      - 'Trigger: EVENT(ON_MELEE_HIT), 내부쿨 3s'
+      - 'T1: 반경 3b 광역 넉백(피아무시)'
+      - 'T2: 반경 4b'
+      - 'T3: 대상 슬로우 + 본인 공격속도↓'
+      - 'T4: 강넉백 + 본인 0.5s 경직'
+      - '구현 포인트: 광역 대상 수 cap'
+      - '엔진적용 공격 피해: T1 +3.5%, T2 +7.0%, T3 +10.5%, T4 +14.0% (발동 시작 T1)'
+      - '엔진적용 받는 피해: T1 +0.0%, T2 +5.0%, T3 +7.5%, T4 +10.0% (발동 시작 T2)'
+      modifiers:
+      - type: DAMAGE_DEALT_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.035
+        min_total_tier: 1
+        world: ANY
+      - type: DAMAGE_TAKEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.025
+        min_total_tier: 2
+        world: ANY
+  X-MOD-29-C:
+    name: 유리 대포
+    type: CURSE
+    weight: 1.0
+    archetype: UTILITY
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-29'
+      - 'Trigger: PASSIVE'
+      - 'T1: 주는 +15% / 받는 +10%'
+      - 'T2: +25 / +20'
+      - 'T3: +35 / +35 + 저체력 추가딜'
+      - 'T4: +50 / +50'
+      - '구현 포인트: Damage modifier는 multiplicative 권장, cap 필요'
+      - '엔진적용 허기 소모: T1 -3.0%, T2 -6.0%, T3 -9.0%, T4 -12.0% (발동 시작 T1)'
+      - '엔진적용 내구도 소모: T1 +0.0%, T2 +6.0%, T3 +9.0%, T4 +12.0% (발동 시작 T2)'
+      modifiers:
+      - type: HUNGER_DRAIN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: -0.03
+        min_total_tier: 1
+        world: ANY
+      - type: ITEM_DURABILITY_LOSS_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.03
+        min_total_tier: 2
+        world: ANY
+  X-MOD-30-C:
+    name: 점수 투자
+    type: CURSE
+    weight: 1.0
+    archetype: SCORE
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-30'
+      - 'Trigger: PERIODIC(300s) + 만기 처리'
+      - 'T1: 5% 잠금→5분 후 7% 반환'
+      - 'T2: 8%→11%'
+      - 'T3: 10%→14% + 반환 시 노출 6s'
+      - 'T4: 12%→18% + 0 반환 확률(도박)'
+      - '구현 포인트: 점수 “잠금”은 별도 ledger로 관리(스틸/감점과 분리)'
+      - '엔진적용 생존 점수: T1 +6.0%, T2 +12.0%, T3 +18.0%, T4 +24.0% (발동 시작 T1)'
+      - '엔진적용 분당 점수 감쇠: T1 +0.0%, T2 +4.0%, T3 +6.0%, T4 +8.0% (발동 시작 T2)'
+      modifiers:
+      - type: SURVIVAL_SCORE_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.06
+        min_total_tier: 1
+        world: ANY
+      - type: SCORE_DECAY_PER_MINUTE_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.02
+        min_total_tier: 2
+        world: ANY
+  X-MOD-31-C:
+    name: 무기 독주
+    type: CURSE
+    weight: 1.0
+    archetype: UTILITY
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-31'
+      - 'Trigger: EVENT(ON_ITEM_HELD_CHANGE)'
+      - 'T1: 주무기군 선택 강화, 타무기 약화'
+      - 'T2: 더 극단'
+      - 'T3: 주무기 전용 스킬(짧은 쿨), 타무기 거의 봉인'
+      - 'T4: 주무기 극강 + 주기 피로'
+      - '구현 포인트: “무기군”은 태그로 판정, 선택 UI는 토큰+모드로 가능'
+      - '엔진적용 허기 소모: T1 -3.0%, T2 -6.0%, T3 -9.0%, T4 -12.0% (발동 시작 T1)'
+      - '엔진적용 내구도 소모: T1 +0.0%, T2 +6.0%, T3 +9.0%, T4 +12.0% (발동 시작 T2)'
+      modifiers:
+      - type: HUNGER_DRAIN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: -0.03
+        min_total_tier: 1
+        world: ANY
+      - type: ITEM_DURABILITY_LOSS_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.03
+        min_total_tier: 2
+        world: ANY
+  X-MOD-32-C:
+    name: 신호탄
+    type: CURSE
+    weight: 1.0
+    archetype: MOBILITY
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-32'
+      - 'Trigger: ACTIVE(TOKEN_UTILITY+SPRINT)'
+      - 'T1: 120s 목표 핑, 노출 6s'
+      - 'T2: 90s 정확도↑, 노출 8s'
+      - 'T3: 차원별 목표 선택, 노출 10s Glowing'
+      - 'T4: 확정 핑 + 15s Glowing'
+      - '구현 포인트: 핑은 “파티클 화살표/보스바 방향”로 구현'
+      - '엔진적용 이동 속도: T1 +3.0%, T2 +6.0%, T3 +9.0%, T4 +12.0% (발동 시작 T1)'
+      - '엔진적용 받는 피해: T1 +0.0%, T2 +4.0%, T3 +6.0%, T4 +8.0% (발동 시작 T2)'
+      modifiers:
+      - type: WALK_SPEED_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.03
+        min_total_tier: 1
+        world: ANY
+      - type: DAMAGE_TAKEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.02
+        min_total_tier: 2
+        world: ANY
+  X-MOD-33-C:
+    name: 엔더 궤도
+    type: CURSE
+    weight: 1.0
+    archetype: MOBILITY
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-33'
+      - 'Trigger: EVENT(ON_TELEPORT, ENDER_PEARL)'
+      - 'T1: 진주 피해↓ + 잔상 2s'
+      - 'T2: 잔상 3s + 연막(약)'
+      - 'T3: 잔상이 투사체 굴절(약) + 흔적 선명'
+      - 'T4: 2연속(긴 쿨) + 노출 강함'
+      - '구현 포인트: 잔상은 파티클/사운드/가짜 엔티티로 연출'
+      - '엔진적용 이동 속도: T1 +3.0%, T2 +6.0%, T3 +9.0%, T4 +12.0% (발동 시작 T1)'
+      - '엔진적용 받는 피해: T1 +0.0%, T2 +4.0%, T3 +6.0%, T4 +8.0% (발동 시작 T2)'
+      modifiers:
+      - type: WALK_SPEED_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.03
+        min_total_tier: 1
+        world: END
+      - type: DAMAGE_TAKEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.02
+        min_total_tier: 2
+        world: END
+  X-MOD-34-C:
+    name: 분신 계약
+    type: CURSE
+    weight: 1.0
+    archetype: UTILITY
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-34'
+      - 'Trigger: ACTIVE(TOKEN_UTILITY+SNEAK)'
+      - 'T1: 분신 + 받은피해 10% 공유'
+      - 'T2: 공유 12%'
+      - 'T3: 혼란 연출 강화, 공유 15%'
+      - 'T4: 분신 2개, 공유 20%'
+      - '구현 포인트: 공유 피해는 DamageEvent 후 추가 damage(무한루프 방지)'
+      - '엔진적용 허기 소모: T1 -3.0%, T2 -6.0%, T3 -9.0%, T4 -12.0% (발동 시작 T1)'
+      - '엔진적용 내구도 소모: T1 +0.0%, T2 +6.0%, T3 +9.0%, T4 +12.0% (발동 시작 T2)'
+      modifiers:
+      - type: HUNGER_DRAIN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: -0.03
+        min_total_tier: 1
+        world: ANY
+      - type: ITEM_DURABILITY_LOSS_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.03
+        min_total_tier: 2
+        world: ANY
+  X-MOD-35-C:
+    name: 반사 피부
+    type: CURSE
+    weight: 1.0
+    archetype: COMBAT
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-35'
+      - 'Trigger: EVENT(ON_DAMAGE_TAKEN)'
+      - 'T1: 피해 10% 반사 + 1s 슬로우'
+      - 'T2: 15% 반사'
+      - 'T3: 20% 반사 + 작은 넉백(피아무시)'
+      - 'T4: 25% 반사 + 반사 후 4s 받피 +10%'
+      - '구현 포인트: 반사는 attacker 존재 시만, true damage 금지'
+      - '엔진적용 공격 피해: T1 +3.5%, T2 +7.0%, T3 +10.5%, T4 +14.0% (발동 시작 T1)'
+      - '엔진적용 받는 피해: T1 +0.0%, T2 +5.0%, T3 +7.5%, T4 +10.0% (발동 시작 T2)'
+      modifiers:
+      - type: DAMAGE_DEALT_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.035
+        min_total_tier: 1
+        world: ANY
+      - type: DAMAGE_TAKEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.025
+        min_total_tier: 2
+        world: ANY
+  X-MOD-36-C:
+    name: 폭발 설계자
+    type: CURSE
+    weight: 1.0
+    archetype: COMBAT
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-36'
+      - 'Trigger: EVENT(Explosion damage)'
+      - 'T1: 폭발 딜 +20% / 받피 +15%'
+      - 'T2: +35 / +25'
+      - 'T3: 넉백↑ + 폭발 킬 점수↑'
+      - 'T4: 극단 폭발, 대신 자기 주변 폭발은 치명'
+      - '구현 포인트: Explosion event에서 피해/넉백 조정(버전 API 확인)'
+      - '엔진적용 공격 피해: T1 +3.5%, T2 +7.0%, T3 +10.5%, T4 +14.0% (발동 시작 T1)'
+      - '엔진적용 받는 피해: T1 +0.0%, T2 +5.0%, T3 +7.5%, T4 +10.0% (발동 시작 T2)'
+      modifiers:
+      - type: DAMAGE_DEALT_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.035
+        min_total_tier: 1
+        world: ANY
+      - type: DAMAGE_TAKEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.025
+        min_total_tier: 2
+        world: ANY
+  X-MOD-37-C:
+    name: 침묵 서약
+    type: CURSE
+    weight: 1.0
+    archetype: MOBILITY
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-37'
+      - 'Trigger: PASSIVE + EVENT(ON_MELEE_HIT)'
+      - 'T1: 소음↓, 공격 후 3s 스프린트 봉인'
+      - 'T2: 더 조용, 4s 봉인'
+      - 'T3: 은신 재생(약), 공격 후 6s Glowing'
+      - 'T4: 거의 무소음, 공격 시 강제 노출+약점'
+      - '구현 포인트: “소음↓”는 발소리/파티클 억제 연출로 대체 가능'
+      - '엔진적용 이동 속도: T1 +3.0%, T2 +6.0%, T3 +9.0%, T4 +12.0% (발동 시작 T1)'
+      - '엔진적용 받는 피해: T1 +0.0%, T2 +4.0%, T3 +6.0%, T4 +8.0% (발동 시작 T2)'
+      modifiers:
+      - type: WALK_SPEED_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.03
+        min_total_tier: 1
+        world: ANY
+      - type: DAMAGE_TAKEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.02
+        min_total_tier: 2
+        world: ANY
+  X-MOD-38-C:
+    name: 고요한 굶주림
+    type: CURSE
+    weight: 1.0
+    archetype: SURVIVAL
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-38'
+      - 'Trigger: PASSIVE'
+      - 'T1: 허기 -40%, 음식 힐 -50%'
+      - 'T2: 허기 -60%, 음식 힐 -70%'
+      - 'T3: 허기 거의 없음, 자연회복 봉인'
+      - 'T4: 허기 무시급, 힐 불가급'
+      - '구현 포인트: FoodLevelChangeEvent에서 소모율 조정'
+      - '엔진적용 자연 회복: T1 +4.0%, T2 +8.0%, T3 +12.0%, T4 +16.0% (발동 시작 T1)'
+      - '엔진적용 허기 소모: T1 +0.0%, T2 +8.0%, T3 +12.0%, T4 +16.0% (발동 시작 T2)'
+      modifiers:
+      - type: NATURAL_REGEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.04
+        min_total_tier: 1
+        world: ANY
+      - type: HUNGER_DRAIN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.04
+        min_total_tier: 2
+        world: ANY
+  X-MOD-39-C:
+    name: 시간 세금
+    type: CURSE
+    weight: 1.0
+    archetype: MOBILITY
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-39'
+      - 'Trigger: ACTIVE(TOKEN_DEFENSE+SPRINT)'
+      - 'T1: 120s, 반경 6b 2s 감속장 + 자기 1s 경직'
+      - 'T2: 8b 2.5s + 1.5s 경직'
+      - 'T3: 투사체도 느려짐 + 2s 경직'
+      - 'T4: 3s 강정지급 + 종료 후 6s 약점/슬로우'
+      - '구현 포인트: 감속장은 주변 엔티티에 slowness + projectile velocity scale'
+      - '엔진적용 이동 속도: T1 +3.0%, T2 +6.0%, T3 +9.0%, T4 +12.0% (발동 시작 T1)'
+      - '엔진적용 받는 피해: T1 +0.0%, T2 +4.0%, T3 +6.0%, T4 +8.0% (발동 시작 T2)'
+      modifiers:
+      - type: WALK_SPEED_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.03
+        min_total_tier: 1
+        world: ANY
+      - type: DAMAGE_TAKEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.02
+        min_total_tier: 2
+        world: ANY
+  X-MOD-40-C:
+    name: 정령 교환
+    type: CURSE
+    weight: 1.0
+    archetype: COMBAT
+    runtime:
+      detail_ko:
+      - '원본ID: X-MOD-40'
+      - 'Trigger: EVENT(ON_TIME_CHECK/ON_WEATHER_CHANGE/ON_DIMENSION_CHANGE)'
+      - 'T1: 환경별 버프1+디버프1 교체'
+      - 'T2: 2개씩'
+      - 'T3: 전환 시 작은 넉백 파동(피아무시)'
+      - 'T4: 유리 환경 점수배율↑ / 불리 환경 점수배율↓'
+      - '구현 포인트: 환경 상태 머신 + 전환 이벤트 시 단 한 번만 발동(중복 방지)'
+      - '엔진적용 공격 피해: T1 +3.5%, T2 +7.0%, T3 +10.5%, T4 +14.0% (발동 시작 T1)'
+      - '엔진적용 받는 피해: T1 +0.0%, T2 +5.0%, T3 +7.5%, T4 +10.0% (발동 시작 T2)'
+      modifiers:
+      - type: DAMAGE_DEALT_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.035
+        min_total_tier: 1
+        world: ANY
+      - type: DAMAGE_TAKEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.025
+        min_total_tier: 2
+        world: ANY

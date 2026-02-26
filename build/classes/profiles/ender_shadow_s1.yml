@@ -1,0 +1,237 @@
+score:
+  gain_states:
+    - HARDCORE
+    - CLIMAX
+  dragon_jackpot:
+    enabled: true
+    assist_total_points: 5000
+    final_hit_bonus: 1000
+    first_egg_bonus: 3000
+
+slots:
+  enabled: true
+  progress_score_source: PEAK_SCORE
+  start: 1
+  max: 5
+  progress_per_unlock: 10000
+  blessing:
+    enabled: true
+    max: 5
+  curse:
+    enabled: true
+    max: 5
+  announce_unlock: true
+
+cards:
+  enabled: true
+  states:
+    - HARDCORE
+    - CLIMAX
+  world_name: "world"
+  midnight_tick: 18000
+  trigger_window_ticks: 120
+  catchup:
+    max_days_per_tick: 7
+  trim_to_slots_on_daily_draw: false
+  draw_for_out_players: false
+  duplicate_weight_scale: 0.30
+  catalog:
+    file: ender_shadow_s1.yml
+    auto_create: true
+    append_files: []
+  effect_duration_ingame_days: 7
+  max_tier: 4
+  draws:
+    bonus_enabled: true
+    score_source: CURRENT_SCORE
+    score_per_extra_draw: 18000
+    max_extra_draws: 4
+  reroll:
+    enabled: true
+    cost_score: 18000
+    cooldown_seconds: 60
+    require_playable: true
+    severe_bonus_on_reroll: false
+  upgrade_overflow_bonus_points: 120
+  upgrade_tier_bias_base: 5.0
+  score_multiplier:
+    enabled: true
+    blessing_per_stack: 0.02
+    curse_per_stack: 0.08
+    min: 1.0
+    max: 3.2
+  runtime_effects:
+    enabled: true
+    interval_seconds: 1
+    refresh_duration_seconds: 3
+    score_decay_interval_seconds: 60
+  severe_curse:
+    default_bonus_points: 350
+    bonus_on_upgrade: true
+  blessing_pool:
+    shadow_guard:
+      name: Shadow Guard
+      weight: 8.0
+    moonstep:
+      name: Moonstep
+      weight: 6.0
+    void_favor:
+      name: Void Favor
+      weight: 4.0
+  curse_pool:
+    dusk_hunger:
+      name: Dusk Hunger
+      weight: 8.0
+    broken_oath:
+      name: Broken Oath
+      weight: 5.0
+    ender_debt:
+      name: Ender Debt
+      weight: 2.0
+      severe: true
+      severe_bonus_points: 900
+
+spawn_separation:
+  enabled: true
+  states:
+    - HARDCORE
+    - CLIMAX
+  min_distance_from_players: 800.0
+  ring:
+    min_radius: 1200.0
+    max_radius: 2600.0
+    border_margin: 64.0
+  search:
+    max_attempts: 120
+    vertical_search_depth: 24
+  safe:
+    min_y: 1
+
+border:
+  enabled: true
+  wither:
+    step_seconds: 45
+    max_level: 8
+  particles:
+    enabled: true
+    interval_ticks: 4
+    render_distance: 320.0
+    outside_render_distance: 880.0
+    arc_degrees: 160.0
+    outside_arc_degrees: 320.0
+    outside_ignore_facing: true
+    force: true
+    angle_step_degrees: 3.0
+    wall_height: 24.0
+    vertical_step: 1.0
+    count_per_point: 3
+    primary_dust:
+      enabled: true
+      red: 122
+      green: 80
+      blue: 255
+      size: 1.5
+    accent:
+      enabled: true
+      count_per_point: 1
+      angle_stride: 2
+      vertical_stride: 2
+
+ender_aura:
+  enabled: true
+  states:
+    - HARDCORE
+    - CLIMAX
+  scan:
+    player_radius: 112.0
+    players_per_tick: 4
+    max_endermen_per_tick: 24
+  aura_radius: 16.0
+  effect_duration_ticks: 60
+  level2_total_score: 30000
+  level3_total_score: 90000
+  effects:
+    level1:
+      speed: -1
+      strength: -1
+    level2:
+      speed: -1
+      strength: -1
+    level3:
+      speed: 1
+      strength: 1
+
+stalker:
+  enabled: true
+  states:
+    - HARDCORE
+    - CLIMAX
+  first_spawn_delay_seconds: 1200
+  respawn_interval_seconds:
+    min: 600
+    max: 900
+  max_active: 3
+  spawn:
+    distance_min: 8.0
+    distance_max: 16.0
+    angle_spread_degrees: 35.0
+  buffs:
+    base_speed: 0
+    base_strength: 0
+    empower_per_overcap: 0
+    max_empower_stacks: 3
+    duration_ticks: 6000
+  visual:
+    enabled: true
+    title:
+      fade_in_ticks: 6
+      stay_ticks: 36
+      fade_out_ticks: 10
+    particles:
+      spawn_count: 70
+      empower_count: 56
+
+dragon_raid:
+  enabled: true
+  states:
+    - CLIMAX
+  wave_interval_seconds: 20
+  spawn:
+    distance_min: 8.0
+    distance_max: 18.0
+  cap:
+    base: 10
+    per_player: 6
+  phase1:
+    enderman_min: 2
+    enderman_max: 3
+  phase2:
+    entry_blaze_min: 8
+    entry_blaze_max: 12
+    enderman_min: 2
+    enderman_max: 3
+    blaze_min: 2
+    blaze_max: 3
+  phase3:
+    enderman_min: 2
+    enderman_max: 3
+    blaze_min: 2
+    blaze_max: 3
+    vex_min: 2
+    vex_max: 3
+  visual:
+    enabled: true
+    title:
+      fade_in_ticks: 6
+      stay_ticks: 40
+      fade_out_ticks: 12
+    particles:
+      default_count: 96
+      phase1_count: 120
+      phase2_count: 160
+      phase3_count: 220
+
+end:
+  spawn_platform:
+    enabled: true
+    radius: 2

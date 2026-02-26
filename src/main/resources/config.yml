@@ -1,0 +1,370 @@
+server:
+  name: season_1_end
+  role: AUTO
+
+season:
+  id: s1
+  active_profile: ender_shadow_s1
+  auto_create_profile_template: true
+  debug_mode: false
+
+lives:
+  base: 3
+  respawn_cost_base: 1000
+
+score:
+  pvp_steal_percent: 0.50
+  out_sets_zero: true
+  gain_states:
+    - HARDCORE
+    - CLIMAX
+  survival:
+    enabled: true
+    interval_seconds: 30
+    points_per_interval: 5
+  mob:
+    enabled: true
+    default_points: 8
+    per_type:
+      ENDERMAN: 20
+      BLAZE: 24
+      VEX: 30
+      WITHER_SKELETON: 22
+  mining:
+    enabled: true
+    per_block:
+      COAL_ORE: 2
+      DEEPSLATE_COAL_ORE: 2
+      COPPER_ORE: 3
+      DEEPSLATE_COPPER_ORE: 3
+      IRON_ORE: 4
+      DEEPSLATE_IRON_ORE: 4
+      GOLD_ORE: 6
+      DEEPSLATE_GOLD_ORE: 6
+      REDSTONE_ORE: 5
+      DEEPSLATE_REDSTONE_ORE: 5
+      LAPIS_ORE: 6
+      DEEPSLATE_LAPIS_ORE: 6
+      DIAMOND_ORE: 16
+      DEEPSLATE_DIAMOND_ORE: 18
+      EMERALD_ORE: 20
+      DEEPSLATE_EMERALD_ORE: 22
+      NETHER_QUARTZ_ORE: 3
+      NETHER_GOLD_ORE: 5
+      ANCIENT_DEBRIS: 35
+  dragon_jackpot:
+    enabled: true
+    assist_total_points: 5000
+    final_hit_bonus: 1000
+    first_egg_bonus: 3000
+
+slots:
+  enabled: true
+  progress_score_source: PEAK_SCORE
+  start: 1
+  max: 5
+  progress_per_unlock: 10000
+  blessing:
+    enabled: true
+    max: 5
+  curse:
+    enabled: true
+    max: 5
+  announce_unlock: true
+
+cards:
+  enabled: true
+  states:
+    - HARDCORE
+    - CLIMAX
+  world_name: "world"
+  midnight_tick: 18000
+  trigger_window_ticks: 120
+  catchup:
+    max_days_per_tick: 7
+  trim_to_slots_on_daily_draw: false
+  draw_for_out_players: false
+  duplicate_weight_scale: 0.35
+  catalog:
+    file: ender_shadow_s1.yml
+    auto_create: true
+    append_files: []
+  effect_duration_ingame_days: 7
+  max_tier: 4
+  draws:
+    bonus_enabled: true
+    score_source: CURRENT_SCORE
+    score_per_extra_draw: 20000
+    max_extra_draws: 3
+  one_time_roll:
+    enabled: true
+    initial_free_rerolls: 5
+    invulnerable_while_gui: true
+    non_expiring: true
+  reroll:
+    enabled: true
+    cost_score: 60000
+    cooldown_seconds: 45
+    require_playable: true
+    severe_bonus_on_reroll: false
+  tier_upgrade:
+    enabled: true
+    cost_score: 60000
+  upgrade_overflow_bonus_points: 100
+  upgrade_tier_bias_base: 5.0
+  score_multiplier:
+    enabled: true
+    blessing_per_stack: 0.03
+    curse_per_stack: 0.06
+    min: 1.0
+    max: 3.0
+  runtime_effects:
+    enabled: true
+    interval_seconds: 1
+    refresh_duration_seconds: 3
+    score_decay_interval_seconds: 60
+  severe_curse:
+    default_bonus_points: 250
+    bonus_on_upgrade: true
+  blessing_pool:
+    vitality:
+      name: Vitality
+      weight: 10.0
+    fortune:
+      name: Fortune
+      weight: 8.0
+    swiftstep:
+      name: Swiftstep
+      weight: 6.0
+  curse_pool:
+    brittle:
+      name: Brittle
+      weight: 10.0
+    famine:
+      name: Famine
+      weight: 7.0
+    doom_echo:
+      name: Doom Echo
+      weight: 3.0
+      severe: true
+      severe_bonus_points: 700
+
+player:
+  newbie_protection_seconds: 600
+  newbie_effects:
+    enabled: true
+    speed: 1
+    regeneration: 0
+    resistance: 0
+    refresh_duration_seconds: 6
+  damage_caps:
+    environment_health_ratio: 0.80
+    pve_health_ratio: 0.72
+    pvp_health_ratio: 0.60
+  enforce_out_spectator: true
+  allow_out_in_free_play: true
+
+spawn_separation:
+  enabled: true
+  states:
+    - HARDCORE
+    - CLIMAX
+  min_distance_from_players: 800.0
+  ring:
+    min_radius: 1200.0
+    max_radius: 2600.0
+    border_margin: 64.0
+  search:
+    max_attempts: 120
+    vertical_search_depth: 24
+  safe:
+    min_y: 1
+
+round:
+  autosave_seconds: 30
+  reset_countdown_seconds: 600
+  cancel_reset_if_playable_again: true
+  reset_commands:
+    - "say [SeasonManager] Round {round_id} reset -> {next_round_id}. Add world wipe commands in config.yml"
+  world_wipe:
+    enabled: true
+    auto_shutdown: true
+    marker_file: ".season_wipe_request"
+    kick_message: "Round reset in progress. Server restarting for world wipe..."
+    worlds:
+      - world
+      - world_nether
+      - world_the_end
+
+free_play:
+  ignore_life_rules: true
+  auto_on_dragon_kill: true
+  escape_window_seconds: 900
+  survival_weight: 1.0
+  escape_weight: 1.2
+  winner_bonus_top_n: 3
+  winner_bonus_score: 2000
+
+climax:
+  auto_on_first_end_entry: true
+
+database:
+  enabled: true
+  use_for_season_state: true
+  jdbc_url: "jdbc:sqlite:../shared/season_manager.db"
+  username: ""
+  password: ""
+  connect_timeout_seconds: 5
+
+vault:
+  internal_enabled: false
+  enabled_in_state: FREE_PLAY
+  deposit_server: season_1_end
+  withdraw_servers:
+    - lobby
+    - personal_yg
+  default_rows: 3
+  out_rows: 1
+  lock_stale_seconds: 45
+  require_db_lock: true
+
+border:
+  enabled: true
+  world_name: "world"
+  center:
+    x: 0.0
+    z: 0.0
+    auto_from_stronghold_on_round_start: true
+    auto_preserve_existing: true
+    auto_search_radius_chunks: 1536
+    auto_find_unexplored: false
+  radius:
+    start: 6000.0
+    end: 300.0
+  shrink_seconds: 86400
+  wither:
+    step_seconds: 30
+    max_level: 20
+  particles:
+    enabled: true
+    interval_ticks: 6
+    render_distance: 224.0
+    outside_render_distance: 224.0
+    arc_degrees: 120.0
+    outside_arc_degrees: 120.0
+    outside_ignore_facing: false
+    force: false
+    angle_step_degrees: 2.2
+    wall_height: 24.0
+    vertical_step: 0.85
+    count_per_point: 4
+    primary_dust:
+      enabled: false
+      red: 126
+      green: 82
+      blue: 255
+      size: 1.35
+    accent:
+      enabled: false
+      count_per_point: 1
+      angle_stride: 2
+      vertical_stride: 2
+
+ender_aura:
+  enabled: true
+  states:
+    - HARDCORE
+    - CLIMAX
+  scan:
+    player_radius: 112.0
+    players_per_tick: 4
+    max_endermen_per_tick: 24
+  aura_radius: 16.0
+  effect_duration_ticks: 60
+  level2_total_score: 30000
+  level3_total_score: 90000
+  effects:
+    level1:
+      speed: 0
+      strength: 0
+    level2:
+      speed: 1
+      strength: 1
+    level3:
+      speed: 2
+      strength: 2
+
+stalker:
+  enabled: true
+  states:
+    - HARDCORE
+    - CLIMAX
+  first_spawn_delay_seconds: 1200
+  respawn_interval_seconds:
+    min: 600
+    max: 900
+  max_active: 3
+  spawn:
+    distance_min: 8.0
+    distance_max: 16.0
+    angle_spread_degrees: 35.0
+  buffs:
+    base_speed: 1
+    base_strength: 1
+    empower_per_overcap: 1
+    max_empower_stacks: 6
+    duration_ticks: 6000
+  visual:
+    enabled: true
+    title:
+      fade_in_ticks: 6
+      stay_ticks: 36
+      fade_out_ticks: 10
+    particles:
+      spawn_count: 70
+      empower_count: 56
+
+dragon_raid:
+  enabled: true
+  states:
+    - CLIMAX
+  wave_interval_seconds: 20
+  spawn:
+    distance_min: 8.0
+    distance_max: 18.0
+  cap:
+    base: 10
+    per_player: 6
+  phase1:
+    enderman_min: 2
+    enderman_max: 3
+  phase2:
+    entry_blaze_min: 8
+    entry_blaze_max: 12
+    enderman_min: 2
+    enderman_max: 3
+    blaze_min: 2
+    blaze_max: 3
+  phase3:
+    enderman_min: 2
+    enderman_max: 3
+    blaze_min: 2
+    blaze_max: 3
+    vex_min: 2
+    vex_max: 3
+  visual:
+    enabled: true
+    title:
+      fade_in_ticks: 6
+      stay_ticks: 40
+      fade_out_ticks: 12
+    particles:
+      default_count: 96
+      phase1_count: 120
+      phase2_count: 160
+      phase3_count: 220
+
+end:
+  spawn_platform:
+    enabled: true
+    radius: 2
