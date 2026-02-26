@@ -1,6 +1,6 @@
 # adjust_card
 
-- source: `PvE_Bless_Curse_60x60_v2_T1-T6.xlsx`
+- source: `PvE_Bless_Curse_60x60_v2_T1-T6_fix_T2T4T5_v3.xlsx`
 - cards: blessing 60 + curse 60 (total 120)
 - note: 기존 효과 정의를 제거하고 엑셀 원문(스탯/카드 기믹/특수 능력/태그) 기준으로 동기화
 

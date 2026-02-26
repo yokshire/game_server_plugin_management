@@ -6544,33 +6544,57 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     AbilityMode heldMode = detectAbilityMode(player);
     long nowEpochSecond = nowEpochSecond();
 
-    if (tryActivateBlessingB010GhostWalk(event, player, data, mainHand, nowEpochSecond)) {
+    return handleEffect80ActiveCast(
+        player,
+        data,
+        mainHand,
+        heldToken,
+        heldMode,
+        nowEpochSecond,
+        () -> event.setCancelled(true)
+    );
+  }
+
+  private boolean handleEffect80ActiveCast(
+      Player player,
+      PlayerRoundData data,
+      ItemStack mainHand,
+      AbilityToken heldToken,
+      AbilityMode heldMode,
+      long nowEpochSecond,
+      Runnable cancelInput
+  ) {
+    if (player == null || data == null) {
+      return false;
+    }
+
+    if (tryActivateBlessingB010GhostWalk(player, data, mainHand, nowEpochSecond, cancelInput)) {
       return true;
     }
-    if (tryActivateBlessingB009Blink(event, player, data, mainHand, nowEpochSecond)) {
+    if (tryActivateBlessingB009Blink(player, data, mainHand, nowEpochSecond, cancelInput)) {
       return true;
     }
-    if (tryActivateBlessingB036LootPortal(event, player, data, heldToken, heldMode, nowEpochSecond)) {
+    if (tryActivateBlessingB036LootPortal(player, data, heldToken, heldMode, nowEpochSecond, cancelInput)) {
       return true;
     }
-    if (tryActivateBlessingB035InstantCraftWorkbench(event, player, data, mainHand)) {
+    if (tryActivateBlessingB035InstantCraftWorkbench(player, data, mainHand, cancelInput)) {
       return true;
     }
-    if (tryActivateBlessingB039AuraCommand(event, player, data, heldToken, heldMode, nowEpochSecond)) {
+    if (tryActivateBlessingB039AuraCommand(player, data, heldToken, heldMode, nowEpochSecond, cancelInput)) {
       return true;
     }
-    return tryActivateGenericEffect80Active(event, player, data, heldToken, heldMode, nowEpochSecond);
+    return tryActivateGenericEffect80Active(player, data, heldToken, heldMode, nowEpochSecond, cancelInput);
   }
 
   private boolean tryActivateGenericEffect80Active(
-      PlayerInteractEvent event,
       Player player,
       PlayerRoundData data,
       AbilityToken heldToken,
       AbilityMode heldMode,
-      long nowEpochSecond
+      long nowEpochSecond,
+      Runnable cancelInput
   ) {
-    if (event == null || player == null || data == null) {
+    if (player == null || data == null) {
       return false;
     }
     List<ActiveSeasonEffect> activeEffects = collectAllActiveEffects(data);
@@ -6610,7 +6634,9 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
       if (!activated) {
         continue;
       }
-      event.setCancelled(true);
+      if (cancelInput != null) {
+        cancelInput.run();
+      }
       emitBModProcFeedback(player, tier, false);
       return true;
     }
@@ -6709,11 +6735,11 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
   }
 
   private boolean tryActivateBlessingB009Blink(
-      PlayerInteractEvent event,
       Player player,
       PlayerRoundData data,
       ItemStack mainHand,
-      long nowEpochSecond
+      long nowEpochSecond,
+      Runnable cancelInput
   ) {
     ActiveSeasonEffect effect = data.getBlessingEffect("B-009");
     if (effect == null || mainHand == null || !isSwordMaterial(mainHand.getType())) {
@@ -6751,17 +6777,19 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
           Math.max(blinkFallImmunityUntilEpochSecondByPlayer.getOrDefault(player.getUniqueId(), 0L), nowEpochSecond + noFallSeconds)
       );
     }
-    event.setCancelled(true);
+    if (cancelInput != null) {
+      cancelInput.run();
+    }
     player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 0.8F, 1.2F);
     return true;
   }
 
   private boolean tryActivateBlessingB010GhostWalk(
-      PlayerInteractEvent event,
       Player player,
       PlayerRoundData data,
       ItemStack mainHand,
-      long nowEpochSecond
+      long nowEpochSecond,
+      Runnable cancelInput
   ) {
     ActiveSeasonEffect effect = data.getBlessingEffect("B-010");
     if (effect == null || mainHand == null || !isSwordMaterial(mainHand.getType())) {
@@ -6806,21 +6834,25 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
         0.05D
     );
     player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_AMBIENT, 0.8F, 0.75F);
-    event.setCancelled(true);
+    if (cancelInput != null) {
+      cancelInput.run();
+    }
     return true;
   }
 
   private boolean tryActivateBlessingB035InstantCraftWorkbench(
-      PlayerInteractEvent event,
       Player player,
       PlayerRoundData data,
-      ItemStack mainHand
+      ItemStack mainHand,
+      Runnable cancelInput
   ) {
     ActiveSeasonEffect effect = data.getBlessingEffect("B-035");
     if (effect == null || mainHand == null || mainHand.getType() != Material.CRAFTING_TABLE) {
       return false;
     }
-    event.setCancelled(true);
+    if (cancelInput != null) {
+      cancelInput.run();
+    }
     player.openWorkbench(null, true);
     UUID playerId = player.getUniqueId();
     Bukkit.getScheduler().runTaskLater(this, () -> {
@@ -6835,12 +6867,12 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
   }
 
   private boolean tryActivateBlessingB036LootPortal(
-      PlayerInteractEvent event,
       Player player,
       PlayerRoundData data,
       AbilityToken heldToken,
       AbilityMode heldMode,
-      long nowEpochSecond
+      long nowEpochSecond,
+      Runnable cancelInput
   ) {
     ActiveSeasonEffect effect = data.getBlessingEffect("B-036");
     if (effect == null || heldToken != AbilityToken.UTILITY || heldMode != AbilityMode.NORMAL) {
@@ -6861,18 +6893,20 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     } else {
       absorbNearbyDropsToLootPortal(player, tier);
     }
-    event.setCancelled(true);
+    if (cancelInput != null) {
+      cancelInput.run();
+    }
     lootPortalExpireEpochSecondByPlayer.put(player.getUniqueId(), nowEpochSecond + 3600L);
     return true;
   }
 
   private boolean tryActivateBlessingB039AuraCommand(
-      PlayerInteractEvent event,
       Player player,
       PlayerRoundData data,
       AbilityToken heldToken,
       AbilityMode heldMode,
-      long nowEpochSecond
+      long nowEpochSecond,
+      Runnable cancelInput
   ) {
     ActiveSeasonEffect effect = data.getBlessingEffect("B-039");
     if (effect == null || heldToken != AbilityToken.UTILITY || heldMode != AbilityMode.NORMAL) {
@@ -6894,7 +6928,9 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     auraInversionBacklashAppliedByPlayer.remove(player.getUniqueId());
     player.getWorld().playSound(player.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 0.65F, 1.0F);
     player.sendActionBar(ChatColor.LIGHT_PURPLE + "오라 지휘 발동 (" + durationSeconds + "s)");
-    event.setCancelled(true);
+    if (cancelInput != null) {
+      cancelInput.run();
+    }
     return true;
   }
 
@@ -16362,7 +16398,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
           ChatColor.GOLD + "행 #" + rowNo,
           List.of(
               ChatColor.GRAY + "구성: 스탯 / 특수 / T2 / T4 / T6",
-              ChatColor.DARK_GRAY + "T4가 비어 있으면 차기 패치 예정"
+              ChatColor.DARK_GRAY + "T4가 비면 기존 능력 강화형"
           )
       ));
     }
@@ -17093,7 +17129,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
       tier2Ability = "T2 해금 능력 정보 없음";
     }
     if (tier4Ability.isBlank()) {
-      tier4Ability = "T4 전용 능력 없음 (차기 패치 예정)";
+      tier4Ability = "T4 전용 능력 없음";
     }
     if (tier6Ability.isBlank()) {
       tier6Ability = "T6 해금 능력 정보 없음";
@@ -17222,12 +17258,15 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     int detailTier = Math.max(1, targetTier);
     Map<Integer, String> sections = parseSpecialTierSections(abilityRaw, detailTier);
     String detail = sections.getOrDefault(targetTier, "");
+    if (targetTier == 4 && isTier4UpgradeOnlyDetail(detail, sections.getOrDefault(3, ""))) {
+      detail = "";
+    }
     if (detail.isBlank()) {
       return switch (targetTier) {
         case 2 -> abilityName.isBlank() ? "T2 해금 능력 데이터 없음" : abilityName + " · T2 데이터 없음";
         case 4 -> abilityName.isBlank()
-            ? "T4 전용 능력 없음 (차기 패치 예정)"
-            : abilityName + " · T4 전용 능력 없음 (차기 패치 예정)";
+            ? "T4 전용 능력 없음"
+            : abilityName + " · T4 전용 능력 없음";
         case 6 -> abilityName.isBlank() ? "T6 해금 능력 데이터 없음" : abilityName + " · T6 데이터 없음";
         default -> abilityName.isBlank() ? "능력 데이터 없음" : abilityName + " · 데이터 없음";
       };
@@ -17235,6 +17274,36 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     String status = ownTier >= targetTier ? "해금" : ("T" + targetTier + " 해금");
     String merged = status + " · " + detail;
     return abilityName.isBlank() ? merged : abilityName + " · " + merged;
+  }
+
+  private boolean isTier4UpgradeOnlyDetail(String t4Detail, String t3Detail) {
+    if (t4Detail == null || t4Detail.isBlank()) {
+      return false;
+    }
+    String normalizedT4 = t4Detail.replaceAll("\\s+", "").toLowerCase(Locale.ROOT);
+    if (normalizedT4.contains("전용능력없음") || normalizedT4.contains("데이터없음")) {
+      return true;
+    }
+    if (normalizedT4.contains("t3강화")
+        || normalizedT4.contains("기존효과강화")
+        || normalizedT4.contains("강화형")
+        || normalizedT4.contains("수치강화")) {
+      return true;
+    }
+    String skeletonT4 = normalizeAbilityDetailSkeleton(t4Detail);
+    String skeletonT3 = normalizeAbilityDetailSkeleton(t3Detail);
+    return !skeletonT3.isBlank() && skeletonT4.equals(skeletonT3);
+  }
+
+  private String normalizeAbilityDetailSkeleton(String detail) {
+    if (detail == null || detail.isBlank()) {
+      return "";
+    }
+    String normalized = detail.toLowerCase(Locale.ROOT);
+    normalized = normalized.replaceAll("\\([^)]*\\)", " ");
+    normalized = normalized.replaceAll("[0-9.+\\-/%]", " ");
+    normalized = normalized.replaceAll("\\s+", "");
+    return normalized;
   }
 
   private String extractAbilityName(String abilityRaw) {
