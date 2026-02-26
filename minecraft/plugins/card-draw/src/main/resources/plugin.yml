@@ -1,0 +1,42 @@
+name: CardDraw
+main: io.bigworld.season.SeasonManagerPlugin
+version: 0.1.0
+api-version: '1.21'
+authors:
+  - big_world
+description: Card pool draw/apply manager (delegates runtime engine to CardEngine when enabled)
+softdepend:
+  - CardEngine
+
+commands:
+  season:
+    description: Season state and round controls
+    usage: /season
+    permission: seasonmanager.admin
+  slot:
+    description: Open season slot overview
+    usage: /slot [player]
+    permission: seasonmanager.slot.use
+  life:
+    description: Manage per-player life and OUT status
+    usage: /life
+    permission: seasonmanager.admin
+  score:
+    description: Manage per-player score
+    usage: /score
+    permission: seasonmanager.admin
+  border:
+    description: Manage season border center/radius
+    usage: /border
+    permission: seasonmanager.admin
+  information:
+    description: Locate a target structure when B-037 is active
+    usage: /information <structure>
+
+permissions:
+  seasonmanager.slot.use:
+    description: Open own season slot overview
+    default: true
+  seasonmanager.admin:
+    description: Full access to SeasonManager commands
+    default: op

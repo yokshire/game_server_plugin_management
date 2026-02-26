@@ -1,0 +1,11 @@
+-encoding
+UTF-8
+-source
+17
+-target
+17
+-cp
+/home/yyg/server/big_world/paper/season_1_end/paper.jar:build/classes
+-d
+build/classes
+src/main/java/io/bigworld/season/SeasonManagerPlugin.java

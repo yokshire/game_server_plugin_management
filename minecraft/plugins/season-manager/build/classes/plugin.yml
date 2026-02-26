@@ -14,7 +14,7 @@ commands:
   slot:
     description: Open season slot overview
     usage: /slot [player]
-    permission: seasonmanager.admin
+    permission: seasonmanager.slot.use
   life:
     description: Manage per-player life and OUT status
     usage: /life
@@ -28,10 +28,13 @@ commands:
     usage: /border
     permission: seasonmanager.admin
   information:
-    description: Locate a target structure when B-103 is active
+    description: Locate a target structure when B-037 is active
     usage: /information <structure>
 
 permissions:
+  seasonmanager.slot.use:
+    description: Open own season slot overview
+    default: true
   seasonmanager.admin:
     description: Full access to SeasonManager commands
     default: op

@@ -1,57 +1,15 @@
-# Season Manager Plugin
+# Season Manager (Info Archive)
 
-## Card Catalog Patch Workflow
+이 경로는 **실행 플러그인 코드가 아니라 시즌 카드 설계/검토 문서(info) 보관용**으로 유지합니다.
 
-SeasonManager supports layered card catalogs so you can add or rebalance cards by patch files without rewriting the base catalog.
+주요 문서:
+- `src/main/resources/season_1/adjust_card.md`
+- `src/main/resources/season_1/card_pool_80_review.md`
+- `src/main/resources/season_1/effect_description_audit_80.md`
+- `src/main/resources/season_1/effect_impl_audit_80.md`
 
-## Runtime Architecture (Current)
+실행 플러그인 분리:
+- 카드풀 추첨/적용: `minecraft/plugins/card-draw`
+- 런타임 엔진(기믹 tick 위임): `minecraft/plugins/card-engine`
 
-- Hardcoded ID runtime handlers are removed from active execution path.
-- Legacy B/C/X ID fallback catalog path is disabled.
-- Runtime behavior is expected to come from catalog-defined effects and generic runtime modifier pipeline.
-
-Load order:
-1. `cards.catalog.file`
-2. `cards.catalog.append_files[]`
-3. `cards.catalog.patch_files[]`
-4. `cards.catalog.patch_dir` auto-discovered `*.yml` / `*.yaml` files (if `patch_auto_discover: true`)
-
-Later files override earlier files with the same card ID.
-
-### Config keys
-
-`cards.catalog`:
-- `file`: base catalog file
-- `append_files`: always-loaded overlays
-- `patch_files`: explicitly-listed patch files
-- `patch_dir`: auto-discovery directory under `plugins/SeasonManager/catalogs`
-- `patch_auto_discover`: enable recursive patch discovery
-
-### Remove / disable cards in patch
-
-You can remove existing cards by ID in patch files:
-
-```yaml
-remove:
-  ids: [B-001, C-010]
-```
-
-or
-
-```yaml
-disable:
-  B-001: true
-  C-010: true
-```
-
-Supported keys under `remove` / `disable`: `ids`, `effects`, `all`, `blessings`, `curses`.
-
-### Reload command
-
-Use in-game:
-
-`/season catalog reload`
-
-Check effective file setup:
-
-`/season catalog show`
+이 구조에서 시즌 카드 info 문서는 계속 이 `season-manager` 경로를 단일 출처로 사용합니다.

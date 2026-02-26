@@ -1,0 +1,20 @@
+name: CardEngine
+main: io.bigworld.cardengine.CardEnginePlugin
+version: 0.1.0
+api-version: '1.21'
+authors:
+  - big_world
+description: Runtime gimmick engine delegate for CardDraw
+softdepend:
+  - CardDraw
+
+commands:
+  cardengine:
+    description: CardEngine runtime status/reload
+    usage: /cardengine [status|reload]
+    permission: cardengine.admin
+
+permissions:
+  cardengine.admin:
+    description: Manage CardEngine runtime delegation
+    default: op

@@ -1,0 +1,13 @@
+delegate:
+  enabled: true
+  target_plugin: CardDraw
+  mode: split
+  interval_ticks: 20
+  strict_target_required: false
+  split_subsystems:
+    active_effects: 20
+    stalker: 20
+    raid: 20
+    aura: 20
+    score_decay: 20
+    border_wither: 20
