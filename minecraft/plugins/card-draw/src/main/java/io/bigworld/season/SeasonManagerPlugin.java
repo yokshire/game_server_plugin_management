@@ -4956,6 +4956,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
         }
       }
       default -> {
+        applyGenericBlessingPeriodicFallback(player, data, effect, profile, index, tier, nowEpochSecond);
       }
     }
   }
@@ -5191,6 +5192,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
         // Dragon breath curse handling is resolved via runtime modifiers.
       }
       default -> {
+        applyGenericCursePeriodicFallback(player, data, effect, profile, index, tier, nowEpochSecond);
       }
     }
   }
@@ -5536,6 +5538,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
         applySpiritExchangeBuff(player, tier);
       }
       default -> {
+        applyGenericHybridPeriodicFallback(player, data, effect, profile, index, tier, nowEpochSecond);
       }
     }
   }
@@ -5886,6 +5889,205 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
       }
       default -> {
       }
+    }
+  }
+
+  private void applyGenericBlessingPeriodicFallback(
+      Player player,
+      PlayerRoundData data,
+      ActiveSeasonEffect effect,
+      EffectGimmickProfile profile,
+      int index,
+      int tier,
+      long nowEpochSecond
+  ) {
+    if (player == null || data == null || effect == null || profile == null) {
+      return;
+    }
+    UUID playerId = player.getUniqueId();
+    EnumSet<GimmickTag> tags = profile.tags() == null ? EnumSet.noneOf(GimmickTag.class) : profile.tags();
+    if (tags.isEmpty()) {
+      return;
+    }
+
+    if (tags.contains(GimmickTag.SCANNER)
+        && useEffectCooldown(playerId, effect.getId(), "generic_b_scanner_" + index, 20L)) {
+      sendScannerHintByTier(player, tier, false);
+    }
+    if (tags.contains(GimmickTag.AURA_SHIFT)
+        && useEffectCooldown(playerId, effect.getId(), "generic_b_aura_" + index, 8L)) {
+      highlightNearbyAuraMobs(player, 8.0D + (tier * 3.0D), 80);
+    }
+    if (tags.contains(GimmickTag.BORDER_PRESSURE)
+        && isOutsideCurrentBorder(player.getLocation())
+        && useEffectCooldown(playerId, effect.getId(), "generic_b_border_" + index, 4L)) {
+      player.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, 40, 0, true, false, true));
+    }
+    if (tags.contains(GimmickTag.DECOY)
+        && tier >= 2
+        && decoyExpireEpochSecondByPlayer.getOrDefault(playerId, 0L) <= nowEpochSecond
+        && useEffectCooldown(playerId, effect.getId(), "generic_b_decoy_" + index, 45L)) {
+      spawnOrRefreshDecoy(player, tier);
+    }
+    if (tags.contains(GimmickTag.PROJECTILE_CONTROL)
+        && player.isBlocking()
+        && useEffectCooldown(playerId, effect.getId(), "generic_b_projectile_" + index, 2L)) {
+      projectileReflectUntilEpochSecondByPlayer.put(
+          playerId,
+          Math.max(projectileReflectUntilEpochSecondByPlayer.getOrDefault(playerId, 0L), nowEpochSecond + 2L)
+      );
+    }
+    if (tags.contains(GimmickTag.SCORE_TRADE)
+        && useEffectCooldown(playerId, effect.getId(), "generic_b_score_trade_" + index, 120L)) {
+      processScoreInvestmentCycle(player, data, tier, nowEpochSecond);
+    }
+    if (tags.contains(GimmickTag.CRAFT_GAMBLE)
+        && useEffectCooldown(playerId, effect.getId(), "generic_b_craft_gamble_" + index, 30L)) {
+      instantCraftBonusUntilEpochSecondByPlayer.put(
+          playerId,
+          Math.max(instantCraftBonusUntilEpochSecondByPlayer.getOrDefault(playerId, 0L), nowEpochSecond + 20L)
+      );
+    }
+  }
+
+  private void applyGenericCursePeriodicFallback(
+      Player player,
+      PlayerRoundData data,
+      ActiveSeasonEffect effect,
+      EffectGimmickProfile profile,
+      int index,
+      int tier,
+      long nowEpochSecond
+  ) {
+    if (player == null || data == null || effect == null || profile == null) {
+      return;
+    }
+    UUID playerId = player.getUniqueId();
+    EnumSet<GimmickTag> tags = profile.tags() == null ? EnumSet.noneOf(GimmickTag.class) : profile.tags();
+    if (tags.isEmpty()) {
+      return;
+    }
+
+    if (tags.contains(GimmickTag.NIGHTMARE)
+        && useEffectCooldown(playerId, effect.getId(), "generic_c_nightmare_" + index, 12L)) {
+      player.addPotionEffect(new PotionEffect(PotionEffectType.DARKNESS, 60, 0, true, false, true));
+      if (tier >= 3) {
+        player.addPotionEffect(new PotionEffect(PotionEffectType.NAUSEA, 40, 0, true, false, true));
+      }
+    }
+    if (tags.contains(GimmickTag.STALKER_PRESSURE)
+        && useEffectCooldown(playerId, effect.getId(), "generic_c_stalker_" + index, 14L)) {
+      player.sendActionBar(ChatColor.DARK_RED + "추격자 압박: 주변 기척이 뒤틀립니다");
+      if (tier >= 3 && hasNearbyHostileEntity(player, 18.0D)) {
+        player.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 40, 0, true, false, true));
+      }
+    }
+    if (tags.contains(GimmickTag.BORDER_PRESSURE)
+        && isOutsideCurrentBorder(player.getLocation())
+        && useEffectCooldown(playerId, effect.getId(), "generic_c_border_" + index, 4L)) {
+      player.addPotionEffect(new PotionEffect(PotionEffectType.WITHER, 40, 0, true, false, true));
+    }
+    if (tags.contains(GimmickTag.HOTBAR_MANIPULATION)
+        && useEffectCooldown(playerId, effect.getId(), "generic_c_hotbar_" + index, 45L)) {
+      executeHotbarCycle(player, tier);
+    }
+    if (tags.contains(GimmickTag.SLOT_LOCK)
+        && useEffectCooldown(playerId, effect.getId(), "generic_c_slot_lock_" + index, 35L)) {
+      lockRandomHotbarSlots(playerId, tier >= 3 ? 2 : 1, 6 + tier);
+    }
+    if (tags.contains(GimmickTag.TOOL_BAN)
+        && useEffectCooldown(playerId, effect.getId(), "generic_c_tool_ban_" + index, 60L)) {
+      applyToolBanByTier(playerId, tier);
+    }
+    if (tags.contains(GimmickTag.SCORE_TRADE)
+        && useEffectCooldown(playerId, effect.getId(), "generic_c_score_trade_" + index, 6L)) {
+      adjustPlayerScore(playerId, data, -Math.max(1L, tier), false);
+    }
+    if (tags.contains(GimmickTag.HUNGER_EXCHANGE)
+        && player.getFoodLevel() <= 6
+        && useEffectCooldown(playerId, effect.getId(), "generic_c_hunger_exchange_" + index, 3L)) {
+      player.damage(0.5D + (tier * 0.1D), player);
+    }
+    if (tags.contains(GimmickTag.AURA_SHIFT)
+        && useEffectCooldown(playerId, effect.getId(), "generic_c_aura_shift_" + index, 10L)
+        && hasNearbyAuraMob(player, 12.0D + (tier * 2.0D))) {
+      player.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 60, 0, true, false, true));
+    }
+    if (tags.contains(GimmickTag.BUILD_DECAY)
+        && useEffectCooldown(playerId, effect.getId(), "generic_c_build_decay_" + index, 12L)) {
+      player.addPotionEffect(new PotionEffect(PotionEffectType.MINING_FATIGUE, 60, 0, true, false, true));
+    }
+    if (tags.contains(GimmickTag.POTION_MUTATION)
+        && hasAnyBeneficialPotionEffect(player)
+        && useEffectCooldown(playerId, effect.getId(), "generic_c_potion_mutation_" + index, 10L)) {
+      applyRandomNegativeEffect(player, 60, tier >= 3 ? 1 : 0);
+    }
+    if (tags.contains(GimmickTag.SCANNER)
+        && useEffectCooldown(playerId, effect.getId(), "generic_c_scanner_noise_" + index, 16L)) {
+      sendScannerHintByTier(player, Math.max(1, 5 - tier), false);
+    }
+    if (tags.contains(GimmickTag.TRADEOFF_DEFENSE)
+        && useEffectCooldown(playerId, effect.getId(), "generic_c_tradeoff_" + index, 14L)) {
+      player.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 40, 0, true, true, true));
+      if (tier >= 3) {
+        player.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 40, 0, true, false, true));
+      }
+    }
+  }
+
+  private void applyGenericHybridPeriodicFallback(
+      Player player,
+      PlayerRoundData data,
+      ActiveSeasonEffect effect,
+      EffectGimmickProfile profile,
+      int index,
+      int tier,
+      long nowEpochSecond
+  ) {
+    if (player == null || data == null || effect == null || profile == null) {
+      return;
+    }
+    UUID playerId = player.getUniqueId();
+    EnumSet<GimmickTag> tags = profile.tags() == null ? EnumSet.noneOf(GimmickTag.class) : profile.tags();
+    if (tags.isEmpty()) {
+      return;
+    }
+
+    if (tags.contains(GimmickTag.AOE_COMBAT)
+        && useEffectCooldown(playerId, effect.getId(), "generic_x_aoe_" + index, 14L)) {
+      executeHybridRepulsePulse(player, tier);
+    }
+    if (tags.contains(GimmickTag.SCORE_TRADE)
+        && useEffectCooldown(playerId, effect.getId(), "generic_x_score_trade_" + index, 60L)) {
+      processScoreInvestmentCycle(player, data, tier, nowEpochSecond);
+    }
+    if (tags.contains(GimmickTag.SCANNER)
+        && useEffectCooldown(playerId, effect.getId(), "generic_x_scanner_" + index, 18L)) {
+      sendScannerHintByTier(player, tier, true);
+    }
+  }
+
+  private boolean hasNearbyAuraMob(Player player, double radius) {
+    if (player == null || radius <= 0.0D) {
+      return false;
+    }
+    for (Entity entity : player.getNearbyEntities(radius, radius, radius)) {
+      if (isAuraInfusedMob(entity)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private void highlightNearbyAuraMobs(Player player, double radius, int glowingTicks) {
+    if (player == null || radius <= 0.0D || glowingTicks <= 0) {
+      return;
+    }
+    for (Entity entity : player.getNearbyEntities(radius, radius, radius)) {
+      if (!(entity instanceof Monster monster) || !isAuraInfusedMob(monster)) {
+        continue;
+      }
+      monster.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, glowingTicks, 0, true, true, true));
     }
   }
 
@@ -6310,7 +6512,156 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     if (tryActivateBlessingB035InstantCraftWorkbench(event, player, data, mainHand)) {
       return true;
     }
-    return tryActivateBlessingB039AuraCommand(event, player, data, heldToken, heldMode, nowEpochSecond);
+    if (tryActivateBlessingB039AuraCommand(event, player, data, heldToken, heldMode, nowEpochSecond)) {
+      return true;
+    }
+    return tryActivateGenericEffect80Active(event, player, data, heldToken, heldMode, nowEpochSecond);
+  }
+
+  private boolean tryActivateGenericEffect80Active(
+      PlayerInteractEvent event,
+      Player player,
+      PlayerRoundData data,
+      AbilityToken heldToken,
+      AbilityMode heldMode,
+      long nowEpochSecond
+  ) {
+    if (event == null || player == null || data == null) {
+      return false;
+    }
+    List<ActiveSeasonEffect> activeEffects = collectAllActiveEffects(data);
+    if (activeEffects.isEmpty()) {
+      return false;
+    }
+
+    for (ActiveSeasonEffect effect : activeEffects) {
+      if (effect == null || effect.getId() == null || effect.getId().isBlank()) {
+        continue;
+      }
+      String effectId = normalizeEffectId(effect.getId());
+      if (isSpecificActiveHandledEffect(effectId)) {
+        continue;
+      }
+      EffectGimmickProfile profile = effectGimmicksById.get(effectId);
+      if (profile == null || !profile.hasActiveTrigger()) {
+        continue;
+      }
+      if (profile.kind() != EffectKind.BLESSING) {
+        continue;
+      }
+      if (profile.token() != null && profile.token() != AbilityToken.NONE && profile.token() != heldToken) {
+        continue;
+      }
+      if (profile.mode() != null && profile.mode() != heldMode) {
+        continue;
+      }
+
+      long cooldownSeconds = scaledBModCooldownSeconds(effectId, Math.max(1, profile.baseCooldownSeconds()));
+      if (!useEffectCooldown(player.getUniqueId(), effectId, "generic_active_cast", cooldownSeconds)) {
+        continue;
+      }
+
+      int tier = boostedBModTier(effectId, effect.getTier());
+      boolean activated = applyGenericActiveGimmickByTags(player, data, effectId, profile, tier, nowEpochSecond);
+      if (!activated) {
+        continue;
+      }
+      event.setCancelled(true);
+      emitBModProcFeedback(player, tier, false);
+      return true;
+    }
+
+    return false;
+  }
+
+  private boolean isSpecificActiveHandledEffect(String effectId) {
+    if (effectId == null || effectId.isBlank()) {
+      return false;
+    }
+    return effectId.equals("B-009")
+        || effectId.equals("B-010")
+        || effectId.equals("B-035")
+        || effectId.equals("B-036")
+        || effectId.equals("B-039");
+  }
+
+  private boolean applyGenericActiveGimmickByTags(
+      Player player,
+      PlayerRoundData data,
+      String effectId,
+      EffectGimmickProfile profile,
+      int tier,
+      long nowEpochSecond
+  ) {
+    if (player == null || data == null || profile == null) {
+      return false;
+    }
+    EnumSet<GimmickTag> tags = profile.tags() == null ? EnumSet.noneOf(GimmickTag.class) : profile.tags();
+    boolean activated = false;
+
+    if (tags.contains(GimmickTag.TELEPORT)) {
+      double distance = switch (Math.max(1, Math.min(4, tier))) {
+        case 1 -> 10.0D;
+        case 2 -> 14.0D;
+        case 3 -> 18.0D;
+        default -> 22.0D;
+      };
+      teleportForwardSafely(player, distance, 5);
+      activated = true;
+    }
+    if (tags.contains(GimmickTag.DECOY)) {
+      spawnOrRefreshDecoy(player, tier);
+      activated = true;
+    }
+    if (tags.contains(GimmickTag.SCANNER)) {
+      sendScannerHintByTier(player, tier, true);
+      activated = true;
+    }
+    if (tags.contains(GimmickTag.AOE_COMBAT)) {
+      executeHybridRepulsePulse(player, tier);
+      activated = true;
+    }
+    if (tags.contains(GimmickTag.SCORE_TRADE)) {
+      processScoreInvestmentCycle(player, data, tier, nowEpochSecond);
+      activated = true;
+    }
+    if (tags.contains(GimmickTag.PROJECTILE_CONTROL)) {
+      projectileAlignUntilEpochSecondByPlayer.put(
+          player.getUniqueId(),
+          Math.max(projectileAlignUntilEpochSecondByPlayer.getOrDefault(player.getUniqueId(), 0L), nowEpochSecond + 5L)
+      );
+      projectileReflectUntilEpochSecondByPlayer.put(
+          player.getUniqueId(),
+          Math.max(projectileReflectUntilEpochSecondByPlayer.getOrDefault(player.getUniqueId(), 0L), nowEpochSecond + 3L)
+      );
+      activated = true;
+    }
+    if (tags.contains(GimmickTag.AURA_SHIFT)) {
+      long duration = tier >= 4 ? 30L : 20L;
+      auraInversionUntilEpochSecondByPlayer.put(
+          player.getUniqueId(),
+          Math.max(auraInversionUntilEpochSecondByPlayer.getOrDefault(player.getUniqueId(), 0L), nowEpochSecond + duration)
+      );
+      activated = true;
+    }
+    if (!activated && tags.contains(GimmickTag.BORDER_PRESSURE)) {
+      if (isOutsideCurrentBorder(player.getLocation())) {
+        player.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, 100, 0, true, false, true));
+      } else {
+        player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 100, 0, true, false, true));
+      }
+      activated = true;
+    }
+    if (!activated && tags.contains(GimmickTag.TRADEOFF_DEFENSE)) {
+      player.setAbsorptionAmount(Math.max(player.getAbsorptionAmount(), 4.0D + (tier * 2.0D)));
+      activated = true;
+    }
+    if (!activated) {
+      // Last-resort generic active buff so active-trigger cards always produce visible behavior.
+      player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 80, 0, true, false, true));
+      activated = true;
+    }
+    return activated;
   }
 
   private boolean tryActivateBlessingB009Blink(
@@ -14386,6 +14737,56 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
       return;
     }
     tickCardEngineSubsystem(subsystemKey);
+  }
+
+  public String getCardEngineImplementationSummary() {
+    int blessingCount = blessingEffectsCatalog == null ? 0 : blessingEffectsCatalog.size();
+    int curseCount = curseEffectsCatalog == null ? 0 : curseEffectsCatalog.size();
+    int total = blessingCount + curseCount;
+    int withRuntime = 0;
+    int withGimmickProfile = 0;
+    int withActiveTrigger = 0;
+
+    if (blessingEffectsCatalog != null) {
+      for (EffectDefinition definition : blessingEffectsCatalog) {
+        if (definition == null || definition.id() == null) {
+          continue;
+        }
+        if (definition.runtimeProfile() != null) {
+          withRuntime++;
+        }
+        EffectGimmickProfile profile = effectGimmicksById.get(normalizeEffectId(definition.id()));
+        if (profile != null) {
+          withGimmickProfile++;
+          if (profile.hasActiveTrigger()) {
+            withActiveTrigger++;
+          }
+        }
+      }
+    }
+    if (curseEffectsCatalog != null) {
+      for (EffectDefinition definition : curseEffectsCatalog) {
+        if (definition == null || definition.id() == null) {
+          continue;
+        }
+        if (definition.runtimeProfile() != null) {
+          withRuntime++;
+        }
+        EffectGimmickProfile profile = effectGimmicksById.get(normalizeEffectId(definition.id()));
+        if (profile != null) {
+          withGimmickProfile++;
+          if (profile.hasActiveTrigger()) {
+            withActiveTrigger++;
+          }
+        }
+      }
+    }
+
+    return "catalog_total=" + total
+        + ", runtime_profiles=" + withRuntime
+        + ", gimmick_profiles=" + withGimmickProfile
+        + ", active_triggers=" + withActiveTrigger
+        + ", generic_fallback=enabled";
   }
 
   private void tick() {

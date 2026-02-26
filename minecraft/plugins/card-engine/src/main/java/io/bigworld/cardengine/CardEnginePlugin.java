@@ -64,6 +64,10 @@ public final class CardEnginePlugin extends JavaPlugin implements CommandExecuto
         "CardEngine enabled. delegate=" + delegateEnabled()
             + ", mode=" + delegateMode()
             + ", target=" + delegateTargetPluginName());
+    String summary = fetchTargetImplementationSummary();
+    if (summary != null && !summary.isBlank()) {
+      getLogger().info("CardEngine target summary: " + summary);
+    }
   }
 
   @Override
@@ -275,6 +279,7 @@ public final class CardEnginePlugin extends JavaPlugin implements CommandExecuto
 
     Plugin target = Bukkit.getPluginManager().getPlugin(delegateTargetPluginName());
     boolean ready = target != null && target.isEnabled();
+    String summary = fetchTargetImplementationSummary();
     sender.sendMessage(
         "[CardEngine] delegate=" + delegateEnabled()
             + ", mode=" + delegateMode()
@@ -282,8 +287,23 @@ public final class CardEnginePlugin extends JavaPlugin implements CommandExecuto
             + ", target_ready=" + ready
             + ", interval_ticks=" + delegateIntervalTicks()
             + ", split_supported=" + splitModeSupportedByTarget
-            + ", split_schedule=" + splitIntervals);
+            + ", split_schedule=" + splitIntervals
+            + (summary == null || summary.isBlank() ? "" : ", target_summary={" + summary + "}"));
     return true;
+  }
+
+  private String fetchTargetImplementationSummary() {
+    DelegateHooks hooks = resolveHooks();
+    if (hooks == null) {
+      return null;
+    }
+    try {
+      Method summaryMethod = hooks.target.getClass().getMethod("getCardEngineImplementationSummary");
+      Object value = summaryMethod.invoke(hooks.target);
+      return value == null ? null : String.valueOf(value);
+    } catch (ReflectiveOperationException ignored) {
+      return null;
+    }
   }
 
   private boolean delegateEnabled() {

@@ -30,3 +30,10 @@
 2. 공유 상태 계약(API 또는 DB 스키마) 확정
 3. CardDraw는 카드 상태 write-only, CardEngine은 runtime apply-only로 분리
 4. season-manager 코드 폴더는 info-only로 고정
+
+## 2차 보강(현재 반영)
+- CardDraw에 `generic active/periodic fallback` 추가
+  - 개별 핸들러가 없는 카드도 `GimmickTag` 기반으로 최소 1개 이상의 기믹 동작이 실행되도록 보강
+  - 기존 개별 핸들러(B-009/B-010/B-035/B-036/B-039 등)는 우선 유지
+- CardEngine 상태 커맨드에서 CardDraw 구현 요약(`getCardEngineImplementationSummary`) 조회 지원
+  - 카탈로그/런타임/기믹/액티브 트리거 개수 확인 가능
