@@ -34,3 +34,6 @@
 
 ## target (this repository)
 - `resource-pack=https://raw.githubusercontent.com/yokshire/game_server_plugin_management/main/minecraft/resourcepacks/season_1/yg_resource_pack_12111.zip`
+
+## target (cdn mirror, recommended)
+- `resource-pack=https://cdn.jsdelivr.net/gh/yokshire/game_server_plugin_management@main/minecraft/resourcepacks/season_1/yg_resource_pack_12111.zip`
