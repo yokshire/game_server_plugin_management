@@ -1,2 +1,4 @@
 # game_server_plugin_management
-private repo to manage server element
+
+Monorepo layout:
+- `minecraft/plugins/season-manager`: SeasonManager plugin source and build artifacts
