@@ -15,6 +15,10 @@ commands:
     description: Open season slot overview
     usage: /slot [player]
     permission: seasonmanager.slot.use
+  perk:
+    description: Open season perk overview
+    usage: /perk [player]
+    permission: seasonmanager.slot.use
   life:
     description: Manage per-player life and OUT status
     usage: /life

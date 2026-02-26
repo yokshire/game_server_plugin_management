@@ -57,6 +57,14 @@ score:
     assist_total_points: 5000
     final_hit_bonus: 1000
     first_egg_bonus: 3000
+  hud:
+    enabled: true
+    actionbar:
+      enabled: true
+      refresh_seconds: 8
+      show_when_no_change: true
+  persistence:
+    db_min_interval_seconds: 5
 
 slots:
   enabled: true
@@ -74,6 +82,7 @@ slots:
 
 cards:
   enabled: true
+  effect_logic_enabled: false
   states:
     - HARDCORE
     - CLIMAX
@@ -88,7 +97,7 @@ cards:
   catalog:
     file: ender_shadow_s1.yml
     auto_create: true
-    sync_from_resource: true
+    sync_from_resource: false
     append_files: []
     patch_dir: patches
     patch_auto_discover: true
@@ -117,13 +126,13 @@ cards:
   upgrade_overflow_bonus_points: 100
   upgrade_tier_bias_base: 5.0
   score_multiplier:
-    enabled: true
+    enabled: false
     blessing_per_stack: 0.03
     curse_per_stack: 0.06
     min: 1.0
     max: 3.0
   runtime_effects:
-    enabled: true
+    enabled: false
     interval_seconds: 1
     refresh_duration_seconds: 3
     score_decay_interval_seconds: 60
@@ -245,7 +254,7 @@ border:
   radius:
     start: 6000.0
     end: 300.0
-  shrink_seconds: 86400
+  shrink_seconds: 2160000
   wither:
     step_seconds: 30
     max_level: 20

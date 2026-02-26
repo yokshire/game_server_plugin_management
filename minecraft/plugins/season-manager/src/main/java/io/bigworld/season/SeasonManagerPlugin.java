@@ -121,6 +121,7 @@ import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Vector;
 
+@SuppressWarnings("deprecation")
 public final class SeasonManagerPlugin extends JavaPlugin implements Listener, CommandExecutor, TabCompleter {
   private static final String ENDER_AURA_TICK_METADATA = "seasonmanager_ender_aura_tick";
   private static final String ENDER_AURA_TAG = "seasonmanager_ender_aura";
@@ -143,6 +144,9 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
   private static final int SLOT_GUI_RESIDUAL_FILTER_EXPIRES_SOON = 2;
   private static final int SLOT_GUI_RESIDUAL_FILTER_MAX = SLOT_GUI_RESIDUAL_FILTER_EXPIRES_SOON;
   private static final int SLOT_GUI_RESIDUAL_EXPIRES_SOON_DAYS = 3;
+  private static final int[] SLOT_GUI_BLESSING_DETAIL_BLOCK_STARTS = {9, 18};
+  private static final int[] SLOT_GUI_CURSE_DETAIL_BLOCK_STARTS = {27, 36};
+  private static final int[] SLOT_GUI_DETAIL_ROW_INFO_SLOTS = {14, 23, 32, 41};
   private static final Pattern DETAIL_ABSOLUTE_TIER_PATTERN = Pattern.compile(
       "^(?<label>.+?):\\s*T1\\s*(?<t1>[+-]?\\d+(?:\\.\\d+)?)%,\\s*"
           + "T2\\s*(?<t2>[+-]?\\d+(?:\\.\\d+)?)%,\\s*"
@@ -173,6 +177,15 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
   private static final Pattern EFFECT80_ID_PATTERN = Pattern.compile("^(?<group>[BCX])-(?<index>\\d{3})(?:-[BC])?$");
   private static final Pattern NUMERIC_POOL_ID_PATTERN = Pattern.compile("^(?<group>[BC])-(?<index>\\d{3})$");
   private static final Pattern EFFECT80_COOLDOWN_PATTERN = Pattern.compile("(?<!\\d)(\\d{1,4})s");
+  private static final Pattern DETAIL_SLASH_SERIES_PATTERN = Pattern.compile(
+      "[+-]?\\d+(?:\\.\\d+)?(?:[%\\p{L}]+)?(?:/[+-]?\\d+(?:\\.\\d+)?(?:[%\\p{L}]+)?)+"
+  );
+  private static final Pattern DETAIL_VALUE_WITH_UNIT_PATTERN = Pattern.compile(
+      "(?<num>[+-]?\\d+(?:\\.\\d+)?)(?<unit>[%\\p{L}]+)?"
+  );
+  private static final Pattern SPECIAL_TIER_SECTION_PATTERN = Pattern.compile(
+      "T(?<tier>[2-6])(?:\\([^)]*\\))?\\s*:\\s*(?<text>[^|]+)"
+  );
   private static final long RHYTHM_COMBO_WINDOW_MILLIS = 2000L;
   private static final int RHYTHM_COMBO_MAX_STACKS = 5;
   private static final double BLESSING_POOL_AGGRESSIVE_SCALE = 1.00D;
@@ -363,6 +376,8 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
   private final Map<UUID, Long> rhythmComboExpireEpochMilliByPlayer = new HashMap<>();
   private final Map<String, Location> strongholdLocateCacheByWorld = new HashMap<>();
   private final Map<String, Long> strongholdLocateCacheExpireEpochSecondByWorld = new HashMap<>();
+  private final Map<UUID, Long> pendingScoreHudDeltaByPlayer = new HashMap<>();
+  private final Map<UUID, Long> lastScoreHudEpochSecondByPlayer = new HashMap<>();
 
   private long roundId = 1L;
   private long roundStartedEpochSecond = 0L;
@@ -370,6 +385,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
   private SeasonState stateBeforeResetPending = SeasonState.HARDCORE;
   private long resetPendingUntilEpochSecond = 0L;
   private long lastAutoSaveEpochSecond = 0L;
+  private long nextScorePersistenceEpochSecond = 0L;
   private long borderShrinkStartedEpochSecond = 0L;
   private long freePlayStartedEpochSecond = 0L;
   private long freePlayEscapeDeadlineEpochSecond = 0L;
@@ -431,6 +447,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     if (isSeasonGameplayServer()) {
       reloadEffectCatalog();
       loadState();
+      stripCardEffectDataIfDisabled();
       if (roundStartedEpochSecond <= 0L) {
         roundStartedEpochSecond = nowEpochSecond();
       }
@@ -460,6 +477,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     if (isSeasonGameplayServer()) {
       registerCommand("season");
       registerCommand("slot");
+      registerCommand("perk");
       registerCommand("life");
       registerCommand("score");
       registerCommand("border");
@@ -522,6 +540,8 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     if (isSeasonGameplayServer()) {
       saveState();
     }
+    pendingScoreHudDeltaByPlayer.clear();
+    lastScoreHudEpochSecondByPlayer.clear();
   }
 
   private void applySeasonProfileOverrides() {
@@ -794,7 +814,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     if (player == null || !player.isOnline() || data == null) {
       return;
     }
-    if (!cardsEnabled() || !cardsOneTimeRollEnabled()) {
+    if (!cardsEnabled() || !cardsOneTimeRollEnabled() || !cardsEffectLogicEnabled()) {
       return;
     }
     if (data.isInitialCardRollCompleted()) {
@@ -1111,6 +1131,8 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     projectileAbsorbReflectUntilEpochSecondByPlayer.remove(uuid);
     lastDamagerLocationByPlayer.remove(uuid);
     shieldCoreBreakBoostUntilEpochSecondByPlayer.remove(uuid);
+    pendingScoreHudDeltaByPlayer.remove(uuid);
+    lastScoreHudEpochSecondByPlayer.remove(uuid);
     rewindGuardUntilEpochSecondByPlayer.remove(uuid);
     rewindGuardRatioByPlayer.remove(uuid);
     gravityLadderActiveUntilEpochMilliByPlayer.remove(uuid);
@@ -1466,6 +1488,9 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     if (!cardsEnabled() || !cardsEnabledInCurrentState()) {
       return "현재 라운드 상태에서는 슬롯 리롤이 비활성화되어 있습니다.";
     }
+    if (!cardsEffectLogicEnabled()) {
+      return "카드 효과가 임시 비활성화되어 있습니다.";
+    }
     if (!cardsRerollEnabled() && !initialSetupMode) {
       return "슬롯 리롤 기능이 비활성화되어 있습니다.";
     }
@@ -1609,6 +1634,9 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     }
     if (!cardsEnabled() || !cardsEnabledInCurrentState()) {
       return "현재 라운드 상태에서는 티어 강화가 비활성화되어 있습니다.";
+    }
+    if (!cardsEffectLogicEnabled()) {
+      return "카드 효과가 임시 비활성화되어 있습니다.";
     }
     if (!cardsTierUpgradeEnabled()) {
       return "티어 강화 기능이 비활성화되어 있습니다.";
@@ -2113,7 +2141,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
         true
     );
 
-    if (tier >= 3) {
+    if (tier >= 2) {
       int witherAmplifier = tier >= 4 ? 2 : 1; // T3 Lv2, T4 Lv3
       victim.addPotionEffect(
           new PotionEffect(PotionEffectType.WITHER, durationTicks, witherAmplifier, true, false, true),
@@ -3162,7 +3190,10 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     if (detailKo != null) {
       for (String line : detailKo) {
         if (line != null && !line.isBlank()) {
-          normalizedDetailKo.add(line.trim());
+          String normalizedLine = normalizeRuntimeDetailLine(line);
+          if (!normalizedLine.isBlank()) {
+            normalizedDetailKo.add(normalizedLine);
+          }
         }
       }
     }
@@ -3175,6 +3206,18 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
         scoreMultiplierPerTier,
         List.copyOf(normalizedDetailKo)
     );
+  }
+
+  private String normalizeRuntimeDetailLine(String line) {
+    if (line == null || line.isBlank()) {
+      return "";
+    }
+    String normalized = line.trim();
+    normalized = normalized.replace("카드 기믹", "특수 효과");
+    if (normalized.startsWith("기믹:")) {
+      normalized = "특수 효과:" + normalized.substring("기믹:".length());
+    }
+    return normalized.trim();
   }
 
   private RuntimeModifierRule parseRuntimeModifierRule(Map<?, ?> raw) {
@@ -4408,7 +4451,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
   }
 
   private List<ActiveSeasonEffect> collectAllActiveEffects(PlayerRoundData data) {
-    if (data == null) {
+    if (data == null || !cardsEffectLogicEnabled()) {
       return List.of();
     }
     List<ActiveSeasonEffect> all = new ArrayList<>();
@@ -4871,7 +4914,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
           };
           ensureShieldCoreAbsorptionCapacity(player, tier);
           player.setAbsorptionAmount(refillAbsorption);
-          if (tier >= 3) {
+          if (tier >= 2) {
             clearSingleNegativeEffect(player);
           }
           emitBModProcFeedback(player, tier, false);
@@ -5019,7 +5062,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
             case 3 -> 30;
             default -> 35;
           };
-          lockRandomHotbarSlots(uuid, tier >= 3 ? 2 : 1, durationSeconds);
+          lockRandomHotbarSlots(uuid, tier >= 2 ? 2 : 1, durationSeconds);
         }
       }
       case 6 -> {
@@ -5044,7 +5087,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
           toolBanPendingEpochSecondByPlayer.remove(uuid);
           toolBanPendingTierByPlayer.remove(uuid);
         }
-        if (tier >= 3 && bannedToolUntilEpochSecond.getOrDefault(uuid, 0L) > nowEpochSecond) {
+        if (tier >= 2 && bannedToolUntilEpochSecond.getOrDefault(uuid, 0L) > nowEpochSecond) {
           player.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 40, 0, true, false, true));
           player.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 40, 0, true, false, true));
         }
@@ -5083,7 +5126,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
           if (tier >= 2) {
             player.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 80, 0, true, false, true));
           }
-          if (tier >= 3) {
+          if (tier >= 2) {
             player.addPotionEffect(new PotionEffect(PotionEffectType.MINING_FATIGUE, 80, 0, true, false, true));
           }
           if (tier >= 4) {
@@ -5100,7 +5143,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
               player.sendActionBar(ChatColor.DARK_PURPLE + "야간 악몽: 뒤에서 시선이 느껴진다");
               player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_STARE, 0.8F, 0.75F);
             }
-            if (tier >= 3) {
+            if (tier >= 2) {
               cursedSprintLockUntilEpochSecondByPlayer.put(uuid, nowEpochSecond + 2L);
               player.setSprinting(false);
             }
@@ -5145,7 +5188,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
           soundExposureUntilEpochSecondByPlayer.put(uuid, nowEpochSecond + durationSeconds);
           soundExposureTierByPlayer.put(uuid, tier);
           player.getWorld().playSound(player.getLocation(), Sound.ENTITY_WARDEN_SONIC_BOOM, tier >= 4 ? 1.35F : 0.85F, tier >= 4 ? 0.70F : 0.92F);
-          if (tier >= 3) {
+          if (tier >= 2) {
             player.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 60, 0, true, true, true));
           }
         }
@@ -5178,7 +5221,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
           default -> 60;
         };
         if (useEffectCooldown(uuid, effect.getId(), "memory_wipe", interval)) {
-          int removeCount = tier >= 3 ? 2 : 1;
+          int removeCount = tier >= 2 ? 2 : 1;
           removePositivePotionEffects(player, removeCount);
           purgeCustomPositiveStates(uuid, removeCount);
           if (tier >= 4) {
@@ -5257,7 +5300,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
           if (tier >= 2) {
             collectNearbyItemDrops(player, Math.min(3.0D, 1.5D + (tier * 0.5D)));
           }
-          if (tier >= 3) {
+          if (tier >= 2) {
             player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 0.95F, 0.7F);
             provokeNearbyMonsters(player, tier);
           }
@@ -5288,13 +5331,13 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
           }
         } else if (frenzyFatigueUntilEpochSecondByPlayer.getOrDefault(uuid, 0L) > nowEpochSecond) {
           int stack = Math.max(1, frenzyFatigueStacksByPlayer.getOrDefault(uuid, 1));
-          int fatigueAmp = tier >= 3 ? Math.min(2, stack - 1) : (tier >= 2 ? 1 : 0);
+          int fatigueAmp = tier >= 2 ? Math.min(2, stack - 1) : 0;
           player.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 40, fatigueAmp, true, false, true));
           player.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 40, fatigueAmp, true, false, true));
           if (tier >= 4) {
             player.addPotionEffect(new PotionEffect(PotionEffectType.HUNGER, 40, Math.min(1, fatigueAmp), true, false, true));
           }
-        } else if (tier >= 3
+        } else if (tier >= 2
             && frenzyFatigueStacksByPlayer.getOrDefault(uuid, 0) > 0
             && useEffectCooldown(uuid, effect.getId(), "frenzy_fatigue_stack_decay", 24L)) {
           int next = Math.max(0, frenzyFatigueStacksByPlayer.getOrDefault(uuid, 0) - 1);
@@ -5332,7 +5375,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
           if (tier >= 2) {
             provokeNearbyMonsters(player, tier);
           }
-          if (tier >= 3) {
+          if (tier >= 2) {
             player.addPotionEffect(new PotionEffect(PotionEffectType.HERO_OF_THE_VILLAGE, 60, 0, true, false, true));
           }
           if (tier >= 4) {
@@ -5378,7 +5421,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
           player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_STARE, 0.45F, 1.45F);
           player.getWorld().spawnParticle(Particle.SMOKE, player.getEyeLocation(), 10 + (tier * 2), 0.25D, 0.18D, 0.25D, 0.01D);
         }
-        if (tier >= 3
+        if (tier >= 2
             && (player.getWorld().getEnvironment() == World.Environment.NETHER
             || player.getWorld().getEnvironment() == World.Environment.THE_END)
             && useEffectCooldown(uuid, effect.getId(), "nightmare_darkness_pulse", 70L)) {
@@ -5427,7 +5470,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
           if (converted > 0) {
             player.getWorld().playSound(player.getLocation(), Sound.BLOCK_NETHER_GOLD_ORE_BREAK, 0.55F, 1.10F);
           }
-          if (tier >= 3) {
+          if (tier >= 2) {
             player.addPotionEffect(new PotionEffect(PotionEffectType.NAUSEA, 80, 0, true, false, true));
             player.addPotionEffect(new PotionEffect(PotionEffectType.MINING_FATIGUE, 80, 0, true, false, true));
           }
@@ -5457,7 +5500,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
           if (selectedGroup.equals(currentGroup)) {
             player.addPotionEffect(new PotionEffect(PotionEffectType.STRENGTH, 40, Math.max(0, tier - 2), true, false, true));
           } else if (!currentGroup.isBlank()) {
-            player.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 40, tier >= 3 ? 1 : 0, true, false, true));
+            player.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 40, tier >= 2 ? 1 : 0, true, false, true));
           }
         }
         if (tier >= 4 && useEffectCooldown(uuid, effect.getId(), "weapon_monopoly_fatigue", 8L)) {
@@ -5473,7 +5516,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
           if (tier >= 2) {
             player.getWorld().spawnParticle(Particle.SMOKE, loc, 10 + (tier * 2), 0.35D, 0.45D, 0.35D, 0.01D);
           }
-          if (tier >= 3) {
+          if (tier >= 2) {
             deflectNearbyProjectilesSlight(player, 2.5D + (tier * 0.7D));
           }
         } else {
@@ -5487,7 +5530,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
         if (silenceVowSilentPlayers.add(uuid)) {
           player.setSilent(true);
         }
-        if (tier >= 3 && !isPlayerInRecentCombat(uuid, 8L) && player.isSneaking()) {
+        if (tier >= 2 && !isPlayerInRecentCombat(uuid, 8L) && player.isSneaking()) {
           player.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, 40, 0, true, false, true));
           healPlayer(player, 0.4D);
         }
@@ -5517,7 +5560,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
               living.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 30, 0, true, false, true));
             }
           }
-          if (fieldTier >= 3) {
+          if (fieldTier >= 2) {
             for (Entity entity : player.getNearbyEntities(radius, radius, radius)) {
               if (!(entity instanceof Projectile projectile) || !projectile.isValid()) {
                 continue;
@@ -6483,7 +6526,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
       return false;
     }
     int tier = clampTier(effect.getTier());
-    if (tier < 3) {
+    if (tier < 2) {
       return false;
     }
     long cooldownSeconds = tier >= 4 ? 60L : 120L;
@@ -6632,7 +6675,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
         ? player.getMaxHealth()
         : player.getAttribute(Attribute.MAX_HEALTH).getValue();
     player.setHealth(Math.max(1.0D, Math.min(maxHealth, chosen.health())));
-    if (tier >= 3) {
+    if (tier >= 2) {
       player.setFoodLevel(Math.max(0, Math.min(20, chosen.foodLevel())));
       player.setSaturation(Math.max(0.0F, chosen.saturation()));
     }
@@ -6960,7 +7003,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
         && event.getClickedBlock() != null) {
       Location anchorLocation = event.getClickedBlock().getLocation().clone().add(0.5D, 1.0D, 0.5D);
       Location previous = anchorPrimaryLocationByPlayer.put(uuid, anchorLocation);
-      if (tier >= 3 && previous != null) {
+      if (tier >= 2 && previous != null) {
         anchorSecondaryLocationByPlayer.put(uuid, previous);
       }
       player.sendActionBar(ChatColor.AQUA + "귀환 앵커가 설정되었습니다");
@@ -7255,7 +7298,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     int released = 0;
     Location lastDamager = lastDamagerLocationByPlayer.get(uuid);
     Vector homingDirection = null;
-    if (tier >= 3 && lastDamager != null && lastDamager.getWorld() == player.getWorld()) {
+    if (tier >= 2 && lastDamager != null && lastDamager.getWorld() == player.getWorld()) {
       Vector toDamager = lastDamager.toVector().subtract(player.getEyeLocation().toVector());
       if (toDamager.lengthSquared() > 0.001D) {
         homingDirection = toDamager.normalize();
@@ -7563,7 +7606,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
       bloodContractKillStreakByPlayer.remove(playerId);
     }
 
-    if (tier < 3 || (nowEpochSecond - lastKillAt) < 30L) {
+    if (tier < 2 || (nowEpochSecond - lastKillAt) < 30L) {
       return;
     }
 
@@ -7620,13 +7663,13 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
       default -> 7L;
     };
     int stacks = Math.max(0, frenzyFatigueStacksByPlayer.getOrDefault(playerId, 0));
-    if (tier >= 3) {
+    if (tier >= 2) {
       stacks = Math.min(4, stacks + 1);
     } else {
       stacks = Math.max(1, stacks);
     }
     frenzyFatigueStacksByPlayer.put(playerId, stacks);
-    long fatigueUntil = nowEpochSecond + fatigueDuration + Math.max(0, (tier >= 3 ? stacks - 1 : 0));
+    long fatigueUntil = nowEpochSecond + fatigueDuration + Math.max(0, (tier >= 2 ? stacks - 1 : 0));
     frenzyFatigueUntilEpochSecondByPlayer.put(playerId, fatigueUntil);
     if (tier >= 4) {
       frenzyHealLockUntilEpochSecondByPlayer.put(playerId, nowEpochSecond + 5L);
@@ -7645,7 +7688,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
       return;
     }
     UUID victimId = victim.getUniqueId();
-    double heavyThreshold = tier >= 3 ? 3.5D : 4.0D;
+    double heavyThreshold = tier >= 2 ? 3.5D : 4.0D;
     if (event.getFinalDamage() >= heavyThreshold) {
       double reductionRatio = tier <= 1 ? 0.20D : 0.30D;
       double prevented = Math.max(0.0D, event.getDamage() * reductionRatio);
@@ -7654,7 +7697,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
       if (available >= scoreCost) {
         adjustPlayerScore(victimId, victimData, -scoreCost, false);
         event.setDamage(Math.max(0.2D, event.getDamage() - prevented));
-      } else if (tier >= 3) {
+      } else if (tier >= 2) {
         double backfireMultiplier = tier >= 4 ? 1.20D : 1.12D;
         event.setDamage(event.getDamage() * backfireMultiplier);
         victim.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, tier >= 4 ? 100 : 60, 0, true, false, true));
@@ -7731,7 +7774,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
       attacker.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, 20, 0, true, false, true));
       target.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, 20, 0, true, false, true));
     }
-    if (tier >= 3) {
+    if (tier >= 2) {
       target.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 40, 0, true, false, true));
       attacker.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 80, 0, true, true, true));
     }
@@ -7809,7 +7852,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     if (player == null || tier <= 0) {
       return;
     }
-    if (tier >= 3) {
+    if (tier >= 2) {
       player.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 40, 0, true, false, true));
     }
     if (tier >= 4) {
@@ -7954,7 +7997,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
       if (data != null && data.isOut()) {
         continue;
       }
-      if (tier < 3 && online.getWorld() != caster.getWorld()) {
+      if (tier < 2 && online.getWorld() != caster.getWorld()) {
         continue;
       }
       candidates.add(online);
@@ -8176,16 +8219,16 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
           default -> 1.4D;
         };
         healPlayer(player, heal);
-        if (tier >= 3) {
+        if (tier >= 2) {
           player.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, tier >= 4 ? 80 : 60, tier >= 4 ? 1 : 0, true, false, true));
         }
       }
       if (inWater) {
-        player.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, tier >= 3 ? 60 : 40, 0, true, false, true));
+        player.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, tier >= 2 ? 60 : 40, 0, true, false, true));
         if (tier >= 2) {
           player.damage(0.7D + (tier * 0.45D), player);
         }
-        if (tier >= 3) {
+        if (tier >= 2) {
           cursedSprintLockUntilEpochSecondByPlayer.put(player.getUniqueId(), nowEpochSecond() + 3L);
           player.setSprinting(false);
         }
@@ -8202,7 +8245,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
           default -> 1.7D;
         };
         healPlayer(player, heal);
-        if (tier >= 3) {
+        if (tier >= 2) {
           healPlayer(player, 0.4D);
           player.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 60, 0, true, false, true));
         }
@@ -8542,7 +8585,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     if (player == null || data == null || effect == null || tier <= 0) {
       return;
     }
-    double auraRadius = enderAuraRadius() + (tier >= 3 ? (3.0D + tier) : 0.0D);
+    double auraRadius = enderAuraRadius() + (tier >= 2 ? (3.0D + tier) : 0.0D);
     boolean inAura = isInsideEnderAura(player, auraRadius);
     if (!inAura) {
       return;
@@ -8550,7 +8593,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     if (useEffectCooldown(player.getUniqueId(), effect.getId(), "aura_resonance_score", Math.max(4, 10 - tier))) {
       addGeneratedScore(player.getUniqueId(), 4L * tier);
     }
-    if (tier >= 3) {
+    if (tier >= 2) {
       player.addPotionEffect(new PotionEffect(PotionEffectType.HUNGER, 40, 0, true, false, true));
     }
     if (tier >= 4
@@ -8602,7 +8645,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
           continue;
         }
       }
-      if (tier >= 3 && alignUntil > now && ownShot) {
+      if (tier >= 2 && alignUntil > now && ownShot) {
         double speed = Math.max(0.6D, velocity.length());
         Vector aligned = player.getEyeLocation().getDirection().normalize().multiply(speed * (1.04D + (tier * 0.03D)));
         projectile.setVelocity(aligned);
@@ -8955,7 +8998,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
   }
 
   private int highestEffect80Tier(PlayerRoundData data, char group, int index) {
-    if (data == null || index <= 0) {
+    if (!cardsEffectLogicEnabled() || data == null || index <= 0) {
       return 0;
     }
     int best = 0;
@@ -9327,7 +9370,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
       case 3 -> 2;
       default -> 3;
     };
-    double periodicDamage = tier >= 4 ? 6.0D : (tier >= 3 ? 3.0D : 0.0D);
+    double periodicDamage = tier >= 4 ? 6.0D : (tier >= 2 ? 3.0D : 0.0D);
     long inversionUntil = auraInversionUntilEpochSecondByPlayer.getOrDefault(player.getUniqueId(), 0L);
     boolean inversionActive = inversionUntil > nowEpochSecond;
     for (Entity entity : player.getNearbyEntities(radius, radius, radius)) {
@@ -9448,7 +9491,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
           continue;
         }
         block.setType(wallMaterial, false);
-        if (tier >= 3) {
+        if (tier >= 2) {
           reinforcedBurstBlocksUntilEpochSecond.put(blockKey(block.getLocation()), reinforceUntil);
         }
       }
@@ -9819,7 +9862,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     if (player == null) {
       return;
     }
-    if (tier >= 3) {
+    if (tier >= 2) {
       player.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 60, 0, true, false, true));
     }
     if (tier >= 4) {
@@ -9953,7 +9996,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     if (player == null) {
       return;
     }
-    if (tier >= 3 && ThreadLocalRandom.current().nextBoolean()) {
+    if (tier >= 2 && ThreadLocalRandom.current().nextBoolean()) {
       rotateHotbar(player, true);
       return;
     }
@@ -10987,7 +11030,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
   }
 
   private void tickDailyCardDraw() {
-    if (!cardsEnabled() || !cardsEnabledInCurrentState()) {
+    if (!cardsEnabled() || !cardsEnabledInCurrentState() || !cardsEffectLogicEnabled()) {
       return;
     }
     if (cardsOneTimeRollEnabled()) {
@@ -11036,6 +11079,9 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
   }
 
   private void runDailyCardDraw(long day) {
+    if (!cardsEffectLogicEnabled()) {
+      return;
+    }
     int targetedPlayers = 0;
     long totalSevereBonus = 0L;
 
@@ -11111,6 +11157,9 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
   ) {
     if (data == null || slotCount <= 0) {
       return new RollOutcome(0, 0, 0, 0, 0L, "추첨 대상 슬롯이 없습니다");
+    }
+    if (!cardsEffectLogicEnabled()) {
+      return new RollOutcome(0, 0, 0, 0, 0L, "카드 효과 비활성화");
     }
     if (effectDefinitionsById.isEmpty()) {
       reloadEffectCatalog();
@@ -11193,6 +11242,11 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     Map<String, ActiveSeasonEffect> active = kind == EffectKind.BLESSING
         ? data.getBlessingEffects()
         : data.getCurseEffects();
+    if (!cardsEffectLogicEnabled()) {
+      int removed = active.size();
+      active.clear();
+      return new RollOutcome(removed, 0, 0, 0, 0L, "카드 효과 비활성화");
+    }
     List<EffectDefinition> pool = kind == EffectKind.BLESSING
         ? blessingEffectsCatalog
         : curseEffectsCatalog;
@@ -12414,7 +12468,16 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     if (sourceTier < minTier) {
       return null;
     }
-    return rule.valuePerTier() * sourceTier;
+    double scaledTier = sourceTier;
+    if (rule.scalingMode() == TierScalingMode.CARD_TIER) {
+      scaledTier = switch (Math.max(1, Math.min(4, sourceTier))) {
+        case 1 -> 1.0D;
+        case 2 -> 2.0D;
+        case 3 -> 3.6D;
+        default -> 5.2D;
+      };
+    }
+    return rule.valuePerTier() * scaledTier;
   }
 
   private double applyCatalogBalanceScaling(
@@ -12681,7 +12744,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
       World world,
       RuntimeModifierType modifierType
   ) {
-    if (points <= 0L || data == null || modifierType == null) {
+    if (!cardsEffectLogicEnabled() || points <= 0L || data == null || modifierType == null) {
       return points;
     }
     Player contextPlayer = resolveOnlinePlayerByRoundData(data);
@@ -13893,7 +13956,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     if (auraDetect != null
         && auraInversionUntilEpochSecondByPlayer.getOrDefault(killerUuid, 0L) > nowEpochSecond()) {
       int tier = clampTier(auraDetect.getTier());
-      if (tier >= 3 && isAuraInfusedMob(event.getEntity())) {
+      if (tier >= 2 && isAuraInfusedMob(event.getEntity())) {
         double activeBonusRatio = tier >= 4 ? 0.35D : 0.20D;
         points += Math.max(1L, Math.round(points * activeBonusRatio));
       }
@@ -14218,15 +14281,98 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
       return;
     }
     data.addScore(delta);
+    queueScoreHudDelta(uuid, delta);
     syncPlayerSlots(uuid, data, notifySlotUnlock);
+    maybePersistScoreChange();
   }
 
   private void setPlayerScore(UUID uuid, PlayerRoundData data, long newScore, boolean notifySlotUnlock) {
     if (data == null) {
       return;
     }
+    long previous = data.getScore();
     data.setScore(newScore);
+    queueScoreHudDelta(uuid, newScore - previous);
     syncPlayerSlots(uuid, data, notifySlotUnlock);
+    maybePersistScoreChange();
+  }
+
+  private void maybePersistScoreChange() {
+    if (!seasonStateDatabaseEnabled() || seasonStateRepository == null || !seasonStateRepository.isReady()) {
+      return;
+    }
+    long now = nowEpochSecond();
+    int minIntervalSeconds = scorePersistenceDbMinIntervalSeconds();
+    if (minIntervalSeconds <= 0) {
+      saveState();
+      return;
+    }
+    if (now < nextScorePersistenceEpochSecond) {
+      return;
+    }
+    nextScorePersistenceEpochSecond = now + minIntervalSeconds;
+    saveState();
+  }
+
+  private void queueScoreHudDelta(UUID uuid, long delta) {
+    if (!scoreHudEnabled() || uuid == null || delta == 0L) {
+      return;
+    }
+    pendingScoreHudDeltaByPlayer.merge(uuid, delta, Long::sum);
+  }
+
+  private void tickScoreHudActionBar() {
+    if (!scoreHudEnabled() || !scoreHudActionbarEnabled()) {
+      return;
+    }
+
+    long now = nowEpochSecond();
+    int refreshSeconds = scoreHudActionbarRefreshSeconds();
+    boolean showWhenNoChange = scoreHudActionbarShowWhenNoChange();
+    for (Player player : Bukkit.getOnlinePlayers()) {
+      if (player == null || !player.isOnline()) {
+        continue;
+      }
+      UUID uuid = player.getUniqueId();
+      PlayerRoundData data = players.get(uuid);
+      if (data == null) {
+        continue;
+      }
+
+      long delta = pendingScoreHudDeltaByPlayer.getOrDefault(uuid, 0L);
+      long lastSent = lastScoreHudEpochSecondByPlayer.getOrDefault(uuid, 0L);
+      boolean refreshDue = refreshSeconds > 0 && (now - lastSent) >= refreshSeconds;
+      if (delta == 0L && (!showWhenNoChange || !refreshDue)) {
+        continue;
+      }
+
+      sendScoreHudActionBar(player, data.getScore(), delta);
+      lastScoreHudEpochSecondByPlayer.put(uuid, now);
+      pendingScoreHudDeltaByPlayer.remove(uuid);
+    }
+
+    pendingScoreHudDeltaByPlayer.keySet().removeIf(playerId -> Bukkit.getPlayer(playerId) == null);
+    lastScoreHudEpochSecondByPlayer.keySet().removeIf(playerId -> Bukkit.getPlayer(playerId) == null);
+  }
+
+  private void sendScoreHudActionBar(Player player, long totalScore, long delta) {
+    if (player == null || !player.isOnline()) {
+      return;
+    }
+    String total = ChatColor.GOLD + "총 " + formatScoreAmount(totalScore);
+    if (delta > 0L) {
+      player.sendActionBar(ChatColor.GREEN + "+" + formatScoreAmount(delta) + ChatColor.DARK_GRAY + " | " + total);
+      return;
+    }
+    if (delta < 0L) {
+      player.sendActionBar(ChatColor.RED + "-" + formatScoreAmount(Math.abs(delta)) + ChatColor.DARK_GRAY + " | " + total);
+      return;
+    }
+    player.sendActionBar(total);
+  }
+
+  private String formatScoreAmount(long value) {
+    return String.format(Locale.ROOT, "%,d", value);
   }
 
   private void syncAllParticipantSlots(boolean notifySlotUnlock) {
@@ -14339,6 +14485,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     tickRuntimeScoreDecay();
     tickBorderWitherHazard();
     tickFreePlayFinalization();
+    tickScoreHudActionBar();
 
     if (state == SeasonState.RESET_PENDING && resetPendingUntilEpochSecond > 0L) {
       long remaining = resetPendingUntilEpochSecond - nowEpochSecond();
@@ -14492,6 +14639,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     }
 
     freePlayFinalized = true;
+    persistFreePlayRankingToDatabase(ranking);
 
     if (ranking.isEmpty()) {
       Bukkit.broadcastMessage("[Season] FREE_PLAY finalized: no eligible participants.");
@@ -14513,6 +14661,43 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     }
 
     saveState();
+  }
+
+  private void persistFreePlayRankingToDatabase(List<Map.Entry<UUID, PlayerRoundData>> ranking) {
+    if (!seasonStateDatabaseEnabled() || seasonStateRepository == null || !seasonStateRepository.isReady()) {
+      return;
+    }
+
+    List<SeasonStateJdbcRepository.RoundLeaderboardEntry> entries = new ArrayList<>();
+    long savedAt = nowEpochSecond();
+    int rank = 0;
+    if (ranking != null) {
+      for (Map.Entry<UUID, PlayerRoundData> entry : ranking) {
+        if (entry == null || entry.getKey() == null || entry.getValue() == null) {
+          continue;
+        }
+        rank++;
+        UUID uuid = entry.getKey();
+        PlayerRoundData data = entry.getValue();
+        long snapshot = data.getScoreSnapshot() == null ? 0L : Math.max(0L, data.getScoreSnapshot());
+        entries.add(new SeasonStateJdbcRepository.RoundLeaderboardEntry(
+            rank,
+            uuid.toString(),
+            playerDisplayName(uuid),
+            snapshot,
+            finalRankingScore(data),
+            data.isEscapedWithinWindow(),
+            data.isWinnerBonusGranted(),
+            savedAt
+        ));
+      }
+    }
+
+    try {
+      seasonStateRepository.replaceRoundLeaderboard(seasonId(), currentServerName(), roundId, entries);
+    } catch (SQLException exception) {
+      getLogger().warning("Failed to persist FREE_PLAY leaderboard to DB: " + exception.getMessage());
+    }
   }
 
   private double finalRankingScore(PlayerRoundData data) {
@@ -14878,6 +15063,79 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     }
   }
 
+  private void stripCardEffectDataIfDisabled() {
+    if (cardsEffectLogicEnabled()) {
+      return;
+    }
+
+    boolean changed = false;
+    for (PlayerRoundData data : players.values()) {
+      if (data == null) {
+        continue;
+      }
+      if (!data.getBlessingEffects().isEmpty()) {
+        data.getBlessingEffects().clear();
+        changed = true;
+      }
+      if (!data.getCurseEffects().isEmpty()) {
+        data.getCurseEffects().clear();
+        changed = true;
+      }
+      if (!data.getBlessingCardStacks().isEmpty()) {
+        data.getBlessingCardStacks().clear();
+        changed = true;
+      }
+      if (!data.getCurseCardStacks().isEmpty()) {
+        data.getCurseCardStacks().clear();
+        changed = true;
+      }
+    }
+
+    if (!silenceVowSilentPlayers.isEmpty()) {
+      Set<UUID> muted = new HashSet<>(silenceVowSilentPlayers);
+      silenceVowSilentPlayers.clear();
+      for (UUID uuid : muted) {
+        Player online = Bukkit.getPlayer(uuid);
+        if (online != null && online.isOnline()) {
+          online.setSilent(false);
+        }
+      }
+      changed = true;
+    }
+
+    if (!initialCardSetupActivePlayers.isEmpty()
+        || !temporaryInvulnerableUntilEpochSecondByPlayer.isEmpty()
+        || !slotRerollCooldownUntilEpochSecond.isEmpty()
+        || !effectCooldownUntilEpochSecond.isEmpty()
+        || !effectCooldownUntilEpochMilli.isEmpty()
+        || !noBuildUntilEpochSecond.isEmpty()
+        || !noAttackUntilEpochSecond.isEmpty()
+        || !lockedHotbarSlotUntilEpochSecond.isEmpty()
+        || !bannedToolGroupByPlayer.isEmpty()
+        || !bannedToolUntilEpochSecond.isEmpty()
+        || !toolBanPendingEpochSecondByPlayer.isEmpty()
+        || !toolBanPendingTierByPlayer.isEmpty()) {
+      changed = true;
+    }
+
+    initialCardSetupActivePlayers.clear();
+    temporaryInvulnerableUntilEpochSecondByPlayer.clear();
+    slotRerollCooldownUntilEpochSecond.clear();
+    effectCooldownUntilEpochSecond.clear();
+    effectCooldownUntilEpochMilli.clear();
+    noBuildUntilEpochSecond.clear();
+    noAttackUntilEpochSecond.clear();
+    lockedHotbarSlotUntilEpochSecond.clear();
+    bannedToolGroupByPlayer.clear();
+    bannedToolUntilEpochSecond.clear();
+    toolBanPendingEpochSecondByPlayer.clear();
+    toolBanPendingTierByPlayer.clear();
+
+    if (changed) {
+      getLogger().info("cards.effect_logic_enabled=false: cleared stored card effects/stacks.");
+    }
+  }
+
   private YamlConfiguration loadStateFromDatabaseIfAvailable() {
     if (!seasonStateDatabaseEnabled() || seasonStateRepository == null || !seasonStateRepository.isReady()) {
       return null;
@@ -15105,7 +15363,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     if ("season".equals(cmd)) {
       return onSeasonCommand(sender, args);
     }
-    if ("slot".equals(cmd)) {
+    if ("slot".equals(cmd) || "perk".equals(cmd)) {
       return onSlotCommand(sender, args);
     }
     if ("life".equals(cmd)) {
@@ -15136,7 +15394,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
       sender.sendMessage("[Season] /season state [HARDCORE|CLIMAX|FREE_PLAY|RESET_PENDING]");
       sender.sendMessage("[Season] /season round info");
       sender.sendMessage("[Season] /season slot [player]");
-      sender.sendMessage("[Season] /slot [player]");
+      sender.sendMessage("[Season] /perk [player]");
       sender.sendMessage("[Season] /season debug [on|off]");
       sender.sendMessage("[Season] /season effect give <player> <B-xxx|C-xxx> [tier]");
       sender.sendMessage("[Season] /season catalog [show|reload]");
@@ -15358,7 +15616,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     } else if (sender instanceof Player player) {
       target = player;
     } else {
-      sender.sendMessage("[Season] /slot <player> (or /season slot <player>)");
+      sender.sendMessage("[Season] /perk <player> (or /season slot <player>)");
       return true;
     }
 
@@ -15556,6 +15814,13 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     if (inventory == null || targetUuid == null || data == null) {
       return;
     }
+    List<ActiveSeasonEffect> blessingEffects = sortedActiveEffects(data.getBlessingEffects());
+    List<ActiveSeasonEffect> curseEffects = sortedActiveEffects(data.getCurseEffects());
+    int blessingDisplayCap = SLOT_GUI_BLESSING_DETAIL_BLOCK_STARTS.length;
+    int curseDisplayCap = SLOT_GUI_CURSE_DETAIL_BLOCK_STARTS.length;
+    int blessingHidden = Math.max(0, blessingEffects.size() - blessingDisplayCap);
+    int curseHidden = Math.max(0, curseEffects.size() - curseDisplayCap);
+
     inventory.setItem(0, makeGuiItem(
         Material.NAME_TAG,
         ChatColor.AQUA + "플레이어: " + ChatColor.WHITE + targetName,
@@ -15566,20 +15831,18 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     ));
     inventory.setItem(1, makeGuiItem(
         Material.LIME_STAINED_GLASS_PANE,
-        ChatColor.GREEN + "축복 슬롯",
+        ChatColor.GREEN + "축복 슬롯(좌측)",
         List.of(
-            ChatColor.GRAY.toString() + data.getBlessingSlotsUnlocked() + " / " + slotBlessingMax(),
-            ChatColor.GRAY + "활성 " + data.getActiveBlessingEffectCount()
-                + " (티어 합 " + data.getTotalBlessingEffectTier() + ")"
+            ChatColor.GRAY + "해금 " + data.getBlessingSlotsUnlocked() + " / " + slotBlessingMax(),
+            ChatColor.GRAY + "표시 최대 " + blessingDisplayCap + "개"
         )
     ));
     inventory.setItem(2, makeGuiItem(
         Material.RED_STAINED_GLASS_PANE,
-        ChatColor.RED + "저주 슬롯",
+        ChatColor.RED + "저주 슬롯(우측)",
         List.of(
-            ChatColor.GRAY.toString() + data.getCurseSlotsUnlocked() + " / " + slotCurseMax(),
-            ChatColor.GRAY + "활성 " + data.getActiveCurseEffectCount()
-                + " (티어 합 " + data.getTotalCurseEffectTier() + ")"
+            ChatColor.GRAY + "해금 " + data.getCurseSlotsUnlocked() + " / " + slotCurseMax(),
+            ChatColor.GRAY + "표시 최대 " + curseDisplayCap + "개"
         )
     ));
     inventory.setItem(3, seasonSlotDrawModeItem(data));
@@ -15590,43 +15853,68 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
             ChatColor.GRAY + "생성 점수 x" + String.format(Locale.ROOT, "%.2f", generatedScoreMultiplier(targetUuid, data))
         )
     ));
+    inventory.setItem(5, makeGuiItem(
+        Material.LIME_DYE,
+        ChatColor.GREEN + "축복 카드 5칸 구성",
+        List.of(
+            ChatColor.GRAY + "스탯 / 특수 효과 / T2 / T4 / T6",
+            ChatColor.DARK_GRAY + "좌측 행에 순서대로 배치"
+        )
+    ));
+    inventory.setItem(6, makeGuiItem(
+        Material.RED_DYE,
+        ChatColor.RED + "저주 카드 5칸 구성",
+        List.of(
+            ChatColor.GRAY + "스탯 / 특수 효과 / T2 / T4 / T6",
+            ChatColor.DARK_GRAY + "하단 행에 순서대로 배치"
+        )
+    ));
+    inventory.setItem(7, makeGuiItem(
+        Material.PAPER,
+        ChatColor.YELLOW + "표시 범위",
+        List.of(
+            ChatColor.GRAY + "활성 축복 " + blessingEffects.size() + "개, 저주 " + curseEffects.size() + "개",
+            ChatColor.GRAY + "행당 1개 · 축복 2행 / 저주 2행",
+            ChatColor.DARK_GRAY + "미표시: 축복 " + blessingHidden + " / 저주 " + curseHidden
+        )
+    ));
     inventory.setItem(8, makeGuiItem(
         Material.BOOK,
         ChatColor.AQUA + "읽는 법",
         List.of(
-            ChatColor.GRAY + "초록 줄: 축복 카드",
-            ChatColor.GRAY + "빨강 줄: 저주 카드",
-            ChatColor.GRAY + "로어에 실제 적용 효과가 표시됩니다"
+            ChatColor.GRAY + "/perk 로 슬롯 UI를 엽니다",
+            ChatColor.GRAY + "카드당 가로 5칸(스탯/특수/T2/T4/T6)",
+            ChatColor.GRAY + "로어에는 현재 티어 기준 수치만 표시됩니다"
         )
     ));
 
-    inventory.setItem(9, makeGuiItem(
-        Material.LIME_DYE,
-        ChatColor.GREEN + "축복 효과",
-        List.of(ChatColor.GRAY + "열린 슬롯 순서대로 카드가 채워집니다")
-    ));
-    inventory.setItem(27, makeGuiItem(
-        Material.RED_DYE,
-        ChatColor.RED + "저주 효과",
-        List.of(ChatColor.GRAY + "중대 저주는 보너스 점수가 함께 표시됩니다")
-    ));
+    for (int i = 0; i < SLOT_GUI_DETAIL_ROW_INFO_SLOTS.length; i++) {
+      int slot = SLOT_GUI_DETAIL_ROW_INFO_SLOTS[i];
+      int rowNo = i + 1;
+      inventory.setItem(slot, makeGuiItem(
+          Material.GRAY_STAINED_GLASS_PANE,
+          ChatColor.GOLD + "행 #" + rowNo,
+          List.of(
+              ChatColor.GRAY + "구성: 스탯 / 특수 / T2 / T4 / T6",
+              ChatColor.DARK_GRAY + "T4가 비어 있으면 차기 패치 예정"
+          )
+      ));
+    }
 
-    populateEffectSection(
+    populateEffectDetailBlocks(
         inventory,
-        10,
-        26,
-        sortedActiveEffects(data.getBlessingEffects()),
+        SLOT_GUI_BLESSING_DETAIL_BLOCK_STARTS,
+        blessingEffects,
         data.getBlessingSlotsUnlocked(),
         slotBlessingMax(),
         EffectKind.BLESSING,
         blessingTierTotals,
         currentDay
     );
-    populateEffectSection(
+    populateEffectDetailBlocks(
         inventory,
-        28,
-        44,
-        sortedActiveEffects(data.getCurseEffects()),
+        SLOT_GUI_CURSE_DETAIL_BLOCK_STARTS,
+        curseEffects,
         data.getCurseSlotsUnlocked(),
         slotCurseMax(),
         EffectKind.CURSE,
@@ -15747,7 +16035,8 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
         Material.BOOK,
         ChatColor.AQUA + "페이지 1/1: 슬롯 현황",
         List.of(
-            ChatColor.GRAY + "현재 활성 슬롯 구조를 표시합니다",
+            ChatColor.GRAY + "카드당 5칸: 스탯 / 특수 / T2 / T4 / T6",
+            ChatColor.GRAY + "T4 전용 효과가 비면 후속 패치 예정",
             ChatColor.DARK_GRAY + "잠금 슬롯 포함"
         )
     );
@@ -15827,6 +16116,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     if (cardsOneTimeRollEnabled()) {
       List<String> lore = new ArrayList<>();
       lore.add(ChatColor.GRAY + "최초 접속 시 1회 자동 추첨");
+      lore.add(ChatColor.YELLOW + "카드 옵션은 리롤 전까지 유지됩니다");
       lore.add(ChatColor.GRAY + "초기 무료 리롤: " + cardsInitialSetupFreeRerolls() + "회");
       lore.add(ChatColor.GRAY + "일반 리롤 비용: " + cardsRerollCostScore() + " 점수");
       if (cardsTierUpgradeEnabled()) {
@@ -15849,6 +16139,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
         Material.EXPERIENCE_BOTTLE,
         ChatColor.GOLD + "추가 추첨",
         List.of(
+            ChatColor.YELLOW + "카드 옵션은 리롤 전까지 유지됩니다",
             ChatColor.GRAY + "일일 추가 추첨: " + cardsBonusDrawCount(data),
             ChatColor.GRAY + "기준: " + cardsDrawBonusScoreSource()
         )
@@ -15997,12 +16288,9 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
           : archetypeTierTotals.getOrDefault(archetype, 0));
 
       List<String> lore = new ArrayList<>();
-      lore.add(ChatColor.GRAY + "ID: " + effect.getId());
-      lore.add(ChatColor.GRAY + "카드 티어: " + effect.getTier() + "/" + cardsMaxTier());
-      lore.add(ChatColor.GRAY + "계열 누적 티어: " + archetypeTotalTier);
-      lore.add(ChatColor.GRAY + "만료까지: " + remainingLabel);
-      lore.add(ChatColor.DARK_GRAY + "계열: " + effectArchetypeLabel(archetype));
-      lore.add(ChatColor.YELLOW + "상태: 슬롯 외 잔여 카드");
+      lore.add(ChatColor.DARK_GRAY + effect.getId() + " · " + effectArchetypeLabel(archetype));
+      lore.add(ChatColor.GRAY + "티어 T" + Math.max(1, effect.getTier()) + " · 만료 " + remainingLabel);
+      lore.add(ChatColor.YELLOW + "상태: 슬롯 외");
       lore.addAll(effectDetailLines(definition, kind, archetype, archetypeTotalTier, effect.getTier()));
       if (kind == EffectKind.CURSE && effect.isSevereCurse()) {
         lore.add(ChatColor.DARK_RED + "중대 저주 보너스 +" + severeBonusFor(effect) + " 점수");
@@ -16080,11 +16368,8 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
           : archetypeTierTotals.getOrDefault(archetype, 0));
 
       List<String> lore = new ArrayList<>();
-      lore.add(ChatColor.GRAY + "ID: " + effect.getId());
-      lore.add(ChatColor.GRAY + "카드 티어: " + effect.getTier() + "/" + cardsMaxTier());
-      lore.add(ChatColor.GRAY + "계열 누적 티어: " + archetypeTotalTier);
-      lore.add(ChatColor.GRAY + "만료까지: " + remainingLabel);
-      lore.add(ChatColor.DARK_GRAY + "계열: " + effectArchetypeLabel(archetype));
+      lore.add(ChatColor.DARK_GRAY + effect.getId() + " · " + effectArchetypeLabel(archetype));
+      lore.add(ChatColor.GRAY + "티어 T" + Math.max(1, effect.getTier()) + " · 만료 " + remainingLabel);
       lore.addAll(effectDetailLines(definition, kind, archetype, archetypeTotalTier, effect.getTier()));
       if (kind == EffectKind.CURSE && effect.isSevereCurse()) {
         lore.add(ChatColor.DARK_RED + "중대 저주 보너스 +" + severeBonusFor(effect) + " 점수");
@@ -16097,6 +16382,433 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
       ));
       visibleIndex++;
     }
+  }
+
+  private void populateEffectDetailBlocks(
+      Inventory inventory,
+      int[] blockStarts,
+      List<ActiveSeasonEffect> activeEffects,
+      int unlockedSlots,
+      int maxSlots,
+      EffectKind kind,
+      EnumMap<EffectArchetype, Integer> archetypeTierTotals,
+      long currentDay
+  ) {
+    if (inventory == null || blockStarts == null || activeEffects == null) {
+      return;
+    }
+    int unlocked = Math.max(0, unlockedSlots);
+    int maximum = Math.max(0, maxSlots);
+
+    for (int index = 0; index < blockStarts.length; index++) {
+      int startSlot = blockStarts[index];
+      if (startSlot < 0 || startSlot + 4 >= inventory.getSize()) {
+        continue;
+      }
+
+      int slotNo = index + 1;
+      if (index >= maximum) {
+        setEffectDetailBlockPlaceholders(
+            inventory,
+            startSlot,
+            Material.BLACK_STAINED_GLASS_PANE,
+            ChatColor.DARK_GRAY + "미사용 슬롯 #" + slotNo,
+            ChatColor.DARK_GRAY + "이번 시즌 최대 슬롯: " + maximum + "칸"
+        );
+        continue;
+      }
+
+      if (index >= unlocked) {
+        setEffectDetailBlockPlaceholders(
+            inventory,
+            startSlot,
+            Material.GRAY_STAINED_GLASS_PANE,
+            ChatColor.GRAY + "잠금 슬롯 #" + slotNo,
+            ChatColor.DARK_GRAY + "점수를 더 쌓아 해금하세요"
+        );
+        continue;
+      }
+
+      ActiveSeasonEffect effect = index < activeEffects.size() ? activeEffects.get(index) : null;
+      if (effect == null) {
+        String emptyHint = cardsOneTimeRollEnabled()
+            ? "리롤로 새 카드를 다시 추첨할 수 있습니다"
+            : "매일 자정 추첨에서 카드가 채워집니다";
+        Material emptyType = kind == EffectKind.BLESSING ? Material.LIME_STAINED_GLASS_PANE : Material.RED_STAINED_GLASS_PANE;
+        ChatColor color = kind == EffectKind.BLESSING ? ChatColor.GREEN : ChatColor.RED;
+        setEffectDetailBlockPlaceholders(
+            inventory,
+            startSlot,
+            emptyType,
+            color + "빈 슬롯 #" + slotNo,
+            ChatColor.GRAY + emptyHint
+        );
+        continue;
+      }
+
+      renderEffectDetailBlock(
+          inventory,
+          startSlot,
+          effect,
+          kind,
+          archetypeTierTotals,
+          currentDay
+      );
+    }
+  }
+
+  private void setEffectDetailBlockPlaceholders(
+      Inventory inventory,
+      int startSlot,
+      Material baseMaterial,
+      String title,
+      String line
+  ) {
+    if (inventory == null) {
+      return;
+    }
+    String message = line == null ? "" : line;
+    inventory.setItem(startSlot, makeGuiItem(
+        baseMaterial,
+        title,
+        List.of(message)
+    ));
+    inventory.setItem(startSlot + 1, makeGuiItem(
+        baseMaterial,
+        ChatColor.DARK_GRAY + "특수 효과",
+        List.of(message)
+    ));
+    inventory.setItem(startSlot + 2, makeGuiItem(
+        baseMaterial,
+        ChatColor.DARK_GRAY + "T2 해금 능력",
+        List.of(message)
+    ));
+    inventory.setItem(startSlot + 3, makeGuiItem(
+        baseMaterial,
+        ChatColor.DARK_GRAY + "T4 해금 능력",
+        List.of(message)
+    ));
+    inventory.setItem(startSlot + 4, makeGuiItem(
+        baseMaterial,
+        ChatColor.DARK_GRAY + "T6 해금 능력",
+        List.of(message)
+    ));
+  }
+
+  private void renderEffectDetailBlock(
+      Inventory inventory,
+      int startSlot,
+      ActiveSeasonEffect effect,
+      EffectKind kind,
+      EnumMap<EffectArchetype, Integer> archetypeTierTotals,
+      long currentDay
+  ) {
+    if (inventory == null || effect == null) {
+      return;
+    }
+
+    EffectDefinition definition = effectDefinitionsById.get(effect.getId());
+    EffectArchetype archetype = definition == null ? inferArchetype(effect.getId()) : definition.archetype();
+    String displayName = (definition != null && definition.displayName() != null && !definition.displayName().isBlank())
+        ? definition.displayName()
+        : ((effect.getDisplayName() == null || effect.getDisplayName().isBlank()) ? effect.getId() : effect.getDisplayName());
+    int ownTier = Math.max(1, effect.getTier());
+    int archetypeTotalTier = Math.max(0, archetypeTierTotals == null
+        ? 0
+        : archetypeTierTotals.getOrDefault(archetype, 0));
+
+    EffectLoreSections sections = effectLoreSections(definition, kind, archetype, archetypeTotalTier, ownTier);
+    String remainingLabel = effectRemainingLabel(effect, currentDay);
+
+    ChatColor mainColor = kind == EffectKind.BLESSING ? ChatColor.GREEN : ChatColor.RED;
+    ChatColor accentColor = kind == EffectKind.BLESSING ? ChatColor.AQUA : ChatColor.GOLD;
+    Material specialMaterial = kind == EffectKind.BLESSING ? Material.LIGHT_BLUE_DYE : Material.GRAY_DYE;
+
+    List<String> titleLore = new ArrayList<>();
+    titleLore.add(ChatColor.DARK_GRAY + effect.getId() + " · " + effectArchetypeLabel(archetype));
+    titleLore.add(ChatColor.GRAY + "티어 T" + ownTier + " · 만료 " + remainingLabel);
+    titleLore.add(accentColor + "스탯: " + truncateLoreDetail(sections.stat(), 72));
+    if (kind == EffectKind.CURSE && effect.isSevereCurse()) {
+      titleLore.add(ChatColor.DARK_RED + "중대 저주 보너스 +" + severeBonusFor(effect) + " 점수");
+    }
+
+    inventory.setItem(startSlot, makeGuiItem(
+        effectIcon(kind, archetype),
+        mainColor + displayName,
+        titleLore
+    ));
+    inventory.setItem(startSlot + 1, makeGuiItem(
+        specialMaterial,
+        accentColor + "특수 효과",
+        List.of(ChatColor.GRAY + truncateLoreDetail(sections.special(), 74))
+    ));
+    inventory.setItem(startSlot + 2, makeGuiItem(
+        Material.BLAZE_POWDER,
+        ChatColor.YELLOW + "T2 해금 능력",
+        buildTierAbilityLore(sections.t2(), ownTier, 2)
+    ));
+    inventory.setItem(startSlot + 3, makeGuiItem(
+        Material.GLOWSTONE_DUST,
+        ChatColor.GOLD + "T4 해금 능력",
+        buildTierAbilityLore(sections.t4(), ownTier, 4)
+    ));
+    inventory.setItem(startSlot + 4, makeGuiItem(
+        Material.NETHER_STAR,
+        ChatColor.LIGHT_PURPLE + "T6 해금 능력",
+        buildTierAbilityLore(sections.t6(), ownTier, 6)
+    ));
+  }
+
+  private List<String> buildTierAbilityLore(String detail, int ownTier, int unlockTier) {
+    List<String> lore = new ArrayList<>();
+    String safeDetail = (detail == null || detail.isBlank()) ? "능력 정보 없음" : detail;
+    if (ownTier >= unlockTier) {
+      lore.add(ChatColor.GREEN + "해금됨");
+    } else {
+      lore.add(ChatColor.DARK_GRAY + "잠김 (T" + unlockTier + " 해금)");
+    }
+    lore.add(ChatColor.GRAY + truncateLoreDetail(safeDetail, 74));
+    return lore;
+  }
+
+  private EffectLoreSections effectLoreSections(
+      EffectDefinition definition,
+      EffectKind kind,
+      EffectArchetype archetype,
+      int totalTier,
+      int ownTier
+  ) {
+    int tier = Math.max(1, ownTier);
+    EffectRuntimeProfile runtimeProfile = resolveRuntimeProfile(definition, kind, archetype);
+    List<String> runtimeDetails = runtimeProfile == null ? List.of() : runtimeProfile.detailKo();
+
+    String statRaw = findRuntimeDetailLine(runtimeDetails, "스탯:");
+    String specialRaw = findRuntimeDetailLine(runtimeDetails, "카드 기믹");
+    if (specialRaw.isBlank()) {
+      specialRaw = findRuntimeDetailLine(runtimeDetails, "특수 효과");
+    }
+    String abilityRaw = findRuntimeDetailLine(runtimeDetails, "특수 능력:");
+
+    String stat = normalizeTierDetailLine(stripRuntimeDetailPrefix(statRaw), tier);
+    String special = normalizeTierDetailLine(stripRuntimeDetailPrefix(specialRaw), tier);
+    String tier2Ability = resolveTierUnlockAbilityDetail(abilityRaw, tier, 2);
+    String tier4Ability = resolveTierUnlockAbilityDetail(abilityRaw, tier, 4);
+    String tier6Ability = resolveTierUnlockAbilityDetail(abilityRaw, tier, 6);
+
+    if (stat.isBlank() || special.isBlank()) {
+      List<String> fallbackLines = effectDetailLines(definition, kind, archetype, totalTier, tier);
+      List<String> plain = new ArrayList<>();
+      for (String fallback : fallbackLines) {
+        String stripped = ChatColor.stripColor(fallback);
+        if (stripped == null || stripped.isBlank()) {
+          continue;
+        }
+        stripped = stripped.replaceFirst("^·\\s*", "").trim();
+        if (!stripped.isBlank()) {
+          plain.add(stripped);
+        }
+      }
+      if (stat.isBlank() && !plain.isEmpty()) {
+        stat = plain.get(0);
+      }
+      if (special.isBlank() && plain.size() >= 2) {
+        special = plain.get(1);
+      }
+    }
+
+    if (stat.isBlank()) {
+      stat = "수치 정보 없음";
+    }
+    if (special.isBlank()) {
+      special = "특수 효과 정보 없음";
+    }
+    if (tier2Ability.isBlank()) {
+      tier2Ability = "T2 해금 능력 정보 없음";
+    }
+    if (tier4Ability.isBlank()) {
+      tier4Ability = "T4 전용 능력 없음 (차기 패치 예정)";
+    }
+    if (tier6Ability.isBlank()) {
+      tier6Ability = "T6 해금 능력 정보 없음";
+    }
+    return new EffectLoreSections(stat, special, tier2Ability, tier4Ability, tier6Ability);
+  }
+
+  private String findRuntimeDetailLine(List<String> runtimeDetails, String prefix) {
+    if (runtimeDetails == null || runtimeDetails.isEmpty() || prefix == null || prefix.isBlank()) {
+      return "";
+    }
+    String normalizedPrefix = prefix.trim();
+    for (String detail : runtimeDetails) {
+      if (detail == null || detail.isBlank()) {
+        continue;
+      }
+      String trimmed = detail.trim();
+      if (trimmed.startsWith(normalizedPrefix)) {
+        return trimmed;
+      }
+      if ("카드 기믹".equals(normalizedPrefix) && trimmed.startsWith("카드 기믹(상시):")) {
+        return trimmed;
+      }
+    }
+    return "";
+  }
+
+  private String stripRuntimeDetailPrefix(String raw) {
+    if (raw == null || raw.isBlank()) {
+      return "";
+    }
+    String trimmed = raw.trim();
+    String[] prefixes = {
+      "스탯:",
+      "카드 기믹(상시):",
+      "카드 기믹:",
+      "특수 효과:",
+      "특수 능력:"
+    };
+    for (String prefix : prefixes) {
+      if (trimmed.startsWith(prefix)) {
+        return trimmed.substring(prefix.length()).trim();
+      }
+    }
+    return trimmed;
+  }
+
+  private String normalizeTierDetailLine(String raw, int tier) {
+    if (raw == null || raw.isBlank()) {
+      return "";
+    }
+    String normalized = raw.replace("**", "").trim();
+    normalized = collapseSlashSeriesByTier(normalized, tier);
+    normalized = normalized.replaceAll("\\s+", " ").trim();
+    return normalized;
+  }
+
+  private String collapseSlashSeriesByTier(String raw, int tier) {
+    if (raw == null || raw.isBlank()) {
+      return "";
+    }
+    int targetTier = Math.max(1, tier);
+    Matcher matcher = DETAIL_SLASH_SERIES_PATTERN.matcher(raw);
+    StringBuffer buffer = new StringBuffer();
+    while (matcher.find()) {
+      String series = matcher.group();
+      String selected = selectSlashSeriesValue(series, targetTier);
+      matcher.appendReplacement(buffer, Matcher.quoteReplacement(selected));
+    }
+    matcher.appendTail(buffer);
+    return buffer.toString();
+  }
+
+  private String selectSlashSeriesValue(String series, int tier) {
+    if (series == null || series.isBlank()) {
+      return "";
+    }
+    String[] tokens = series.split("/");
+    if (tokens.length == 0) {
+      return series;
+    }
+    int index = Math.max(0, Math.min(tokens.length - 1, Math.max(1, tier) - 1));
+    String selected = tokens[index].trim();
+    Matcher selectedMatcher = DETAIL_VALUE_WITH_UNIT_PATTERN.matcher(selected);
+    if (!selectedMatcher.matches()) {
+      return selected;
+    }
+
+    String number = selectedMatcher.group("num");
+    String unit = selectedMatcher.group("unit");
+    if (number == null || number.isBlank()) {
+      return selected;
+    }
+    if (unit == null || unit.isBlank()) {
+      unit = detectSlashSeriesUnit(tokens);
+    }
+    return number + (unit == null ? "" : unit);
+  }
+
+  private String detectSlashSeriesUnit(String[] tokens) {
+    if (tokens == null || tokens.length == 0) {
+      return "";
+    }
+    for (int i = tokens.length - 1; i >= 0; i--) {
+      String token = tokens[i];
+      if (token == null || token.isBlank()) {
+        continue;
+      }
+      Matcher matcher = DETAIL_VALUE_WITH_UNIT_PATTERN.matcher(token.trim());
+      if (!matcher.matches()) {
+        continue;
+      }
+      String unit = matcher.group("unit");
+      if (unit != null && !unit.isBlank()) {
+        return unit;
+      }
+    }
+    return "";
+  }
+
+  private String resolveTierUnlockAbilityDetail(String abilityRaw, int ownTier, int targetTier) {
+    if (abilityRaw == null || abilityRaw.isBlank()) {
+      return "";
+    }
+    String abilityName = extractAbilityName(abilityRaw);
+    int detailTier = Math.max(1, targetTier);
+    Map<Integer, String> sections = parseSpecialTierSections(abilityRaw, detailTier);
+    String detail = sections.getOrDefault(targetTier, "");
+    if (detail.isBlank()) {
+      return switch (targetTier) {
+        case 2 -> abilityName.isBlank() ? "T2 해금 능력 데이터 없음" : abilityName + " · T2 데이터 없음";
+        case 4 -> abilityName.isBlank()
+            ? "T4 전용 능력 없음 (차기 패치 예정)"
+            : abilityName + " · T4 전용 능력 없음 (차기 패치 예정)";
+        case 6 -> abilityName.isBlank() ? "T6 해금 능력 데이터 없음" : abilityName + " · T6 데이터 없음";
+        default -> abilityName.isBlank() ? "능력 데이터 없음" : abilityName + " · 데이터 없음";
+      };
+    }
+    String status = ownTier >= targetTier ? "해금" : ("T" + targetTier + " 해금");
+    String merged = status + " · " + detail;
+    return abilityName.isBlank() ? merged : abilityName + " · " + merged;
+  }
+
+  private String extractAbilityName(String abilityRaw) {
+    if (abilityRaw == null || abilityRaw.isBlank()) {
+      return "";
+    }
+    String normalized = normalizeTierDetailLine(stripRuntimeDetailPrefix(abilityRaw), 1);
+    int splitAt = normalized.indexOf('—');
+    if (splitAt < 0) {
+      splitAt = normalized.indexOf('-');
+    }
+    String head = splitAt < 0 ? normalized : normalized.substring(0, splitAt).trim();
+    int triggerAt = head.indexOf("(발동:");
+    if (triggerAt >= 0) {
+      head = head.substring(0, triggerAt).trim();
+    }
+    return head.replace("**", "").trim();
+  }
+
+  private Map<Integer, String> parseSpecialTierSections(String abilityRaw, int tier) {
+    Map<Integer, String> sections = new LinkedHashMap<>();
+    if (abilityRaw == null || abilityRaw.isBlank()) {
+      return sections;
+    }
+    String normalized = stripRuntimeDetailPrefix(abilityRaw);
+    Matcher matcher = SPECIAL_TIER_SECTION_PATTERN.matcher(normalized);
+    while (matcher.find()) {
+      Integer parsedTier = parseInt(matcher.group("tier"));
+      if (parsedTier == null) {
+        continue;
+      }
+      String detail = matcher.group("text");
+      if (detail == null || detail.isBlank()) {
+        continue;
+      }
+      detail = normalizeTierDetailLine(detail, tier);
+      if (!detail.isBlank()) {
+        sections.put(parsedTier, detail);
+      }
+    }
+    return sections;
   }
 
   private ItemStack seasonSlotRerollButtonItem(Player viewer, UUID targetUuid, PlayerRoundData data) {
@@ -16119,6 +16831,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
       lore.add(ChatColor.GRAY + "비용: " + cost + " 점수");
     }
     lore.add(ChatColor.GRAY + "현재 점수: " + (data == null ? 0L : data.getScore()));
+    lore.add(ChatColor.DARK_GRAY + "리롤 전까지 현재 카드 옵션/티어가 유지됩니다");
     lore.add(ChatColor.YELLOW + "주의: 기존 축복/저주 카드 효과가 모두 제거됩니다");
     lore.add(ChatColor.YELLOW + "제거 직후 새 카드로 다시 추첨됩니다");
     if (cooldownLeft > 0L) {
@@ -16147,7 +16860,9 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     lore.add(ChatColor.GRAY + "비용: " + cost + " 점수");
     lore.add(ChatColor.GRAY + "현재 점수: " + (data == null ? 0L : data.getScore()));
     lore.add(ChatColor.YELLOW + "축복/저주 카드를 동시에 +1 티어 강화");
+    lore.add(ChatColor.AQUA + "특수 효과: T2 개방 · T3 강화 · T4 신규");
     lore.add(ChatColor.DARK_GRAY + "양쪽 모두 강화 가능한 카드가 있어야 합니다");
+    lore.add(ChatColor.DARK_GRAY + "강화한 옵션은 리롤 전까지 유지됩니다");
 
     if (blockedReason == null) {
       lore.add(ChatColor.GREEN + "좌클릭: 동시 티어 강화");
@@ -16340,31 +17055,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     List<RuntimeModifierRule> rules = runtimeProfile == null ? List.of() : runtimeProfile.modifierRules();
     List<String> runtimeDetails = runtimeProfile == null ? List.of() : runtimeProfile.detailKo();
     int detailLinesAdded = 0;
-    EffectGimmickProfile gimmickProfile = definition == null
-        ? null
-        : effectGimmicksById.get(normalizeEffectId(definition.id()));
-    String rawTriggerLine = extractRuntimeTriggerLine(runtimeDetails);
-    String resolvedTrigger = null;
-    if (rawTriggerLine != null && !rawTriggerLine.isBlank()) {
-      resolvedTrigger = humanReadableTriggerLine(rawTriggerLine);
-    }
-    if (resolvedTrigger == null || resolvedTrigger.isBlank()) {
-      resolvedTrigger = deriveTriggerSummary(rules, gimmickProfile);
-    }
-    if (resolvedTrigger != null && !resolvedTrigger.isBlank()) {
-      lines.add(ChatColor.GOLD + "발동 조건: " + resolvedTrigger);
-      detailLinesAdded++;
-    }
-
-    if (gimmickProfile != null && gimmickProfile.hasActiveTrigger()) {
-      String activeInput = activeInputGuideLine(gimmickProfile);
-      if (activeInput != null && !activeInput.isBlank()) {
-        lines.add(ChatColor.YELLOW + activeInput);
-        detailLinesAdded++;
-      }
-    }
-
-    List<String> tierDetails = runtimeDetailTierLines(runtimeDetails, ownTier);
+    List<String> tierDetails = compactTierDetailLines(runtimeDetailTierLines(runtimeDetails, ownTier));
     if (!tierDetails.isEmpty()) {
       for (String detail : tierDetails) {
         lines.add(mainColor + "· " + detail);
@@ -16380,7 +17071,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
           lines.add(mainColor + "· " + line);
         }
       } else {
-        lines.add(mainColor + "· 상시 수치 보정 없음 (전용 기믹 중심)");
+        lines.add(mainColor + "· 상시 수치 보정 없음 (전용 특수 효과 중심)");
       }
     }
 
@@ -16393,6 +17084,50 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     }
 
     return lines;
+  }
+
+  private List<String> compactTierDetailLines(List<String> tierDetails) {
+    if (tierDetails == null || tierDetails.isEmpty()) {
+      return List.of();
+    }
+    List<String> regular = new ArrayList<>();
+    List<String> special = new ArrayList<>();
+    for (String detail : tierDetails) {
+      if (detail == null || detail.isBlank()) {
+        continue;
+      }
+      String normalized = detail.replaceAll("\\s+", " ").trim();
+      if (normalized.startsWith("특수 효과")) {
+        special.add(normalized);
+      } else {
+        regular.add(normalized);
+      }
+    }
+
+    List<String> compact = new ArrayList<>();
+    int regularLimit = special.isEmpty() ? 3 : 2;
+    for (String line : regular) {
+      if (compact.size() >= regularLimit) {
+        break;
+      }
+      compact.add(truncateLoreDetail(line, 72));
+    }
+    if (!special.isEmpty()) {
+      compact.add(truncateLoreDetail(special.get(0), 72));
+    }
+    return compact.isEmpty() ? List.of() : compact;
+  }
+
+  private String truncateLoreDetail(String raw, int maxLength) {
+    if (raw == null || raw.isBlank()) {
+      return "";
+    }
+    int limit = Math.max(24, maxLength);
+    String normalized = raw.replaceAll("\\s+", " ").trim();
+    if (normalized.length() <= limit) {
+      return normalized;
+    }
+    return normalized.substring(0, limit - 3) + "...";
   }
 
   private String deriveTriggerSummary(List<RuntimeModifierRule> rules, EffectGimmickProfile gimmickProfile) {
@@ -16461,8 +17196,12 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
       if (trimmed.startsWith("-")) {
         trimmed = trimmed.substring(1).trim();
       }
+      trimmed = trimmed.replace("카드 기믹", "특수 효과");
+      if (trimmed.startsWith("기믹:")) {
+        trimmed = "특수 효과:" + trimmed.substring("기믹:".length()).trim();
+      }
       if (trimmed.startsWith("카드 기믹:")) {
-        trimmed = "기믹: " + trimmed.substring("카드 기믹:".length()).trim();
+        trimmed = "특수 효과:" + trimmed.substring("카드 기믹:".length()).trim();
       }
       Matcher tierGateMatcher = DETAIL_TIER_GATE_PATTERN.matcher(trimmed);
       boolean gatedOut = false;
@@ -17026,6 +17765,10 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     if (effectDefinitionsById.isEmpty()) {
       reloadEffectCatalog();
     }
+    if (!cardsEffectLogicEnabled()) {
+      sender.sendMessage("[Season] 카드 효과 로직이 비활성화되어 effect give를 사용할 수 없습니다.");
+      return true;
+    }
     if (args.length < 4 || !"give".equalsIgnoreCase(args[1])) {
       sender.sendMessage("[Season] /season effect give <player> <B-xxx|C-xxx> [tier]");
       return true;
@@ -17123,6 +17866,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
         applySeasonProfileOverrides();
         reloadEffectCatalog();
         syncAllParticipantSlots(false);
+        stripCardEffectDataIfDisabled();
         saveState();
       }
       sender.sendMessage("[Season] Profile reloaded. active_profile=" + activeSeasonProfile());
@@ -17147,6 +17891,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
         applySeasonProfileOverrides();
         reloadEffectCatalog();
         syncAllParticipantSlots(false);
+        stripCardEffectDataIfDisabled();
         saveState();
       }
       sender.sendMessage("[Season] Active profile set to " + activeSeasonProfile());
@@ -17225,13 +17970,33 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
       return true;
     }
 
-    if (args.length < 3) {
+    if (args.length < 1) {
       sender.sendMessage("[Season] /score add <player> <amount>");
       sender.sendMessage("[Season] /score set <player> <amount>");
+      sender.sendMessage("[Season] /score top [count]");
+      sender.sendMessage("[Season] /score history <round_id|latest> [count]");
       return true;
     }
 
     String sub = args[0].toLowerCase(Locale.ROOT);
+    if ("top".equals(sub) || "leaderboard".equals(sub)) {
+      int count = resolveScoreTopCount(args.length >= 2 ? args[1] : null);
+      showCurrentScoreTop(sender, count);
+      return true;
+    }
+    if ("history".equals(sub)) {
+      showPersistedLeaderboard(sender, args);
+      return true;
+    }
+
+    if (args.length < 3) {
+      sender.sendMessage("[Season] /score add <player> <amount>");
+      sender.sendMessage("[Season] /score set <player> <amount>");
+      sender.sendMessage("[Season] /score top [count]");
+      sender.sendMessage("[Season] /score history <round_id|latest> [count]");
+      return true;
+    }
+
     OfflinePlayer target = resolvePlayer(args[1]);
     if (target == null) {
       sender.sendMessage("[Season] Unknown player: " + args[1]);
@@ -17264,6 +18029,128 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
 
     sender.sendMessage("[Season] Unknown score subcommand: " + sub);
     return true;
+  }
+
+  private int resolveScoreTopCount(String raw) {
+    if (raw == null || raw.isBlank()) {
+      return 10;
+    }
+    Long parsed = parseLong(raw);
+    if (parsed == null) {
+      return 10;
+    }
+    return Math.max(1, Math.min(50, parsed.intValue()));
+  }
+
+  private void showCurrentScoreTop(CommandSender sender, int limit) {
+    int top = Math.max(1, Math.min(50, limit));
+    List<Map.Entry<UUID, PlayerRoundData>> ranking = new ArrayList<>();
+    for (Map.Entry<UUID, PlayerRoundData> entry : players.entrySet()) {
+      if (entry == null || entry.getKey() == null || entry.getValue() == null) {
+        continue;
+      }
+      ranking.add(entry);
+    }
+    ranking.sort((left, right) -> {
+      int cmp = Long.compare(right.getValue().getScore(), left.getValue().getScore());
+      if (cmp != 0) {
+        return cmp;
+      }
+      cmp = Long.compare(right.getValue().getPeakScore(), left.getValue().getPeakScore());
+      if (cmp != 0) {
+        return cmp;
+      }
+      return left.getKey().toString().compareTo(right.getKey().toString());
+    });
+
+    if (ranking.isEmpty()) {
+      sender.sendMessage("[Season] score leaderboard is empty.");
+      return;
+    }
+
+    int show = Math.min(top, ranking.size());
+    sender.sendMessage("[Season] score top " + show + " (round=" + roundId + ")");
+    for (int i = 0; i < show; i++) {
+      Map.Entry<UUID, PlayerRoundData> entry = ranking.get(i);
+      PlayerRoundData data = entry.getValue();
+      sender.sendMessage(
+          "[Season] #"
+              + (i + 1)
+              + " "
+              + playerDisplayName(entry.getKey())
+              + " score="
+              + formatScoreAmount(data.getScore())
+              + " peak="
+              + formatScoreAmount(data.getPeakScore())
+              + (data.isOut() ? " OUT" : "")
+      );
+    }
+  }
+
+  private void showPersistedLeaderboard(CommandSender sender, String[] args) {
+    if (!seasonStateDatabaseEnabled() || seasonStateRepository == null || !seasonStateRepository.isReady()) {
+      sender.sendMessage("[Season] DB leaderboard is unavailable. check database.enabled/use_for_season_state.");
+      return;
+    }
+
+    String roundToken = args.length >= 2 ? args[1] : "latest";
+    int limit = resolveScoreTopCount(args.length >= 3 ? args[2] : null);
+    Long targetRoundId;
+    try {
+      if ("latest".equalsIgnoreCase(roundToken)) {
+        targetRoundId = seasonStateRepository.findLatestLeaderboardRoundId(seasonId(), currentServerName());
+      } else {
+        targetRoundId = parseLong(roundToken);
+      }
+    } catch (SQLException exception) {
+      sender.sendMessage("[Season] Failed to read DB leaderboard round id: " + exception.getMessage());
+      return;
+    }
+
+    if (targetRoundId == null || targetRoundId <= 0L) {
+      sender.sendMessage("[Season] No persisted leaderboard round found.");
+      return;
+    }
+
+    List<SeasonStateJdbcRepository.RoundLeaderboardEntry> entries;
+    try {
+      entries = seasonStateRepository.loadRoundLeaderboard(
+          seasonId(),
+          currentServerName(),
+          targetRoundId,
+          limit
+      );
+    } catch (SQLException exception) {
+      sender.sendMessage("[Season] Failed to load DB leaderboard: " + exception.getMessage());
+      return;
+    }
+
+    if (entries == null || entries.isEmpty()) {
+      sender.sendMessage("[Season] No persisted leaderboard entries for round " + targetRoundId + ".");
+      return;
+    }
+
+    sender.sendMessage("[Season] persisted leaderboard round=" + targetRoundId + " top=" + entries.size());
+    for (SeasonStateJdbcRepository.RoundLeaderboardEntry entry : entries) {
+      if (entry == null) {
+        continue;
+      }
+      String name = (entry.playerName() == null || entry.playerName().isBlank())
+          ? entry.playerUuid()
+          : entry.playerName();
+      sender.sendMessage(
+          "[Season] #"
+              + entry.rankNo()
+              + " "
+              + name
+              + " snapshot="
+              + formatScoreAmount(entry.snapshotScore())
+              + " weighted="
+              + String.format(Locale.ROOT, "%.1f", entry.weightedScore())
+              + (entry.escapedWithinWindow() ? " escape" : " survival")
+              + (entry.winnerBonusGranted() ? " bonus" : "")
+      );
+    }
   }
 
   private boolean onBorderCommand(CommandSender sender, String[] args) {
@@ -17708,7 +18595,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
       }
     }
 
-    if ("slot".equals(cmd) && args.length == 1) {
+    if (("slot".equals(cmd) || "perk".equals(cmd)) && args.length == 1) {
       return completePlayerNames(args[0]);
     }
 
@@ -17726,10 +18613,19 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
 
     if ("score".equals(cmd)) {
       if (args.length == 1) {
-        return complete(args[0], List.of("add", "set"));
+        return complete(args[0], List.of("add", "set", "top", "leaderboard", "history"));
       }
-      if (args.length == 2) {
+      if (args.length == 2 && ("add".equalsIgnoreCase(args[0]) || "set".equalsIgnoreCase(args[0]))) {
         return completePlayerNames(args[1]);
+      }
+      if (args.length == 2 && ("top".equalsIgnoreCase(args[0]) || "leaderboard".equalsIgnoreCase(args[0]))) {
+        return complete(args[1], List.of("5", "10", "20"));
+      }
+      if (args.length == 2 && "history".equalsIgnoreCase(args[0])) {
+        return complete(args[1], List.of("latest", String.valueOf(roundId)));
+      }
+      if (args.length == 3 && "history".equalsIgnoreCase(args[0])) {
+        return complete(args[2], List.of("5", "10", "20"));
       }
     }
 
@@ -17966,6 +18862,22 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     return Math.max(0L, getConfig().getLong("score.dragon_jackpot.first_egg_bonus", 3000L));
   }
 
+  private boolean scoreHudEnabled() {
+    return getConfig().getBoolean("score.hud.enabled", true);
+  }
+
+  private boolean scoreHudActionbarEnabled() {
+    return getConfig().getBoolean("score.hud.actionbar.enabled", true);
+  }
+
+  private int scoreHudActionbarRefreshSeconds() {
+    return Math.max(0, getConfig().getInt("score.hud.actionbar.refresh_seconds", 8));
+  }
+
+  private boolean scoreHudActionbarShowWhenNoChange() {
+    return getConfig().getBoolean("score.hud.actionbar.show_when_no_change", true);
+  }
+
   private boolean outSetsScoreZero() {
     return getConfig().getBoolean("score.out_sets_zero", true);
   }
@@ -18055,6 +18967,10 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
 
   private boolean cardsEnabled() {
     return getConfig().getBoolean("cards.enabled", true);
+  }
+
+  private boolean cardsEffectLogicEnabled() {
+    return getConfig().getBoolean("cards.effect_logic_enabled", true);
   }
 
   private boolean cardsEnabledInCurrentState() {
@@ -18194,7 +19110,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
   }
 
   private boolean cardsMultiplierEnabled() {
-    return getConfig().getBoolean("cards.score_multiplier.enabled", true);
+    return cardsEffectLogicEnabled() && getConfig().getBoolean("cards.score_multiplier.enabled", true);
   }
 
   private double cardsMultiplierBlessingPerStack() {
@@ -18334,7 +19250,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
   }
 
   private boolean cardsRuntimeEffectsEnabled() {
-    return getConfig().getBoolean("cards.runtime_effects.enabled", true);
+    return cardsEffectLogicEnabled() && getConfig().getBoolean("cards.runtime_effects.enabled", true);
   }
 
   private int cardsRuntimeEffectIntervalSeconds() {
@@ -18796,6 +19712,10 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
 
   private int autoSaveSeconds() {
     return Math.max(5, getConfig().getInt("round.autosave_seconds", 30));
+  }
+
+  private int scorePersistenceDbMinIntervalSeconds() {
+    return Math.max(0, getConfig().getInt("score.persistence.db_min_interval_seconds", 5));
   }
 
   private boolean cancelResetIfPlayableAgain() {
@@ -19274,6 +20194,14 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
   private record RuntimeArchetypeTotals(
       EnumMap<EffectArchetype, Integer> blessingTotals,
       EnumMap<EffectArchetype, Integer> curseTotals
+  ) {}
+
+  private record EffectLoreSections(
+      String stat,
+      String special,
+      String t2,
+      String t4,
+      String t6
   ) {}
 
   private record EffectRuntimeProfile(

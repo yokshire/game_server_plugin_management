@@ -2,6 +2,11 @@
 
 CardDraw의 런타임 엔진 tick(기믹/보더/추격자/오라 관련 루프)을 외부에서 오케스트레이션하는 엔진 플러그인입니다.
 
+## Responsibility boundary
+- `CardDraw`: 카드 상태/관리/명령
+- `CardEngine`: 효과 런타임 실행 스케줄/위임
+- `SeasonManager`: 서버 운영 코어 관리자
+
 ## Delegate model
 - 대상 플러그인(`CardDraw`)의 공개 메서드를 reflection으로 호출합니다.
   - `isCardEngineDelegationActive()`
@@ -21,7 +26,7 @@ CardDraw의 런타임 엔진 tick(기믹/보더/추격자/오라 관련 루프)�
 cd minecraft/plugins/card-engine
 mkdir -p build/classes
 CP=$(find /home/yyg/server/big_world/paper/season_1_end/libraries -name '*.jar' -printf '%p:' | sed 's/:$//')
-javac -encoding UTF-8 -source 21 -target 21 -cp "$CP" -d build/classes $(find src/main/java -name '*.java')
+javac -proc:none -encoding UTF-8 -source 21 -target 21 -cp "$CP" -d build/classes $(find src/main/java -name '*.java')
 rsync -a src/main/resources/ build/classes/
 jar cf build/card-engine-0.1.0.jar -C build/classes .
 ```

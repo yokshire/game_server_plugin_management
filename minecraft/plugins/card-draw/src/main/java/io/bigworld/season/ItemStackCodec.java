@@ -11,6 +11,7 @@ import org.bukkit.util.io.BukkitObjectOutputStream;
 public final class ItemStackCodec {
   private ItemStackCodec() {}
 
+  @SuppressWarnings("deprecation")
   public static String encode(ItemStack item) throws IOException {
     ByteArrayOutputStream bytes = new ByteArrayOutputStream();
     try (BukkitObjectOutputStream out = new BukkitObjectOutputStream(bytes)) {
@@ -19,6 +20,7 @@ public final class ItemStackCodec {
     return Base64.getEncoder().encodeToString(bytes.toByteArray());
   }
 
+  @SuppressWarnings("deprecation")
   public static ItemStack decode(String encoded) throws IOException, ClassNotFoundException {
     byte[] bytes = Base64.getDecoder().decode(encoded);
     try (BukkitObjectInputStream in = new BukkitObjectInputStream(new ByteArrayInputStream(bytes))) {

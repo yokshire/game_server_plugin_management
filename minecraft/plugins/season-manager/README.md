@@ -1,15 +1,16 @@
-# Season Manager (Info Archive)
+# SeasonManager Plugin (Core Manager)
 
-이 경로는 **실행 플러그인 코드가 아니라 시즌 카드 설계/검토 문서(info) 보관용**으로 유지합니다.
+`season-manager`는 서버 시즌 운영 시스템의 코어 관리자 플러그인입니다.
 
-주요 문서:
-- `src/main/resources/season_1/adjust_card.md`
-- `src/main/resources/season_1/card_pool_80_review.md`
-- `src/main/resources/season_1/effect_description_audit_80.md`
-- `src/main/resources/season_1/effect_impl_audit_80.md`
+## Role
+- 시즌 상태/라운드/생명/점수/보더 등 운영 제어
+- 카드 정보 호출/관리 및 정책 적용
+- 운영 명령(`season`, `slot`, `life`, `score`, `border`, `information`) 제공
 
-실행 플러그인 분리:
-- 카드풀 추첨/적용: `minecraft/plugins/card-draw`
-- 런타임 엔진(기믹 tick 위임): `minecraft/plugins/card-engine`
+## Runtime relation
+- `card-draw`: 카드 추첨/리롤/강화 및 효과 발동 경로
+- `card-engine`: 런타임 효과 루프 오케스트레이션(delegate)
+- `season-manager`: 상위 운영/관리 컨트롤 플레인
 
-이 구조에서 시즌 카드 info 문서는 계속 이 `season-manager` 경로를 단일 출처로 사용합니다.
+## Docs
+시즌 카드 설계 문서는 계속 `src/main/resources/season_1/*`에 함께 유지합니다.

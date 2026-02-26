@@ -1,1824 +1,676 @@
 blessings:
   B-001:
-    name: 바람걸음
+    name: 바람돛
     type: BLESSING
     weight: 1.0
     archetype: MOBILITY
     runtime:
       detail_ko:
-      - '이동 속도: T1 +15.0%, T2 +30.0%, T3 +50.0%, T4 +90.0%'
-      - '낙하 피해: T1 -20.0%, T2 -40.0%, T3 -60.0%, T4 -80.0%'
-      - '스텝 업 높이: T1 +0.0%, T2 +30.0%, T3 +60.0%, T4 +90.0%'
-      - '카드 기믹: 상시 패시브'
-      modifiers:
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.15
-        min_total_tier: 1
-        world: ANY
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.016667
-        min_total_tier: 3
-        world: ANY
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.058333
-        min_total_tier: 4
-        world: ANY
-      - type: FALL_DAMAGE_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.2
-        min_total_tier: 1
-        world: ANY
-      - type: STEP_HEIGHT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.15
-        min_total_tier: 2
-        world: ANY
-      - type: STEP_HEIGHT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.05
-        min_total_tier: 3
-        world: ANY
-      - type: STEP_HEIGHT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.025
-        min_total_tier: 4
-        world: ANY
+      - '스탯: 이동 속도 +6/+12/+18/+27/+34/+43%, 낙하 피해 -15/-30/-45/-60/-71/-86%, 스텝 업 +15/+37.5/+60/+90/+112.5/+142.5%'
+      - '카드 기믹(상시): 공중(점프/낙하/활공) 판정 중 **몹 투사체** 피해 0/-6/-10.5/-15/-18.5/-23%.'
+      - '특수 능력: **돌풍 도약** (발동: F / 궁극: Shift+F) — T2: 공중 더블 점프(1회, 쿨 12s). | T3: 쿨 9s, 사용 후 4s 느린 낙하(낙뎀 안전). | T4: 2회 충전(충전 10s), 사용 후 8s 동안 지나친 몹(4b)이 넉백 + 4 피해(쿨 공유). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 쿨 -10%(최소 4s). | T6(궁극): **질풍 폭주** — Shift+F, 쿨 180s: 10s 동안 이동 속도 +70%, 낙하 피해 0, 대시 2회(재사용 3s). 대시 경로 4b 내 몹에게 4 피해 + 넉백.'
+      - '태그: 이동, 공중, 생존'
   B-002:
-    name: 강물의 은총
+    name: 강물 질주
     type: BLESSING
     weight: 1.0
     archetype: MOBILITY
     runtime:
       detail_ko:
-      - '수중 이동: T1 +15.0%, T2 +30.0%, T3 +45.0%, T4 +60.0%'
-      - '산소 소모: T1 -10.0%, T2 -20.0%, T3 -30.0%, T4 -40.0%'
-      - '포만감 소모: T1 -12.0%, T2 -18.0%, T3 -24.0%, T4 -30.0%'
-      - '카드 기믹: 머리가 물에 잠기거나 수영 상태일 때 이동 속도/포만감 소모 관련 수치를 1.25배 적용'
-      modifiers:
-      - type: WATER_MOVEMENT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.15
-        min_total_tier: 1
-        world: ANY
-      - type: OXYGEN_DRAIN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.1
-        min_total_tier: 1
-        world: ANY
-      - type: HUNGER_DRAIN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.12
-        min_total_tier: 1
-        world: ANY
-      - type: HUNGER_DRAIN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.03
-        min_total_tier: 2
-        world: ANY
-      - type: HUNGER_DRAIN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.01
-        min_total_tier: 3
-        world: ANY
-      - type: HUNGER_DRAIN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.005
-        min_total_tier: 4
-        world: ANY
+      - '스탯: 수영 속도 +15/+30/+45/+60/+71/+86%, 산소 소모 -15/-30/-45/-60/-71/-86%, 물속 포만감 소모 -6/-12/-18/-24/-28.5/-34.5%'
+      - '카드 기믹(상시): 물에 들어간 뒤 4.5s 동안 받는 피해(몹) -3/-6/-9/-12/-14/-17%.'
+      - '특수 능력: **물살 돌진** (발동: F / 궁극: Shift+F) — T2: 물속에서 웅크림+점프로 전방 24b 대시(쿨 18s). | T3: 24b, 쿨 14s, 돌진 후 6s 산소 소모 0. | T4: 돌진 시작 지점에 12s 소용돌이(반경 10.5b, 몹 60% 둔화 + 매초 2 피해). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 쿨 -10%(최소 4s). | T6(궁극): **해류 지배** — Shift+F, 쿨 180s: 12s 동안 물속 이동 속도 +80%, 산소 소모 0. 발동 즉시 12b 파도 충격파(몹 넉백+6 피해) + 10s 소용돌이(반경 10b, 몹 60% 둔화, 매초 2 피해).'
+      - '태그: 이동, 수중, 군중제어'
   B-003:
-    name: 용암의 가호
+    name: 암벽 갈고리
     type: BLESSING
     weight: 1.0
     archetype: MOBILITY
     runtime:
       detail_ko:
-      - '화염 피해: T1 -20.0%, T2 -40.0%, T3 -60.0%, T4 -80.0%'
-      - '화상 지속 시간: T1 -20.0%, T2 -40.0%, T3 -60.0%, T4 -80.0%'
-      - '이동 속도 [네더]: T1 +0.0%, T2 +5.0%, T3 +15.0%, T4 +30.0%'
-      - '카드 기믹: 네더에서 받는 피해 +0.0%/-5.0%/-12.5%/-20.0%'
-      modifiers:
-      - type: FIRE_DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.2
-        min_total_tier: 1
-        world: ANY
-      - type: BURNING_TIME_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.2
-        min_total_tier: 1
-        world: ANY
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.025
-        min_total_tier: 2
-        world: NETHER
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.025
-        min_total_tier: 3
-        world: NETHER
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.025
-        min_total_tier: 4
-        world: NETHER
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.025
-        min_total_tier: 2
-        world: NETHER
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.016667
-        min_total_tier: 3
-        world: NETHER
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.008333
-        min_total_tier: 4
-        world: NETHER
+      - '스탯: 스텝 업 +22.5/+45/+67.5/+90/+107/+129.5%, 사다리/덩굴/비계 이동 속도 +15/+30/+45/+60/+71/+86%, 낙하 피해 -7.5/-15/-30/-45/-56/-71%'
+      - '카드 기믹(상시): 벽에 붙은 상태로 웅크리면 낙하 속도 -15/-30/-45/-60/-71/-86%(미끄럼 방지).'
+      - '특수 능력: **갈고리 사출** (발동: F / 궁극: Shift+F) — T2: 낚싯대로 블록에 걸고 당기면 해당 방향으로 당김(사거리 24b, 쿨 10s). | T3: 33b, 쿨 8s, 당김 후 4s 피해 -20%. | T4: 42b, 쿨 6s, 당김으로 몹과 접촉 시 6s 기절(이속 -120%, 공격 -60%). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 쿨 -10%(최소 4s). | T6(궁극): **질풍 폭주** — Shift+F, 쿨 180s: 10s 동안 이동 속도 +70%, 낙하 피해 0, 대시 2회(재사용 3s). 대시 경로 4b 내 몹에게 4 피해 + 넉백.'
+      - '태그: 이동, 유틸, 테크닉'
   B-004:
-    name: 산악/빙결 적응
+    name: 빙설 각인
     type: BLESSING
     weight: 1.0
     archetype: MOBILITY
     runtime:
       detail_ko:
-      - '스텝 업 높이: T1 +20.0%, T2 +40.0%, T3 +60.0%, T4 +80.0%'
-      - '얼음/설원 이동 속도: T1 +10.0%, T2 +20.0%, T3 +30.0%, T4 +40.0%'
-      - '낙하 피해: T1 -10.0%, T2 -20.0%, T3 -30.0%, T4 -40.0%'
-      - '카드 기믹: 설원 유형에서 받는 피해 추가 -3.5%/-6.0%/-10.0%/-20.0%'
-      modifiers:
-      - type: STEP_HEIGHT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.2
-        min_total_tier: 1
-        world: ANY
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.1
-        min_total_tier: 1
-        world: ANY
-        conditions:
-        - IN_COLD_BIOME
-      - type: FALL_DAMAGE_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.1
-        min_total_tier: 1
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.035
-        min_total_tier: 1
-        world: ANY
-        conditions: &id001
-        - IN_COLD_BIOME
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.005
-        min_total_tier: 2
-        world: ANY
-        conditions: *id001
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.003333
-        min_total_tier: 3
-        world: ANY
-        conditions: *id001
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.016667
-        min_total_tier: 4
-        world: ANY
-        conditions: *id001
+      - '스탯: 눈/얼음 위 이동 속도 +9/+18/+27/+36/+43/+52%, 동상/빙결 진행 -30/-52.5/-75/-90/-101/-116%, 낙하 피해 -7.5/-15/-22.5/-30/-35.5/-43%'
+      - '카드 기믹(상시): 얼음 위에서 받는 넉백 -15/-30/-45/-60/-71/-86%.'
+      - '특수 능력: **서리 발자국** (발동: F / 궁극: Shift+F) — T2: 질주 시 8s 동안 발밑에 임시 얼음 생성(쿨 20s). | T3: 12s, 얼음 밟은 몹 6s 50% 둔화. | T4: 16s, 종료 시 5.5b ''빙결 파편''(몹 8 피해 + 8s 80% 둔화, 쿨 12s). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 쿨 -10%(최소 4s). | T6(궁극): **절대빙결** — Shift+F, 쿨 180s: 10s 동안 14b 내 몹에게 빙결(이속 -90%) + 매 1.5s마다 3 피해. 종료 시 8b 빙결 폭발(몹 10 피해) + 8s 둔화 60%.'
+      - '태그: 이동, 빙결, 군중제어'
   B-005:
-    name: 잠행 보행술
+    name: 사막의 균형
     type: BLESSING
     weight: 1.0
     archetype: MOBILITY
     runtime:
       detail_ko:
-      - '잠행 이동 속도: T1 +15.0%, T2 +30.0%, T3 +45.0%, T4 +60.0%'
-      - '노출 표식 지속: T1 -30.0%, T2 -45.0%, T3 -60.0%, T4 -75.0%'
-      - '잠행 해제 후 5s 이동 속도: T1 +15.0%, T2 +30.0%, T3 +45.0%, T4 +60.0%'
-      - '카드 기믹: 잠행 중 받는 피해 T1 +0.0%, T2 -5.0%, T3 -10.0%, T4 -15.0%'
-      modifiers:
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.15
-        min_total_tier: 1
-        world: ANY
-      - type: SNEAK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.15
-        min_total_tier: 1
-        world: ANY
-      - type: GLOWING_DURATION_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.3
-        min_total_tier: 1
-        world: ANY
-      - type: GLOWING_DURATION_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.075
-        min_total_tier: 2
-        world: ANY
-      - type: GLOWING_DURATION_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.025
-        min_total_tier: 3
-        world: ANY
-      - type: GLOWING_DURATION_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.0125
-        min_total_tier: 4
-        world: ANY
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.15
-        min_total_tier: 1
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.025
-        min_total_tier: 2
-        world: ANY
-        conditions: &id002
-        - SNEAKING
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.008333
-        min_total_tier: 3
-        world: ANY
-        conditions: *id002
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.004167
-        min_total_tier: 4
-        world: ANY
-        conditions: *id002
+      - '스탯: 모래/붉은모래 이동 속도 +9/+18/+27/+36/+43/+52%, 사막/악지대 포만감 소모 -7.5/-15/-22.5/-30/-35.5/-43%, 투사체 받는 피해(몹) -7.5/-15/-22.5/-30/-35.5/-43%'
+      - '카드 기믹(상시): 사막/악지대에서 낮(밝기≥12) 동안 부정효과 지속 -7.5/-15/-22.5/-30/-35.5/-43%.'
+      - '특수 능력: **모래 분산** (발동: F / 궁극: Shift+F) — T2: 삽 우클릭으로 12s ''모래 장막''(반경 12b, 몹 탐지 반경 -52.5%, 쿨 45s). | T3: 반경 12b, 쿨 35s, 장막 중 이속 +20%. | T4: 장막 안에서 첫 타격은 피해 +60% + 몹 4s 실명(대상당 20s 쿨). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 쿨 -10%(최소 4s). | T6(궁극): **질풍 폭주** — Shift+F, 쿨 180s: 10s 동안 이동 속도 +70%, 낙하 피해 0, 대시 2회(재사용 3s). 대시 경로 4b 내 몹에게 4 피해 + 넉백.'
+      - '태그: 탐험, 사막, 기습'
   B-006:
-    name: 차원 내성
+    name: 숲의 숨결
     type: BLESSING
     weight: 1.0
     archetype: MOBILITY
     runtime:
       detail_ko:
-      - '받는 피해 [엔드]: T1 -10.0%, T2 -20.0%, T3 -30.0%, T4 -40.0%'
-      - '차원 이동 후 60s 받는 피해: T1 -10.0%, T2 -15.0%, T3 -20.0%, T4 -25.0%'
-      - '위치 핑(좌표/방향 안내): T1~T4 공통 엔드 유적(Stronghold) 방향 안내'
-      - '카드 기믹: 나무 막대 우클릭 핑 재사용 T1 120s, T2 90s, T3 60s, T4 30s'
-      modifiers:
-      - type: END_DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.1
-        min_total_tier: 1
-        world: END
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.1
-        min_total_tier: 1
-        world: END
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.1
-        min_total_tier: 1
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.025
-        min_total_tier: 2
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.008333
-        min_total_tier: 3
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.004167
-        min_total_tier: 4
-        world: ANY
+      - '스탯: 숲/정글 이동 속도 +6/+12/+18/+27/+34/+43%, 나뭇잎/원목 9b 이내 받는 피해(몹) -4.5/-9/-13.5/-18/-21.5/-26%, 낙하 피해 -12/-24/-36/-48/-57/-69%'
+      - '카드 기믹(상시): 풀/나뭇잎 위에서 점프 시 점프력 0/+7.5/+15/+22.5/+28/+35.5%(짧은 도약).'
+      - '특수 능력: **나무 정박** (발동: F / 궁극: Shift+F) — T2: 도끼로 원목 우클릭해 ''정박'' 지정(120s). 1회에 한해 정박지로 순간이동(최대 192b, 쿨 90s). | T3: 288b, 쿨 60s, 이동 후 12s 낙뎀 무시. | T4: 384b, 쿨 45s, 도착 후 10s 피해 -30% + 반경 16b 아군 1회 동반(절반 거리). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 쿨 -10%(최소 4s). | T6(궁극): **질풍 폭주** — Shift+F, 쿨 180s: 10s 동안 이동 속도 +70%, 낙하 피해 0, 대시 2회(재사용 3s). 대시 경로 4b 내 몹에게 4 피해 + 넉백.'
+      - '태그: 이동, 탐험, 유틸'
   B-007:
-    name: 순간가속
+    name: 구름 낙하산
     type: BLESSING
     weight: 1.0
     archetype: MOBILITY
     runtime:
       detail_ko:
-      - '달리기 중 이동 속도: T1 +20.0%, T2 +40.0%, T3 +60.0%, T4 +80.0%'
-      - '낙하 피해: T1 +0.0%, T2 -10.0%, T3 -25.0%, T4 -40.0%'
-      - '저체력(35% 이하) 이동 속도: T1 +10.0%, T2 +20.0%, T3 +30.0%, T4 +40.0%'
-      - '카드 기믹: 상시 패시브'
-      modifiers:
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.2
-        min_total_tier: 1
-        world: ANY
-        conditions:
-        - SPRINTING
-      - type: FALL_DAMAGE_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.05
-        min_total_tier: 2
-        world: ANY
-      - type: FALL_DAMAGE_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.033333
-        min_total_tier: 3
-        world: ANY
-      - type: FALL_DAMAGE_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.016667
-        min_total_tier: 4
-        world: ANY
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.1
-        min_total_tier: 1
-        world: ANY
-        conditions:
-        - LOW_HEALTH_35
+      - '스탯: 낙하 피해 -30/-52.5/-75/-90/-101/-116%, 겉날개 내구도 소모 -15/-30/-45/-60/-71/-86%, 활공 중 받는 피해 -7.5/-15/-22.5/-30/-35.5/-43%'
+      - '카드 기믹(상시): 10b 이상 낙하 시작 시 3s 느린 낙하 자동 부여(쿨 25/20/15/12/10/7s).'
+      - '특수 능력: **비상 강하** (발동: F / 궁극: Shift+F) — T2: 활공 중 웅크림+우클릭(불꽃 로켓)으로 급감속+느린 낙하 7.5s(쿨 35s). | T3: 쿨 25s, 사용 시 겉날개 내구도 +10(80s 내 1회). | T4: 240s마다 1회, 공허/추락 치명 상황에서 마지막 안전 지점으로 ''되감기'' 이동 + 12s 피해 -40%. | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 쿨 -10%(최소 4s). | T6(궁극): **질풍 폭주** — Shift+F, 쿨 180s: 10s 동안 이동 속도 +70%, 낙하 피해 0, 대시 2회(재사용 3s). 대시 경로 4b 내 몹에게 4 피해 + 넉백.'
+      - '태그: 이동, 활공, 생존'
   B-008:
-    name: 균형감각
+    name: 길잡이의 표식
     type: BLESSING
     weight: 1.0
     archetype: MOBILITY
     runtime:
       detail_ko:
-      - '받는 넉백: T1 -10.0%, T2 -30.0%, T3 -60.0%, T4 -90.0%'
-      - '받는 피해: T1 -5.0%, T2 -10.0%, T3 -15.0%, T4 -20.0%'
-      - '체력 35% 이하일 때 받는 피해 추가: T1 -5.0%, T2 -10.0%, T3 -15.0%, T4 -20.0%'
-      - '카드 기믹: 상시 패시브'
-      modifiers:
-      - type: KNOCKBACK_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.1
-        min_total_tier: 1
-        world: ANY
-      - type: KNOCKBACK_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.05
-        min_total_tier: 2
-        world: ANY
-      - type: KNOCKBACK_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.05
-        min_total_tier: 3
-        world: ANY
-      - type: KNOCKBACK_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.025
-        min_total_tier: 4
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.05
-        min_total_tier: 1
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.05
-        min_total_tier: 1
-        world: ANY
-        conditions:
-        - LOW_HEALTH_35
+      - '스탯: 이동 속도 0/+6/+12/+18/+22.5/+28.5%, 탐험/구조물 발견 점수 +15/+30/+45/+60/+71/+86%, 스캔 재사용 대기시간 120/90/75/60/49/34s'
+      - '카드 기믹(상시): 나침반/지도 사용 시 15s 동안 길 안내(방향 입자) 생성.'
+      - '특수 능력: **탐색 스캔** (발동: F / 궁극: Shift+F) — T2: 나침반 우클릭으로 반경 256b 내 ''상자/스포너'' 최대 4개를 24s 하이라이트(쿨 120s). | T3: 384b, 22.5s, 쿨 90s. | T4: 512b, 27s, 쿨 75s + 스캔된 상자 개봉 후 20s 피해 -20%(몹). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 쿨 -10%(최소 4s). | T6(궁극): **질풍 폭주** — Shift+F, 쿨 180s: 10s 동안 이동 속도 +70%, 낙하 피해 0, 대시 2회(재사용 3s). 대시 경로 4b 내 몹에게 4 피해 + 넉백.'
+      - '태그: 탐험, 유적, 점수'
   B-009:
-    name: 차원 점멸
+    name: 짐승 길들이기
     type: BLESSING
     weight: 1.0
     archetype: MOBILITY
     runtime:
       detail_ko:
-      - '능동 발동(검 우클릭, 방패 비소지) 쿨타임: T1 20s, T2 15s, T3 10s, T4 5s'
-      - '점멸 거리: T1 10b, T2 15b, T3 20b, T4 25b'
-      - '점멸 후 낙하 피해 무시: T1 0s, T2 0s, T3 1s, T4 2s'
-      - '카드 기믹: 차원 점멸 사용 후 5s 받는 피해 -20.0%/-30.0%/-40.0%/-50.0%, 공격 피해 +25.0%/+50.0%/+75.0%/+100.0%'
-      modifiers:
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.2
-        min_total_tier: 1
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.05
-        min_total_tier: 2
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.016667
-        min_total_tier: 3
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.008333
-        min_total_tier: 4
-        world: ANY
-      - type: DAMAGE_DEALT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.25
-        min_total_tier: 1
-        world: ANY
+      - '스탯: 길들인 동물 피해 +15/+30/+45/+60/+71/+86%, 길들인 동물 받는 피해 -15/-30/-45/-60/-71/-86%, 동물 교배 쿨타임 -15/-30/-45/-60/-71/-86%'
+      - '카드 기믹(상시): 반경 18b 내 길들인 동물이 있을 때 본인 이동 속도 +3/+6/+9/+12/+14/+17%.'
+      - '특수 능력: **동료 소환** (발동: F / 궁극: Shift+F) — T2: 염소 뿔(또는 지정 키)로 길들인 동물을 내 위치로 집결(쿨 60s). | T3: 집결한 동물 16s 피해 -40% + 공격 +30%. | T4: 180s마다 1회, 40s 동안 임시 늑대 무리(3마리) 소환(전용 소환, 전리품 없음). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 쿨 -10%(최소 4s). | T6(궁극): **각성** — Shift+F, 쿨 180s: 12s 동안 공격 피해 +25%, 받는 피해 -10%, 이동 속도 +25%. 처치/채굴/낚시 등 행동 성공 시 2s씩 연장(최대 +6s).'
+      - '태그: 동료, 소환, PvE'
   B-010:
-    name: 유령 걸음
+    name: 야간 사냥감
     type: BLESSING
     weight: 1.0
     archetype: MOBILITY
     runtime:
       detail_ko:
-      - '능동 발동(검 우클릭, 방패 비소지) 쿨타임: T1 60s, T2 50s, T3 40s, T4 30s'
-      - '위상 이동 지속: T1 7s, T2 8s, T3 9s, T4 10s (위상 중 공격 불가)'
-      - '위상 중 받는 피해: T1 -50.0%, T2 -60.0%, T3 -70.0%, T4 -80.0%'
-      - '카드 기믹: 위상 중 이동 속도 +35.0%/+70.0%/+105.0%/+140.0%, 스텝 업 +50.0%/+100.0%/+150.0%/+200.0%'
-      modifiers:
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.5
-        min_total_tier: 1
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.2
-        min_total_tier: 2
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.066667
-        min_total_tier: 3
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.033333
-        min_total_tier: 4
-        world: ANY
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.35
-        min_total_tier: 1
-        world: ANY
+      - '스탯: 밤/저조도(밝기≤7) 공격 피해(몹) +12/+24/+36/+48/+57/+69%, 밤/저조도 받는 피해(몹) -6/-10.5/-15/-21/-25.5/-31.5%, 다크니스/실명 지속 -22.5/-45/-67.5/-90/-107/-129.5%'
+      - '카드 기믹(상시): 밤/저조도에서 10s마다 4.5s 야간시야 부여(깜빡임 최소).'
+      - '특수 능력: **사냥꾼의 표식** (발동: F / 궁극: Shift+F) — T2: 저조도에서 타격한 몹 20s 표식(내 피해 +40%, 대상당 20s 쿨). | T3: 30s, 표식 대상 24s 발광. | T4: 표식 처치 시 ''그림자 구슬'' 생성: 6s 이속+재생(레벨1) + 5.5b 폭발(몹 8 피해). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 쿨 -10%(최소 4s). | T6(궁극): **각성** — Shift+F, 쿨 180s: 12s 동안 공격 피해 +25%, 받는 피해 -10%, 이동 속도 +25%. 처치/채굴/낚시 등 행동 성공 시 2s씩 연장(최대 +6s).'
+      - '태그: 야간, 전투, 기습'
   B-011:
-    name: 예리한 칼날
+    name: 강철심장
     type: BLESSING
     weight: 1.0
-    archetype: COMBAT
+    archetype: MOBILITY
     runtime:
       detail_ko:
-      - '공격 피해: T1 +25.0%, T2 +35.0%, T3 +50.0%, T4 +90.0%'
-      - '카드 기믹: 위더 지속 -15.0%/-25.0%/-35.0%/-45.0%'
-      modifiers:
-      - type: DAMAGE_DEALT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.25
-        min_total_tier: 1
-        world: ANY
-      - type: DAMAGE_DEALT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.075
-        min_total_tier: 2
-        world: ANY
-      - type: DAMAGE_DEALT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.008333
-        min_total_tier: 3
-        world: ANY
-      - type: DAMAGE_DEALT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.058333
-        min_total_tier: 4
-        world: ANY
-      - type: WITHER_DURATION_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.15
-        min_total_tier: 1
-        world: ANY
-      - type: WITHER_DURATION_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.025
-        min_total_tier: 2
-        world: ANY
-      - type: WITHER_DURATION_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.008333
-        min_total_tier: 3
-        world: ANY
-      - type: WITHER_DURATION_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.004167
-        min_total_tier: 4
-        world: ANY
+      - '스탯: 최대 체력 +2/+4/+6/+12/+16.5/+22.5HP, 받는 피해(몹) -6/-10.5/-15/-21/-25.5/-31.5%, 넉백 저항 +15/+30/+45/+60/+71/+86%'
+      - '카드 기믹(상시): 체력이 80% 이상이면 추가로 받는 피해(몹) -3/-6/-9/-12/-14/-17%.'
+      - '특수 능력: **철의 경화** (발동: F / 궁극: Shift+F) — T2: 10.5s 무피격 시 20s 흡수 +6HP(쿨 30s). | T3: 흡수 +9HP, 쿨 25s. | T4: 흡수 유지 중 근접 타격 시 1s마다 1회, 4b 충격파(몹 4 피해+넉백). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 쿨 -10%(최소 4s). | T6(궁극): **불사 선언** — Shift+F, 쿨 240s: 12s 동안 흡수 +30HP, 재생 III, 받는 피해 -20%. 치명 피해 1회 무효(발동 시 3s 무적).'
+      - '태그: 탱킹, 생존, 흡수'
   B-012:
-    name: 연타의 리듬
+    name: 반사 방패
     type: BLESSING
     weight: 1.0
-    archetype: COMBAT
+    archetype: MOBILITY
     runtime:
       detail_ko:
-      - '2s 내 연속 타격 스택 공격 속도: T1 +20.0%, T2 +40.0%, T3 +60.0%, T4 +80.0% (최대 5중첩)'
-      - '스택 유지 중 공격 피해: T1 +5.0%, T2 +10.0%, T3 +15.0%, T4 +20.0% (최대 5중첩)'
-      - '카드 기믹: 상시 패시브'
-      modifiers:
-      - type: ATTACK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.2
-        min_total_tier: 1
-        world: ANY
-      - type: DAMAGE_DEALT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.05
-        min_total_tier: 1
-        world: ANY
+      - '스탯: 방패 방어 효율 +22.5/+45/+67.5/+90/+107/+129.5%, 방패 방어 중 받는 피해 -7.5/-12/-16.5/-22.5/-27/-33%, 투사체 받는 피해 -15/-30/-45/-60/-71/-86%'
+      - '카드 기믹(상시): 방패를 든 상태에서 받는 넉백 -15/-30/-45/-60/-71/-86%.'
+      - '특수 능력: **탄도 반사** (발동: F / 궁극: Shift+F) — T2: 방패를 올린 직후 0.5s 내 투사체를 막으면 반사(피해 +75%, 쿨 5s). | T3: 판정 0.5s, 반사 투사체 관통 +1. | T4: 반사 성공 시 8s 이속+공격 +20% + 3s ''전면 반사장''(투사체 전부 반사, 쿨 20s). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 쿨 -10%(최소 4s). | T6(궁극): **집중 사격** — Shift+F, 쿨 180s: 다음 6발 투사체가 관통(최대 4대상) + 피해 +80%. 적중 지점에 4b 충격파(몹 6 피해, 넉백).'
+      - '태그: 방어, 패링, 원거리'
   B-013:
-    name: 저격수의 호흡
+    name: 회복의 맥박
     type: BLESSING
     weight: 1.0
-    archetype: COMBAT
+    archetype: MOBILITY
     runtime:
       detail_ko:
-      - '원거리 공격 피해: T1 +15.0%, T2 +25.0%, T3 +35.0%, T4 +45.0%'
-      - '거리 비례 적용 배율(원거리 공격 피해에 곱연산): T1~T4 공통, 5b 미만 0.5x, 5b~50b 선형 변화(0.5x→5.0x), 50b 초과 5.0x'
-      - '최종 원거리 공격 피해: `기본 원거리 공격 피해 × 거리 비례 적용 배율`'
-      - '공격 피해 [엔드]: T1 +10.0%, T2 +15.0%, T3 +20.0%, T4 +25.0%'
-      - '노출 표식 지속: T1 +0.0%, T2 +0.0%, T3 -20.0%, T4 -30.0%'
-      - '카드 기믹: 상시 패시브(거리 비례 배율 적용)'
-      modifiers:
-      - type: DAMAGE_DEALT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.15
-        min_total_tier: 1
-        world: ANY
-      - type: DAMAGE_DEALT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.025
-        min_total_tier: 2
-        world: ANY
-      - type: DAMAGE_DEALT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.008333
-        min_total_tier: 3
-        world: ANY
-      - type: DAMAGE_DEALT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.004167
-        min_total_tier: 4
-        world: ANY
-      - type: DAMAGE_DEALT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.1
-        min_total_tier: 1
-        world: END
-      - type: DAMAGE_DEALT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.025
-        min_total_tier: 2
-        world: END
-      - type: DAMAGE_DEALT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.008333
-        min_total_tier: 3
-        world: END
-      - type: DAMAGE_DEALT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.004167
-        min_total_tier: 4
-        world: END
-      - type: GLOWING_DURATION_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.066667
-        min_total_tier: 3
-        world: ANY
-      - type: GLOWING_DURATION_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.008333
-        min_total_tier: 4
-        world: ANY
+      - '스탯: 자연 회복량 +22.5/+45/+67.5/+90/+107/+129.5%, 포만감 소모 -6/-12/-18/-24/-28.5/-34.5%, 전투 중 자연 회복량 +7.5/+15/+22.5/+30/+35.5/+43%'
+      - '카드 기믹(상시): 음식 섭취 시 4.5s 재생 I 부여(쿨 20s).'
+      - '특수 능력: **세컨드 윈드** (발동: F / 궁극: Shift+F) — T2: 체력 46.5% 이하 진입 시 재생 II 12s + 저항 I 6s(쿨 90s). | T3: 재생 III 9s, 쿨 75s. | T4: 발동 시 부정효과 1개 제거 + 흡수 +12HP 20s. | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 쿨 -10%(최소 4s). | T6(궁극): **불사 선언** — Shift+F, 쿨 240s: 12s 동안 흡수 +30HP, 재생 III, 받는 피해 -20%. 치명 피해 1회 무효(발동 시 3s 무적).'
+      - '태그: 회복, 생존, 응급'
   B-014:
-    name: 방패 반사
+    name: 해독 인장
     type: BLESSING
     weight: 1.0
-    archetype: COMBAT
+    archetype: MOBILITY
     runtime:
       detail_ko:
-      - '방패 방어 효율: T1 +25.0%, T2 +50.0%, T3 +75.0%, T4 +100.0%'
-      - '방패 방어 중 받는 피해: T1 -10.0%, T2 -15.0%, T3 -20.0%, T4 -25.0%'
-      - '방패 방어 중 투사체 집중 반경: T1 4b, T2 5b, T3 6b, T4 7b (집중 후 반사)'
-      - '카드 기믹: 투사체 피해 -20.0%/-30.0%/-40.0%/-50.0%'
-      modifiers:
-      - type: SHIELD_BLOCK_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.25
-        min_total_tier: 1
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.1
-        min_total_tier: 1
-        world: ANY
-        conditions: &id003
-        - BLOCKING
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.025
-        min_total_tier: 2
-        world: ANY
-        conditions: *id003
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.008333
-        min_total_tier: 3
-        world: ANY
-        conditions: *id003
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.004167
-        min_total_tier: 4
-        world: ANY
-        conditions: *id003
-      - type: PROJECTILE_DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.2
-        min_total_tier: 1
-        world: ANY
-      - type: PROJECTILE_DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.05
-        min_total_tier: 2
-        world: ANY
-      - type: PROJECTILE_DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.016667
-        min_total_tier: 3
-        world: ANY
-      - type: PROJECTILE_DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.008333
-        min_total_tier: 4
-        world: ANY
+      - '스탯: 부정효과 지속 -22.5/-37.5/-52.5/-67.5/-79/-94%, 독/위더/화상 지속 -30/-52.5/-75/-90/-101/-116%, 정화 후 12s 받는 피해(몹) -12/-18/-24/-33/-40/-49%'
+      - '카드 기믹(상시): 부정효과 2개 이상일 때 이동 속도 - 효과를 무시(둔화 면역은 아님, ''감소 무시'' 수준).'
+      - '특수 능력: **정화 의식** (발동: F / 궁극: Shift+F) — T2: 우유/꿀 사용 시 반경 16b 아군 포함 부정효과 최대 2개 제거(쿨 60s). | T3: 최대 3개 + 10s 저항 I. | T4: 제거한 효과 수만큼 12s ''독기 구름''(반경 12b, 적대 몹 독 I 8s). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 쿨 -10%(최소 4s). | T6(궁극): **성역 전개** — Shift+F, 쿨 240s: 12s 동안 12b 내 아군에게 흡수 +15HP, 재생 II, 받는 피해 -15%. 영역 내 몹은 약화 I + 둔화 30%.'
+      - '태그: 정화, 지원, 상태이상'
   B-015:
-    name: 폭발 공학
+    name: 폭발 완충
     type: BLESSING
     weight: 1.0
-    archetype: COMBAT
+    archetype: MOBILITY
     runtime:
       detail_ko:
-      - '폭발 피해: T1 -15.0%, T2 -30.0%, T3 -45.0%, T4 -60.0%'
-      - '받는 피해: T1 -5.0%, T2 -10.0%, T3 -15.0%, T4 -20.0%'
-      - '함정 감지 반경: T1 8b, T2 12b, T3 16b, T4 24b'
-      - '카드 기믹: 감지 대상(레드스톤/스위치) 핑 5s'
-      modifiers:
-      - type: EXPLOSION_DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.15
-        min_total_tier: 1
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.05
-        min_total_tier: 1
-        world: ANY
+      - '스탯: 폭발 피해 -15/-30/-45/-60/-71/-86%, 폭발 넉백 -22.5/-45/-67.5/-90/-107/-129.5%, 함정 감지 반경 8/12/16/36/51/71b'
+      - '카드 기믹(상시): 폭발 피해를 받으면 9s 동안 받는 피해(몹) -3/-6/-9/-12/-14/-17%(쿨 20s).'
+      - '특수 능력: **충격 흡수** (발동: F / 궁극: Shift+F) — T2: 폭발 피해의 60%를 ''충전''으로 저장(최대 20). 다음 근접 공격이 충전 방출(반경 5.5b, 충전만큼 추가 피해, 쿨 15s). | T3: 저장 80%, 반경 8b. | T4: 막대기 우클릭으로 충전 방출 ''충격파''(몹 넉백+2s 기절, 쿨 30s). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 쿨 -10%(최소 4s). | T6(궁극): **각성** — Shift+F, 쿨 180s: 12s 동안 공격 피해 +25%, 받는 피해 -10%, 이동 속도 +25%. 처치/채굴/낚시 등 행동 성공 시 2s씩 연장(최대 +6s).'
+      - '태그: 폭발, 던전, 딜전환'
   B-016:
-    name: 화염 연금
+    name: 화염 동화
     type: BLESSING
     weight: 1.0
     archetype: COMBAT
     runtime:
       detail_ko:
-      - '화염 피해: T1 -15.0%, T2 -25.0%, T3 -40.0%, T4 -60.0%'
-      - '화상 지속 시간: T1 -10.0%, T2 -20.0%, T3 -27.5%, T4 -35.0%'
-      - '받는 피해: T1 -5.0%, T2 -10.0%, T3 -15.0%, T4 -20.0%'
-      - '카드 기믹: 긍정 버프 적용 중 화염/화상 감소 1.5배'
-      modifiers:
-      - type: FIRE_DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.15
-        min_total_tier: 1
-        world: ANY
-      - type: FIRE_DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.025
-        min_total_tier: 2
-        world: ANY
-      - type: FIRE_DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.008333
-        min_total_tier: 3
-        world: ANY
-      - type: FIRE_DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.016667
-        min_total_tier: 4
-        world: ANY
-      - type: BURNING_TIME_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.1
-        min_total_tier: 1
-        world: ANY
-      - type: BURNING_TIME_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.008333
-        min_total_tier: 3
-        world: ANY
-      - type: BURNING_TIME_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.004167
-        min_total_tier: 4
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.05
-        min_total_tier: 1
-        world: ANY
+      - '스탯: 화염/화상 피해 -15/-30/-45/-67.5/-84.5/-107%, 네더 이동 속도 0/+9/+18/+27/+34/+43%, 용암 피해 0/-15/-30/-45/-56/-71%'
+      - '카드 기믹(상시): 불타는 동안 공격 피해(몹) +6/+12/+18/+24/+28.5/+34.5%(리스크를 딜로 전환).'
+      - '특수 능력: **마그마 걸음** (발동: F / 궁극: Shift+F) — T2: 용암에서 웅크리면 12s 화염 저항 + 상승 속도 증가(쿨 45s). | T3: 18s, 지나간 자리에 12s 임시 마그마(몹 2 피해/초). | T4: 120s마다 1회, 치명적 화상 시 16s ''화염 면역'' + 힘 II, 주변 8b 화염 폭발(몹 12 피해, 블록 무피해). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 쿨 -10%(최소 4s). | T6(궁극): **화염의 왕관** — Shift+F, 쿨 240s: 12s 동안 화염/폭발 피해 -40%, 공격 시 적에게 6s 화상(초당 2 피해). 발동 시 10b 화염 고리(몹 8 피해 + 6s 공포(둔화 40%)).'
+      - '태그: 화염, 네더, 생존'
   B-017:
-    name: 맹독 주입
+    name: 한기 내성
     type: BLESSING
     weight: 1.0
     archetype: COMBAT
     runtime:
       detail_ko:
-      - '독 지속: T1 -10.0%, T2 -15.0%, T3 -21.0%, T4 -28.0%'
-      - '위더 지속: T1 -5.0%, T2 -10.0%, T3 -15.0%, T4 -20.0%'
-      - '공격 대상 독 부여(10s): T1 Lv1, T2 Lv2, T3 Lv3, T4 Lv4'
-      - '카드 기믹: T3+ 공격 대상 위더 부여(10s): T3 Lv2, T4 Lv3'
-      modifiers:
-      - type: POISON_DURATION_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.1
-        min_total_tier: 1
-        world: ANY
-      - type: POISON_DURATION_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.025
-        min_total_tier: 2
-        world: ANY
-      - type: POISON_DURATION_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.005
-        min_total_tier: 3
-        world: ANY
-      - type: WITHER_DURATION_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.05
-        min_total_tier: 1
-        world: ANY
+      - '스탯: 빙결/동상 진행 -15/-30/-45/-60/-71/-86%, 눈/얼음 이동 속도 +6/+12/+18/+27/+34/+43%, 공격 속도 0/+4.5/+9/+15/+19.5/+25.5%'
+      - '카드 기믹(상시): 피격 시 9s 동안 동상/빙결에 완만해짐(빙결 진행 추가 -7.5/-15/-22.5/-30/-35.5/-43%).'
+      - '특수 능력: **냉기 방출** (발동: F / 궁극: Shift+F) — T2: 피격 시 반경 10.5b 서리 파동(몹 6s 50% 둔화, 쿨 20s). | T3: 70% 둔화 + 몹 공격속도 -20%. | T4: 파동이 투사체 4s 둔화(화살 속도 감소) + 본인 8s 피해 -24%. | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 쿨 -10%(최소 4s). | T6(궁극): **절대빙결** — Shift+F, 쿨 180s: 10s 동안 14b 내 몹에게 빙결(이속 -90%) + 매 1.5s마다 3 피해. 종료 시 8b 빙결 폭발(몹 10 피해) + 8s 둔화 60%.'
+      - '태그: 빙결, 방어, 군중제어'
   B-018:
-    name: 역전의 분노
+    name: 생명 보험
     type: BLESSING
     weight: 1.0
     archetype: COMBAT
     runtime:
       detail_ko:
-      - '체력 35% 이하 공격 피해: T1 +20.0%, T2 +35.0%, T3 +50.0%, T4 +70.0%'
-      - '체력 35% 이하 받는 피해: T1 -10.0%, T2 -15.0%, T3 -20.0%, T4 -25.0%'
-      - '전투 상태 자연 회복량: T1 +10.0%, T2 +20.0%, T3 +30.0%, T4 +40.0%'
-      - '카드 기믹: 체력 35.0% 이하에서 재생 적용(T1 없음, T2 없음, T3 재생 I, T4 재생 II), 체력 50.0% 이상 시 해제'
-      modifiers:
-      - type: DAMAGE_DEALT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.2
-        min_total_tier: 1
-        world: ANY
-        conditions: &id004
-        - LOW_HEALTH_35
-      - type: DAMAGE_DEALT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.025
-        min_total_tier: 2
-        world: ANY
-        conditions: *id004
-      - type: DAMAGE_DEALT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.008333
-        min_total_tier: 3
-        world: ANY
-        conditions: *id004
-      - type: DAMAGE_DEALT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.008333
-        min_total_tier: 4
-        world: ANY
-        conditions: *id004
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.1
-        min_total_tier: 1
-        world: ANY
-        conditions: &id005
-        - LOW_HEALTH_35
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.025
-        min_total_tier: 2
-        world: ANY
-        conditions: *id005
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.008333
-        min_total_tier: 3
-        world: ANY
-        conditions: *id005
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.004167
-        min_total_tier: 4
-        world: ANY
-        conditions: *id005
-      - type: NATURAL_REGEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.1
-        min_total_tier: 1
-        world: ANY
+      - '스탯: 받는 피해(몹) -4.5/-9/-13.5/-18/-21.5/-26%, 치명 피해 방지 쿨타임 240/210/180/150/127.5/97.5s, 부활 후 12s 이동 속도 +15/+22.5/+30/+45/+56/+71%'
+      - '카드 기믹(상시): 치명 피해 방지 발동 시 부정효과 1개 제거.'
+      - '특수 능력: **보험금 지급** (발동: F / 궁극: Shift+F) — T2: 치명 피해 시 HP 2로 생존 + 4s 무적 + 24b 후방 안전지점 이동(쿨 적용). | T3: 무적 6s + 12s 동안 12HP 회복. | T4: 발동 후 20s ''수호령''(반경 8b 몹 4 피해/초 + 본인 흡수 +20HP). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 쿨 -10%(최소 4s). | T6(궁극): **불사 선언** — Shift+F, 쿨 240s: 12s 동안 흡수 +30HP, 재생 III, 받는 피해 -20%. 치명 피해 1회 무효(발동 시 3s 무적).'
+      - '태그: 응급, 생존, 수호'
   B-019:
-    name: 집중
+    name: 보호의 성가
     type: BLESSING
     weight: 1.0
     archetype: COMBAT
     runtime:
       detail_ko:
-      - '비전투(공격/피격 없음) 5s 유지 후 다음 1회 공격 피해: T1 +100.0%, T2 +200.0%, T3 +300.0%, T4 +500.0%'
-      - '다크니스/실명 지속: T1 -15.0%, T2 -30.0%, T3 -45.0%, T4 -60.0%'
-      - '비전투(공격/피격 없음) 5s 유지 후 다음 1회 받는 피해: T1 -25.0%, T2 -40.0%, T3 -55.0%, T4 -70.0%'
-      - '카드 기믹: 공격/피격 없이 5s 유지 시 집중 상태 5s 활성화, 다음 1회 공격/피격 처리 후 종료(내부 쿨타임 없음)'
-      modifiers:
-      - type: DAMAGE_DEALT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 1.0
-        min_total_tier: 1
-        world: ANY
-      - type: DAMAGE_DEALT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.25
-        min_total_tier: 4
-        world: ANY
-      - type: BLINDNESS_DURATION_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.15
-        min_total_tier: 1
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.25
-        min_total_tier: 1
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.05
-        min_total_tier: 2
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.016667
-        min_total_tier: 3
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.008333
-        min_total_tier: 4
-        world: ANY
+      - '스탯: 본인 받는 피해(몹) -4.5/-9/-13.5/-18/-21.5/-26%, 반경 15b 아군 회복량 +7.5/+15/+22.5/+30/+35.5/+43%, 아군 투사체 피해 -7.5/-15/-22.5/-30/-35.5/-43%'
+      - '카드 기믹(상시): 18b 내 아군 1명 이상이면 본인 방어력 +1/+2/+3/+4/+5/+6(가벼운 보너스).'
+      - '특수 능력: **성가 발동** (발동: F / 궁극: Shift+F) — T2: 염소 뿔(또는 지정 키)로 24s 성가: 아군 저항 I+재생 I(쿨 180s). | T3: 22.5s, 쿨 150s, 아군 이속 +20%. | T4: 시전 시 부정효과 1개 제거 + 24s 동안 24b 내 적대 몹에 빛줄기(초당 2 피해). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 쿨 -10%(최소 4s). | T6(궁극): **성역 전개** — Shift+F, 쿨 240s: 12s 동안 12b 내 아군에게 흡수 +15HP, 재생 II, 받는 피해 -15%. 영역 내 몹은 약화 I + 둔화 30%.'
+      - '태그: 지원, 파티, 유틸'
   B-020:
-    name: 무기 장인
+    name: 생존 본능
     type: BLESSING
     weight: 1.0
     archetype: COMBAT
     runtime:
       detail_ko:
-      - '무기/장비 내구도 소모: T1 -10.0%, T2 -20.0%, T3 -30.0%, T4 -40.0%'
-      - '모루 수리 비용(XP/작업 페널티): T1 -10.0%, T2 -20.0%, T3 -30.0%, T4 -40.0%'
-      - '수리 시 내구도 회복량: T1 +10.0%, T2 +20.0%, T3 +30.0%, T4 +40.0%'
-      - '제작 재료 무소모 확률: T1 5.0%, T2 10.0%, T3 15.0%, T4 20.0%'
-      - '적 처치 시 무기 내구도 회복: T1 +0, T2 +0, T3 +1, T4 +2'
-      - '카드 기믹: 상시 패시브'
-      modifiers:
-      - type: ITEM_DURABILITY_LOSS_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.1
-        min_total_tier: 1
-        world: ANY
+      - '스탯: 체력 35% 이하 받는 피해(몹) -9/-15/-21/-27/-31.5/-37.5%, 체력 35% 이하 이동 속도 +9/+18/+27/+36/+43/+52%, 전투 중 자연 회복량 +7.5/+15/+22.5/+30/+35.5/+43%'
+      - '카드 기믹(상시): 체력 35% 이하일 때 받는 넉백 -15/-30/-45/-60/-71/-86%.'
+      - '특수 능력: **도주 경로** (발동: F / 궁극: Shift+F) — T2: 저체력(≤70%) 상태에서 피격 시 6s 가속 + ''미끼 잔상'' 8s(몹 시선 분산, 쿨 60s). | T3: 가속 8s, 잔상 12s. | T4: 잔상 종료 시 5.5b 연막 폭발(몹 8 피해 + 8s 80% 둔화). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 쿨 -10%(최소 4s). | T6(궁극): **불사 선언** — Shift+F, 쿨 240s: 12s 동안 흡수 +30HP, 재생 III, 받는 피해 -20%. 치명 피해 1회 무효(발동 시 3s 무적).'
+      - '태그: 생존, 저체력, 도주'
   B-021:
-    name: 강철 피부
+    name: 연타의 춤
     type: BLESSING
     weight: 1.0
-    archetype: DEFENSE
+    archetype: COMBAT
     runtime:
       detail_ko:
-      - '받는 피해: T1 -10.0%, T2 -20.0%, T3 -30.0%, T4 -40.0%'
-      - '받는 피해 [엔드]: T1 -5.0%, T2 -10.0%, T3 -15.0%, T4 -20.0%'
-      - '스텝 업 높이 [엔드]: T1 +10.0%, T2 +20.0%, T3 +30.0%, T4 +40.0%'
-      - '카드 기믹: 상시 패시브'
-      modifiers:
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.1
-        min_total_tier: 1
-        world: ANY
-      - type: END_DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.05
-        min_total_tier: 1
-        world: END
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.05
-        min_total_tier: 1
-        world: END
-      - type: STEP_HEIGHT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.1
-        min_total_tier: 1
-        world: END
+      - '스탯: 공격 속도 +15/+30/+45/+60/+71/+86%(콤보 스택), 공격 피해(몹) +6/+12/+18/+24/+28.5/+34.5%(콤보 스택), 스택 유지 시간 2/2/2.5/4/5/6.5s'
+      - '카드 기믹(상시): 몹을 2s 내 연속 적중하면 스택 +1(최대 5). 스택은 공격 중단 시 소멸.'
+      - '특수 능력: **콤보 피니시** (발동: F / 궁극: Shift+F) — T2: 5스택에서 다음 타격이 ''피니시''(추가 12 피해+4b 범위, 쿨 12s). | T3: 추가 20 피해, 범위 5.5b. | T4: 피니시가 12s ''시차''(몹 이속 -80%, 공격 -40%) 부여 + 처치 시 4s 무적. | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 쿨 -10%(최소 4s). | T6(궁극): **학살의 춤** — Shift+F, 쿨 180s: 10s 동안 공격 속도 +40% & 공격 피해 +35%. 타격마다 6b 파동(몹 3 피해). 처치 시 지속 1s 연장(최대 +5s).'
+      - '태그: 근접, 콤보, 난전'
   B-022:
-    name: 재생의 샘
+    name: 흡혈의 칼끝
     type: BLESSING
     weight: 1.0
-    archetype: DEFENSE
+    archetype: COMBAT
     runtime:
       detail_ko:
-      - '자연 회복량: T1 +20.0%, T2 +40.0%, T3 +60.0%, T4 +80.0%'
-      - '저체력 생존 발동 체력 임계: T1 30.0%, T2 28.0%, T3 26.0%, T4 20.0%'
-      - '저체력 생존 발동 후 무적: T1 2s, T2 3s, T3 4s, T4 5s'
-      - '저체력 생존 발동 내부 쿨타임: 60s'
-      - '카드 기믹: 저체력 생존 발동 후 재생 III 5s'
-      modifiers:
-      - type: NATURAL_REGEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.2
-        min_total_tier: 1
-        world: ANY
+      - '스탯: 공격 피해(몹) +9/+18/+27/+36/+43/+52%, 흡혈 6/9/12/15/17/20%(대상: 몹, 타격당 최대 4/5/6/10.5/14/18.5HP), 처치 시 포만감 회복 0/+1/+1/+2/+3/+4'
+      - '카드 기믹(상시): 보스(드래곤/위더/워든 등) 상대 흡혈 효율 75%.'
+      - '특수 능력: **피의 계약** (발동: F / 궁극: Shift+F) — T2: 검 우클릭으로 20s 계약(흡혈 +20% 대신 받는 피해 +7.5%, 쿨 60s). | T3: 24s, 흡혈 +28%, 피해 패널티 +4.5%, 쿨 50s. | T4: 계약 중 처치 시 지속 +4s(최대 40s) + 종료 시 흡수 +16HP 20s. | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 쿨 -10%(최소 4s). | T6(궁극): **학살의 춤** — Shift+F, 쿨 180s: 10s 동안 공격 속도 +40% & 공격 피해 +35%. 타격마다 6b 파동(몹 3 피해). 처치 시 지속 1s 연장(최대 +5s).'
+      - '태그: 근접, 흡혈, 리스크'
   B-023:
-    name: 흡수 보호막
+    name: 파쇄의 일격
     type: BLESSING
     weight: 1.0
-    archetype: DEFENSE
+    archetype: COMBAT
     runtime:
       detail_ko:
-      - '흡수 리필 주기/획득량: T1 10s/+5HP, T2 10s/+10HP, T3 10s/+15HP, T4 10s/+20HP'
-      - '받는 피해: T1 +0.0%, T2 -5.0%, T3 -10.0%, T4 -15.0% (흡수 존재 시 T1 -10.0%p, T2 -15.0%p, T3 -20.0%p, T4 -25.0%p 추가)'
-      - '카드 기믹: T4 흡수 파괴 시 10s 넉백 면역'
-      modifiers:
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.025
-        min_total_tier: 2
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.008333
-        min_total_tier: 3
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.004167
-        min_total_tier: 4
-        world: ANY
+      - '스탯: 공격 피해(몹) +12/+21/+30/+42/+51/+63%, 방어 관통 +7.5/+15/+22.5/+30/+35.5/+43%, 넉백 0/+15/+30/+45/+56/+71%'
+      - '카드 기믹(상시): 같은 몹을 6s 내 3회 적중 시 ''파쇄'' 1스택(최대 3). 파쇄 스택당 대상이 받는 피해 +7.5/+12/+16.5/+22.5/+27/+33%.'
+      - '특수 능력: **파쇄 폭발** (발동: F / 궁극: Shift+F) — T2: 파쇄 3스택 도달 시 5.5b 폭발(몹 8 피해) 후 스택 초기화(대상당 쿨 12s). | T3: 반경 8b + 약화 I 12s. | T4: 폭발이 주변 몹을 끌어당김(미니 인력) + 4s 기절(이속 -120%). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 쿨 -10%(최소 4s). | T6(궁극): **학살의 춤** — Shift+F, 쿨 180s: 10s 동안 공격 속도 +40% & 공격 피해 +35%. 타격마다 6b 파동(몹 3 피해). 처치 시 지속 1s 연장(최대 +5s).'
+      - '태그: 근접, 디버프, 딜증폭'
   B-024:
-    name: 해독 전문가
+    name: 충격파 망치
     type: BLESSING
     weight: 1.0
-    archetype: DEFENSE
+    archetype: COMBAT
     runtime:
       detail_ko:
-      - '독/위더/화상 지속: T1 -20.0%, T2 -35.0%, T3 -50.0%, T4 -65.0%'
-      - '부정효과 지속: T1 -20.0%, T2 -30.0%, T3 -40.0%, T4 -50.0%'
-      - '정화/해제 후 8s 받는 피해: T1 -15.0%, T2 -25.0%, T3 -35.0%, T4 -50.0%'
-      - '카드 기믹: T3+ 8s/5s마다 부정효과 1개 제거'
-      modifiers:
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.15
-        min_total_tier: 1
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.025
-        min_total_tier: 2
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.008333
-        min_total_tier: 3
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.008333
-        min_total_tier: 4
-        world: ANY
+      - '스탯: 공격 피해(몹) +15/+27/+39/+54/+65/+80%, 받는 넉백 -7.5/-15/-22.5/-30/-35.5/-43%, 낙하 피해 -7.5/-15/-22.5/-30/-35.5/-43%'
+      - '카드 기믹(상시): 도약/낙하 후 4.5s 동안 근접 공격 범위 0/0/+0.5/+2/+3/+4.5b.'
+      - '특수 능력: **지면 강타** (발동: F / 궁극: Shift+F) — T2: 6.5b 이상 낙하 후 2.5s 내 타격 시 충격파(반경 8b, 몹 12 피해+넉백, 쿨 25s). | T3: 필요 낙하 8b, 반경 10.5b. | T4: 충격파가 6s 기절(이속 -120%) + 12s 약화 II. | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 쿨 -10%(최소 4s). | T6(궁극): **학살의 춤** — Shift+F, 쿨 180s: 10s 동안 공격 속도 +40% & 공격 피해 +35%. 타격마다 6b 파동(몹 3 피해). 처치 시 지속 1s 연장(최대 +5s).'
+      - '태그: 근접, 광역, 기절'
   B-025:
-    name: 투사체 차폐
+    name: 맹독 연마
     type: BLESSING
     weight: 1.0
-    archetype: DEFENSE
+    archetype: COMBAT
     runtime:
       detail_ko:
-      - '투사체 받는 피해: T1 -15.0%, T2 -30.0%, T3 -45.0%, T4 -60.0%'
-      - '브레스 피해 [엔드]: T1 -20.0%, T2 -40.0%, T3 -60.0%, T4 -80.0%'
-      - '받는 피해 [엔드]: T1 -15.0%, T2 -25.0%, T3 -35.0%, T4 -45.0%'
-      - '카드 기믹: 상시 패시브'
-      modifiers:
-      - type: PROJECTILE_DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.15
-        min_total_tier: 1
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.15
-        min_total_tier: 1
-        world: ANY
-      - type: END_DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.15
-        min_total_tier: 1
-        world: END
-      - type: END_DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.025
-        min_total_tier: 2
-        world: END
-      - type: END_DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.008333
-        min_total_tier: 3
-        world: END
-      - type: END_DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.004167
-        min_total_tier: 4
-        world: END
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.15
-        min_total_tier: 1
-        world: END
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.025
-        min_total_tier: 2
-        world: END
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.008333
-        min_total_tier: 3
-        world: END
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.004167
-        min_total_tier: 4
-        world: END
+      - '스탯: 타격 시 독 부여 4/6/8/15/20/27s(기본 독 I, T3~ 독 II), 독 저항(본인 부정효과 지속 감소) -15/-30/-45/-60/-71/-86%, 공격 피해(몹) +6/+12/+18/+24/+28.5/+34.5%'
+      - '카드 기믹(상시): 독 걸린 몹에게 주는 피해 +7.5/+15/+22.5/+30/+35.5/+43%.'
+      - '특수 능력: **독 확산** (발동: F / 궁극: Shift+F) — T2: 독 부여 시 8b 내 1마리에게 전염(쿨 8s). | T3: 12b, 최대 2마리. | T4: 독 대상 처치 시 10s 독기 구름(5.5b) 생성 + 구름에 걸린 몹 수만큼 회복(1마리당 4HP, 최대 12HP). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 쿨 -10%(최소 4s). | T6(궁극): **학살의 춤** — Shift+F, 쿨 180s: 10s 동안 공격 속도 +40% & 공격 피해 +35%. 타격마다 6b 파동(몹 3 피해). 처치 시 지속 1s 연장(최대 +5s).'
+      - '태그: 상태이상, 근접, 광역'
   B-026:
-    name: 폭발 방호
+    name: 성수의 검
     type: BLESSING
     weight: 1.0
-    archetype: DEFENSE
+    archetype: COMBAT
     runtime:
       detail_ko:
-      - '폭발 피해: T1 -20.0%, T2 -35.0%, T3 -50.0%, T4 -65.0%'
-      - '받는 피해: T1 +0.0%, T2 -5.0%, T3 -10.0%, T4 -15.0%'
-      - '폭발 넉백: T1 -20.0%, T2 -35.0%, T3 -50.0%, T4 -65.0%'
-      - '함정 감지 반경(레드스톤/압력판/트립와이어/TNT): T1 8b, T2 12b, T3 16b, T4 24b'
-      - '카드 기믹: 감지 반경 내 TNT 점화/크리퍼 점화/압력판·트립와이어 작동 시 5s 받는 피해 추가 T1 -10.0%, T2 -15.0%, T3 -20.0%, T4 -25.0% (ICD 10s)'
-      modifiers:
-      - type: EXPLOSION_DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.2
-        min_total_tier: 1
-        world: ANY
-      - type: EXPLOSION_DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.025
-        min_total_tier: 2
-        world: ANY
-      - type: EXPLOSION_DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.008333
-        min_total_tier: 3
-        world: ANY
-      - type: EXPLOSION_DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.004167
-        min_total_tier: 4
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.025
-        min_total_tier: 2
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.008333
-        min_total_tier: 3
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.004167
-        min_total_tier: 4
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.1
-        min_total_tier: 1
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.025
-        min_total_tier: 2
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.008333
-        min_total_tier: 3
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.004167
-        min_total_tier: 4
-        world: ANY
+      - '스탯: 언데드 공격 피해 +18/+30/+42/+60/+73.5/+91.5%, 언데드에게 받는 피해 -7.5/-15/-22.5/-30/-35.5/-43%, 언데드 처치 시 회복 0/+2/+4/+9/+13/+18HP'
+      - '카드 기믹(상시): 언데드 처치 시 15s 동안 이동 속도 +6/+12/+18/+27/+34/+43%.'
+      - '특수 능력: **정화의 섬광** (발동: F / 궁극: Shift+F) — T2: 언데드 타격 시 40% 확률로 8s 연소(낮이 아니어도)(쿨 4s). | T3: 확률 60%, 연소 12s. | T4: 90s마다 1회, 16b ''성광''(언데드 20 피해 + 아군 8HP 치유 + 부정효과 1개 제거). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 쿨 -10%(최소 4s). | T6(궁극): **전장 제압** — Shift+F, 쿨 180s: 12s 동안 14b ''제압장'' 생성. 영역 내 몹은 이속 -50% + 공격력 -25%, 매초 2 피해. 종료 시 8 피해 폭발.'
+      - '태그: 언데드, 보조힐, 광역'
   B-027:
-    name: 불굴 의지
+    name: 거인 사냥꾼
     type: BLESSING
     weight: 1.0
-    archetype: DEFENSE
+    archetype: COMBAT
     runtime:
       detail_ko:
-      - '치명 피해 방지 내부 쿨타임: T1 180s, T2 150s, T3 120s, T4 90s'
-      - '발동 후 무적: T1 2s, T2 3s, T3 4s, T4 5s'
-      - '발동 후 받는 피해 감소(지속): T1 -20.0%(10s), T2 -30.0%(20s), T3 -40.0%(30s), T4 -50.0%(40s)'
-      - '발동 후 이동 속도 증가(지속): T1 +0.0%(10s), T2 +10.0%(20s), T3 +20.0%(30s), T4 +40.0%(40s)'
-      - '카드 기믹: 생존 점수 +10.0%/+20.0%/+30.0%/+40.0%'
-      modifiers:
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.2
-        min_total_tier: 1
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.05
-        min_total_tier: 2
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.016667
-        min_total_tier: 3
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.008333
-        min_total_tier: 4
-        world: ANY
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.05
-        min_total_tier: 2
-        world: ANY
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.016667
-        min_total_tier: 3
-        world: ANY
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.033333
-        min_total_tier: 4
-        world: ANY
-      - type: SURVIVAL_SCORE_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.1
-        min_total_tier: 1
-        world: ANY
+      - '스탯: 최대 체력 60HP↑ 몹 공격 피해 +12/+24/+36/+48/+57/+69%, 60HP↑ 몹에게 받는 피해 -6/-10.5/-15/-21/-25.5/-31.5%, 치명타 확률(몹) +4.5/+9/+13.5/+18/+21.5/+26%'
+      - '카드 기믹(상시): 대상 현재 체력이 높을수록(≥90%) 추가 피해 0/+7.5/+15/+22.5/+28/+35.5%p(선형).'
+      - '특수 능력: **처형 표식** (발동: F / 궁극: Shift+F) — T2: 체력 106.5%↑ 몹 타격 시 24s 표식. 표식 중 26.5%↓로 만들면 다음 1타가 처형(추가 ''최대체력 50%'' 진실 피해, 최대 20, 쿨 45s). | T3: 최대 26, 쿨 35s. | T4: 처형 시 12b 공포 파동(몹 12s 80% 둔화+도주) + 본인 힘 I 12s. | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 쿨 -10%(최소 4s). | T6(궁극): **결전 선언** — Shift+F, 쿨 240s: 15s 동안 보스/대형 몹에게 주는 피해 +60%, 보스에게 받는 피해 -15%. 15s 내 보스에게 준 피해의 20%를 흡수(최대 20HP).'
+      - '태그: 보스, 처형, 근접'
   B-028:
-    name: 응급 처치
+    name: 난전 지휘
     type: BLESSING
     weight: 1.0
-    archetype: DEFENSE
+    archetype: COMBAT
     runtime:
       detail_ko:
-      - '후방 안전 지점 전이 거리: T1 10b, T2 12b, T3 14b, T4 16b'
-      - '전이 후 무적: T1 2s, T2 3s, T3 4s, T4 5s'
-      - '전이 후 8s 받는 피해: T1 -10.0%, T2 -15.0%, T3 -20.0%, T4 -25.0%'
-      - '슈퍼세이브 내부 쿨타임: T1 180s, T2 150s, T3 120s, T4 90s'
-      - '카드 기믹: 치명/즉사급 피해를 받으면 피해를 무효화하고 체력을 1로 고정한 뒤 즉시 전이, 재생 V 5s 적용(슈퍼세이브 쿨타임 중 미발동)'
-      modifiers:
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.1
-        min_total_tier: 1
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.025
-        min_total_tier: 2
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.008333
-        min_total_tier: 3
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.004167
-        min_total_tier: 4
-        world: ANY
+      - '스탯: 반경 12b 내 적대 몹 3마리↑일 때 받는 피해 -4.5/-9/-13.5/-18/-21.5/-26%, 같은 조건 공격 피해 +9/+18/+27/+36/+43/+52%, 이동 속도 0/+6/+12/+18/+22.5/+28.5%'
+      - '카드 기믹(상시): 난전 상태에서 휩쓸기(광역) 반경 0/0/+0.5/+2/+3/+4.5b.'
+      - '특수 능력: **전열 붕괴** (발동: F / 궁극: Shift+F) — T2: 방패로 막은 뒤 2.5s 내 타격 시 12b 돌파 대시(몹 넉백, 쿨 35s). | T3: 16b, 대시 후 8s 피해 -20%. | T4: 대시 경로에 12s 전장(반경 12b, 몹 40% 둔화 + 본인 피해 +30%). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 쿨 -10%(최소 4s). | T6(궁극): **질풍 폭주** — Shift+F, 쿨 180s: 10s 동안 이동 속도 +70%, 낙하 피해 0, 대시 2회(재사용 3s). 대시 경로 4b 내 몹에게 4 피해 + 넉백.'
+      - '태그: 난전, 이동, 돌파'
   B-029:
-    name: 방어구 장인
+    name: 수확자의 낫
     type: BLESSING
     weight: 1.0
-    archetype: DEFENSE
+    archetype: COMBAT
     runtime:
       detail_ko:
-      - '방어구 내구도 소모: T1 -15.0%, T2 -25.0%, T3 -35.0%, T4 -45.0%'
-      - '수리 효율: T1 +20.0%, T2 +30.0%, T3 +40.0%, T4 +50.0%'
-      - '방어구 대장간 작업 비용(XP/작업 페널티): T1 -10.0%, T2 -20.0%, T3 -30.0%, T4 -40.0%'
-      - '방어구 착용 시 받는 피해: T1 -5.0%, T2 -10.0%, T3 -15.0%, T4 -20.0%'
-      - '카드 기믹: 방어구 착용 부위당 받는 피해 추가 감소 T1 -1.0%p, T2 -1.5%p, T3 -2.0%p, T4 -2.5%p (최대 4부위)'
-      modifiers:
-      - type: ITEM_DURABILITY_LOSS_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.15
-        min_total_tier: 1
-        world: ANY
-      - type: ITEM_DURABILITY_LOSS_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.025
-        min_total_tier: 2
-        world: ANY
-      - type: ITEM_DURABILITY_LOSS_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.008333
-        min_total_tier: 3
-        world: ANY
-      - type: ITEM_DURABILITY_LOSS_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.004167
-        min_total_tier: 4
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.05
-        min_total_tier: 1
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.01
-        min_total_tier: 1
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.0025
-        min_total_tier: 2
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.000833
-        min_total_tier: 3
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.000417
-        min_total_tier: 4
-        world: ANY
+      - '스탯: 공격 피해(몹) +9/+18/+27/+36/+43/+52%, 광역 휩쓸기 피해 비율 60/75/90/105/116/131%, 몹 처치 점수 +7.5/+15/+22.5/+30/+35.5/+43%'
+      - '카드 기믹(상시): 휩쓸기 적중 시 4.5s 동안 이동 속도 +3/+6/+9/+12/+14/+17%(연쇄 처치 보조).'
+      - '특수 능력: **영혼 낫질** (발동: F / 궁극: Shift+F) — T2: 처치 1회당 영혼 1(최대 6). 최대치 도달 시 다음 공격이 16b 파동(몹 16 피해+드랍 흡인, 쿨 45s). | T3: 최대 8, 파동 24 피해. | T4: 파동이 위더 I 12s 부여 + 본인 흡수 +12HP 20s. | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 쿨 -10%(최소 4s). | T6(궁극): **전장 제압** — Shift+F, 쿨 180s: 12s 동안 14b ''제압장'' 생성. 영역 내 몹은 이속 -50% + 공격력 -25%, 매초 2 피해. 종료 시 8 피해 폭발.'
+      - '태그: 광역, 점수, 영혼'
   B-030:
-    name: 고요한 수면
+    name: 약점 간파
+    type: BLESSING
+    weight: 1.0
+    archetype: COMBAT
+    runtime:
+      detail_ko:
+      - '스탯: 치명타 피해 +15/+30/+45/+60/+71/+86%, 치명타 확률(몹) +3/+6/+9/+12/+14/+17%, 공격 속도 +4.5/+9/+13.5/+18/+21.5/+26%'
+      - '카드 기믹(상시): 정지(이동 입력 없음) 1.5/1.5/1.5/2/2/2.5s 유지 시 ''집중'' 상태(7.5s).'
+      - '특수 능력: **정조준** (발동: F / 궁극: Shift+F) — T2: 집중 중 다음 1타는 확정 치명 + 방어 60% 무시(쿨 10s). | T3: 방어 90% 무시 + 적중 시 대상 6s 50% 둔화. | T4: 첫 타격이 8b 내 1마리에게 120% 연쇄 피해(번개형). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 쿨 -10%(최소 4s). | T6(궁극): **각성** — Shift+F, 쿨 180s: 12s 동안 공격 피해 +25%, 받는 피해 -10%, 이동 속도 +25%. 처치/채굴/낚시 등 행동 성공 시 2s씩 연장(최대 +6s).'
+      - '태그: 정밀, 버스트, 근접/원거리'
+  B-031:
+    name: 저격수의 눈
     type: BLESSING
     weight: 1.0
     archetype: DEFENSE
     runtime:
       detail_ko:
-      - '다크니스/실명 지속: T1 -15.0%, T2 -30.0%, T3 -45.0%, T4 -60.0%'
-      - '야간 시야 효과: T1 비활성, T2 비활성, T3 활성, T4 활성'
-      - '저조도(밝기 7 이하) 받는 피해: T1 -5.0%, T2 -10.0%, T3 -15.0%, T4 -20.0%'
-      - '카드 기믹: 저조도(밝기 7 이하)에서 시야 관련 디버프 지속 추가 감소 T1 -10.0%, T2 -15.0%, T3 -20.0%, T4 -25.0%'
-      modifiers:
-      - type: BLINDNESS_DURATION_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.15
-        min_total_tier: 1
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.05
-        min_total_tier: 1
-        world: ANY
-  B-031:
+      - '스탯: 원거리 공격 피해(몹) +12/+21/+30/+42/+51/+63%, 활/석궁 장전 속도 +15/+30/+45/+60/+71/+86%, 거리 보정 최대 배율 2/2.5/2.5/3/3/3.5x'
+      - '카드 기믹(상시): 거리 5~60b에서 피해가 선형 증가(0.8x→최대 배율). 40b 이상은 최대 배율 유지.'
+      - '특수 능력: **호흡 조절** (발동: F / 궁극: Shift+F) — T2: 웅크림 조준 2s 후 발사 시 관통 +1 + 6s 50% 둔화(쿨 12s). | T3: 관통 +2, 쿨 9s. | T4: 적중 대상 16s ''약점 노출''(전 피해 +50%, 보스 100% 효율)(쿨 45s). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 쿨 -10%(최소 4s). | T6(궁극): **집중 사격** — Shift+F, 쿨 180s: 다음 6발 투사체가 관통(최대 4대상) + 피해 +80%. 적중 지점에 4b 충격파(몹 6 피해, 넉백).'
+      - '태그: 원거리, 저격, 디버프'
+  B-032:
+    name: 관통 화살통
+    type: BLESSING
+    weight: 1.0
+    archetype: DEFENSE
+    runtime:
+      detail_ko:
+      - '스탯: 화살 소모 확률 감소 15/27/39/51/60/72%, 원거리 공격 피해(몹) +7.5/+15/+22.5/+30/+35.5/+43%, 투사체 속도 +7.5/+15/+22.5/+30/+35.5/+43%'
+      - '카드 기믹(상시): 발사체 적중 후 6/8/10/18/24/32b 안의 드랍/화살을 자동 회수.'
+      - '특수 능력: **원소 화살** (발동: F / 궁극: Shift+F) — T2: 20s마다 다음 화살 1발이 원소화(화염/서리/번개/독 중 1, 12s). | T3: 30s, 지속 16s. | T4: 오프핸드 화살 우클릭으로 원소 선택 가능 + 적중 시 5.5b 원소 폭발(몹 8 피해, 블록 무피해, 16s 주기). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 쿨 -10%(최소 4s). | T6(궁극): **집중 사격** — Shift+F, 쿨 180s: 다음 6발 투사체가 관통(최대 4대상) + 피해 +80%. 적중 지점에 4b 충격파(몹 6 피해, 넉백).'
+      - '태그: 원거리, 자원절약, 원소'
+  B-033:
+    name: 삼지창 폭풍
+    type: BLESSING
+    weight: 1.0
+    archetype: DEFENSE
+    runtime:
+      detail_ko:
+      - '스탯: 삼지창 피해 +12/+21/+30/+42/+51/+63%, 물/비 이동 속도 +6/+12/+18/+27/+34/+43%, 삼지창 재사용 대기(투척-회수) -15/-30/-45/-60/-71/-86%'
+      - '카드 기믹(상시): 비/폭풍 날씨에서 받는 피해(몹) -3/-6/-9/-12/-14/-17%.'
+      - '특수 능력: **폭풍 충전** (발동: F / 궁극: Shift+F) — T2: 삼지창 적중 시 20s 충전. 충전 중 다음 적중에 번개 1회(몹 10 피해, 쿨 20s). | T3: 번개 16 피해, 쿨 15s. | T4: 충전 최대 3스택, 120s마다 ''미니 폭풍''(24s, 3s마다 가장 가까운 적대 몹에 번개, 블록 무피해). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 쿨 -10%(최소 4s). | T6(궁극): **전장 제압** — Shift+F, 쿨 180s: 12s 동안 14b ''제압장'' 생성. 영역 내 몹은 이속 -50% + 공격력 -25%, 매초 2 피해. 종료 시 8 피해 폭발.'
+      - '태그: 삼지창, 원소, 광역'
+  B-034:
+    name: 폭발 예술
+    type: BLESSING
+    weight: 1.0
+    archetype: DEFENSE
+    runtime:
+      detail_ko:
+      - '스탯: 폭발로 주는 피해(몹) +15/+30/+45/+60/+71/+86%, 폭발로 받는 피해(본인) -7.5/-15/-22.5/-30/-35.5/-43%, 폭발 반경(몹 대상) 0/+7.5/+15/+22.5/+28/+35.5%'
+      - '카드 기믹(상시): 내가 설치한 폭발로 드랍 아이템이 사라지지 않음(보호).'
+      - '특수 능력: **원격 기폭** (발동: F / 궁극: Shift+F) — T2: TNT를 태그 후 원격 기폭(사거리 128b, 유효 90s, 쿨 45s). | T3: 144b, 쿨 35s, 폭발 후 4s 기절(몹). | T4: 원격 폭발로 몹 처치 시 12s 이속 +20% + 경험치 +37.5%(쿨 10s). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 쿨 -10%(최소 4s). | T6(궁극): **각성** — Shift+F, 쿨 180s: 12s 동안 공격 피해 +25%, 받는 피해 -10%, 이동 속도 +25%. 처치/채굴/낚시 등 행동 성공 시 2s씩 연장(최대 +6s).'
+      - '태그: 폭발, 전술, 던전'
+  B-035:
+    name: 방패 지휘
+    type: BLESSING
+    weight: 1.0
+    archetype: DEFENSE
+    runtime:
+      detail_ko:
+      - '스탯: 방패 방어 중 받는 피해 -7.5/-12/-16.5/-22.5/-27/-33%, 방어 성공 후 7.5s 공격 피해(몹) +12/+21/+30/+42/+51/+63%, 받는 넉백 -15/-30/-45/-60/-71/-86%'
+      - '카드 기믹(상시): 방패를 든 동안 적대 몹의 타겟 우선도 +30/+45/+60/+90/+112.5/+142.5%(PvE 도발).'
+      - '특수 능력: **전선 고정** (발동: F / 궁극: Shift+F) — T2: 지정 키로 20s ''도발 구호''(24b 몹 강제 타겟 8s, 아군이 해당 몹에게 주는 피해 +15%, 쿨 90s). | T3: 타겟 9s, 쿨 75s. | T4: 도발 중 본인 피해 -60%(상한) + 종료 시 아군 8HP 치유. | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 쿨 -10%(최소 4s). | T6(궁극): **성역 전개** — Shift+F, 쿨 240s: 12s 동안 12b 내 아군에게 흡수 +15HP, 재생 II, 받는 피해 -15%. 영역 내 몹은 약화 I + 둔화 30%.'
+      - '태그: 탱, 파티, 도발'
+  B-036:
+    name: 함정 공학
+    type: BLESSING
+    weight: 1.0
+    archetype: DEFENSE
+    runtime:
+      detail_ko:
+      - '스탯: 함정/레드스톤 감지 반경 10/14/18/36/49.5/67.5b, 폭발 피해 -7.5/-15/-22.5/-30/-35.5/-43%, 이동 속도 0/+6/+12/+18/+22.5/+28.5%'
+      - '카드 기믹(상시): 감지된 함정은 9s 하이라이트(재표시 10/8/6/6/6/6s).'
+      - '특수 능력: **해체 키트** (발동: F / 궁극: Shift+F) — T2: 가위로 감지 함정 우클릭 시 즉시 비활성화+아이템화(쿨 60s). | T3: 쿨 40s, 비활성화 성공 시 20s 야간시야. | T4: 저장한 함정 재설치 시 ''아군 무피해''로 전환 + 몹에게 피해 100% 증가(30m 내 3회 제한). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 쿨 -10%(최소 4s). | T6(궁극): **각성** — Shift+F, 쿨 180s: 12s 동안 공격 피해 +25%, 받는 피해 -10%, 이동 속도 +25%. 처치/채굴/낚시 등 행동 성공 시 2s씩 연장(최대 +6s).'
+      - '태그: 던전, 유틸, 함정'
+  B-037:
+    name: 빛의 횃불
+    type: BLESSING
+    weight: 1.0
+    archetype: DEFENSE
+    runtime:
+      detail_ko:
+      - '스탯: 저조도 받는 피해(몹) -4.5/-9/-13.5/-18/-21.5/-26%, 저조도 공격 피해(몹) +7.5/+15/+22.5/+30/+35.5/+43%, 다크니스/실명 지속 -30/-52.5/-75/-90/-101/-116%'
+      - '카드 기믹(상시): 횃불/랜턴 설치 시 15s 아군 이속 +7.5/+12/+16.5/+22.5/+27/+33%(쿨 20s).'
+      - '특수 능력: **태양의 잔광** (발동: F / 궁극: Shift+F) — T2: 광원 설치 시 20b 빛 파동(몹 발광 12s + 본인 재생 I 9s, 쿨 45s). | T3: 24b, 지속 20s. | T4: 파동이 언데드 12s 연소 + 아군 흡수 +8HP 부여. | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 쿨 -10%(최소 4s). | T6(궁극): **성역 전개** — Shift+F, 쿨 240s: 12s 동안 12b 내 아군에게 흡수 +15HP, 재생 II, 받는 피해 -15%. 영역 내 몹은 약화 I + 둔화 30%.'
+      - '태그: 빛, 지원, 야간'
+  B-038:
+    name: 군중 제어
+    type: BLESSING
+    weight: 1.0
+    archetype: DEFENSE
+    runtime:
+      detail_ko:
+      - '스탯: 디버프(둔화/약화 등) 지속 +15/+30/+45/+60/+71/+86%, 휩쓸기 반경 0/0/+1/+3/+4.5/+6.5b, 받는 피해(몹) -3/-6/-9/-12/-14/-17%'
+      - '카드 기믹(상시): 4s 내 3마리 이상 적중 시 6s 저항 I(쿨 20s).'
+      - '특수 능력: **속박 장** (발동: F / 궁극: Shift+F) — T2: 60s마다 다음 타격이 12s 속박장(반경 10.5b, 몹 이속 -60%+공격속도 -20%). | T3: 16s, 이속 -80%. | T4: 속박장 내부에서 크리퍼 점화/엔더맨 텔포/마녀 포션을 봉인(대상만). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 쿨 -10%(최소 4s). | T6(궁극): **전장 제압** — Shift+F, 쿨 180s: 12s 동안 14b ''제압장'' 생성. 영역 내 몹은 이속 -50% + 공격력 -25%, 매초 2 피해. 종료 시 8 피해 폭발.'
+      - '태그: 군중제어, 전장, 디버프'
+  B-039:
+    name: 소환사의 계약
+    type: BLESSING
+    weight: 1.0
+    archetype: DEFENSE
+    runtime:
+      detail_ko:
+      - '스탯: 소환물/골렘/길들인 동물 피해 +12/+21/+30/+42/+51/+63%, 소환물 받는 피해 -15/-30/-45/-60/-71/-86%, 소환물 지속시간 0/+30/+60/+90/+112.5/+142.5%'
+      - '카드 기믹(상시): 내가 처치 시 소환 스킬 쿨타임 -1/-2/-3/-6/-8/-11s(최대 30s).'
+      - '특수 능력: **임시 소환** (발동: F / 궁극: Shift+F) — T2: 180s마다 전투 골렘 1기 40s 소환(플레이어 무피해). | T3: 50s + 주변 몹 도발. | T4: 골렘이 6s마다 지면 강타(넉백+4 피해) + 아군 흡수 +8HP 12s. | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 쿨 -10%(최소 4s). | T6(궁극): **성역 전개** — Shift+F, 쿨 240s: 12s 동안 12b 내 아군에게 흡수 +15HP, 재생 II, 받는 피해 -15%. 영역 내 몹은 약화 I + 둔화 30%.'
+      - '태그: 소환, 파티, 탱보조'
+  B-040:
+    name: 차원 탄환
+    type: BLESSING
+    weight: 1.0
+    archetype: DEFENSE
+    runtime:
+      detail_ko:
+      - '스탯: 원거리 공격 피해(몹) +9/+18/+27/+36/+43/+52%, 엔더 진주 피해 -15/-30/-45/-60/-71/-86%, 텔레포트 후 7.5s 이동 속도 +9/+18/+27/+36/+43/+52%'
+      - '카드 기믹(상시): 엔더 진주 사용 후 4.5s 동안 받는 피해(몹) -3/-6/-9/-12/-14/-17%.'
+      - '특수 능력: **차원 탄** (발동: F / 궁극: Shift+F) — T2: 25s마다 다음 투사체 적중 시 내 위치가 적중 지점으로 이동(최대 40b, 진주 피해 없음). | T3: 36s, 52b. | T4: 이동 후 8s 몹에게 은신(타겟 해제) + 첫 타격 피해 +70%. | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 쿨 -10%(최소 4s). | T6(궁극): **집중 사격** — Shift+F, 쿨 180s: 다음 6발 투사체가 관통(최대 4대상) + 피해 +80%. 적중 지점에 4b 충격파(몹 6 피해, 넉백).'
+      - '태그: 순간이동, 원거리, 기습'
+  B-041:
     name: 광부의 서약
     type: BLESSING
     weight: 1.0
-    archetype: GATHERING
+    archetype: DEFENSE
     runtime:
       detail_ko:
-      - '채굴 속도: T1 +10.0%, T2 +20.0%, T3 +30.0%, T4 +40.0%'
-      - '채굴 점수: T1 +10.0%, T2 +15.0%, T3 +20.0%, T4 +25.0%'
-      - '포만감 소모: T1 -5.0%, T2 -10.0%, T3 -15.0%, T4 -20.0%'
-      - '희귀 블럭 탐지 핑: T1 20s마다 15b, T2 15s마다 25b, T3 10s마다 40b, T4 5s마다 50b 범위를 스캔해 가장 가까운 대상 1개를 5s 표기'
-      - '탐지 대상 블럭: 다이아몬드 광석/심층암 다이아몬드 광석, 에메랄드 광석, 금 광석/심층암 금 광석, 네더 금 광석, 고대 잔해'
-      - '카드 기믹 1: 탐지 표기된 대상을 20s 이내에 채굴하면 채굴 점수 추가 T1 +10.0%, T2 +15.0%, T3 +20.0%, T4 +25.0%'
-      - '카드 기믹 2: 12s 내 자연석/광물을 20개 이상 연속 채굴 시 6s 받는 피해 T1 -5.0%, T2 -10.0%, T3 -15.0%, T4 -20.0% (ICD 30s)'
-      modifiers:
-      - type: BLOCK_BREAK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.1
-        min_total_tier: 1
-        world: ANY
-      - type: MINING_SCORE_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.1
-        min_total_tier: 1
-        world: ANY
-      - type: MINING_SCORE_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.025
-        min_total_tier: 2
-        world: ANY
-      - type: MINING_SCORE_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.008333
-        min_total_tier: 3
-        world: ANY
-      - type: MINING_SCORE_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.004167
-        min_total_tier: 4
-        world: ANY
-      - type: HUNGER_DRAIN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.05
-        min_total_tier: 1
-        world: ANY
-      - type: MINING_SCORE_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.1
-        min_total_tier: 1
-        world: ANY
-      - type: MINING_SCORE_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.025
-        min_total_tier: 2
-        world: ANY
-      - type: MINING_SCORE_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.008333
-        min_total_tier: 3
-        world: ANY
-      - type: MINING_SCORE_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.004167
-        min_total_tier: 4
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.05
-        min_total_tier: 1
-        world: ANY
-  B-032:
-    name: 석공의 기술
+      - '스탯: 채굴 속도 +9/+18/+27/+36/+43/+52%, 채굴 점수 +12/+21/+30/+42/+51/+63%, 채굴 중 포만감 소모 -4.5/-9/-13.5/-18/-21.5/-26%'
+      - '카드 기믹(상시): 20/15/10/7/5/2s마다 반경 60b 내 가장 가까운 광물을 7.5s 표식(시야 안내).'
+      - '특수 능력: **굴착 집중** (발동: F / 궁극: Shift+F) — T2: 13.5s 내 돌 20블록 채굴 시 16s 강화(성급함 II + 피해 -15%, 쿨 45s). | T3: 18블록, 20s. | T4: 강화 중 광물 5개 채굴마다 자동 제련 1회 + 60s 채굴 점수 +10%(최대 3중첩). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 쿨 -10%(최소 4s). | T6(궁극): **지각 폭풍** — Shift+F, 쿨 240s: 15s 동안 채굴 속도 +100%, 도구 내구도 소모 -50%, 광물 채굴 시 추가 드랍 +50%(Fortune 유사). 발동 시 24b 내 희귀 광물 3개를 10s 핑.'
+      - '태그: 채굴, 점수, 유틸'
+  B-042:
+    name: 지각 연금술
     type: BLESSING
     weight: 1.0
-    archetype: GATHERING
+    archetype: DEFENSE
     runtime:
       detail_ko:
-      - '발동 트리거: 곡괭이로 자연석(돌/심층암/안산암/화강암/섬록암/방해석/응회암/현무암/블랙스톤) 채굴 시'
-      - '지각 연금술 변이 확률/반경: T1 10.0%/4b, T2 15.0%/6b, T3 20.0%/8b, T4 25.0%/10b (주변 자연석 대상, 광물 블럭 제외)'
-      - '변이 가능 광물 티어 해금: T1 석탄/철/구리/금, T2 +레드스톤/청금석, T3 +다이아몬드/석영/네더라이트, T4 동일(고급 광물 가중치 증가)'
-      - '석영 선별 확률 [네더]: T1 0.0%, T2 0.0%, T3 10.0%, T4 15.0%'
-      - '엔드 광물 변이 보정: T1 비활성, T2 비활성, T3 50.0%, T4 75.0% (성공 시 오버월드+네더 통합 테이블 사용)'
-      - '굴착 파동 임계 채굴량/연쇄 파괴량: T1 25/25, T2 20/30, T3 15/35, T4 10/40 (자연석만, 광물 제외)'
-      - '채굴 속도: T1 +10.0%, T2 +20.0%, T3 +30.0%, T4 +40.0%'
-      - '카드 기믹: 지각 연금술 내부 쿨타임 5s, 굴착 파동은 나무 곡괭이 사용 시에만 발동'
-      modifiers:
-      - type: BLOCK_BREAK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.1
-        min_total_tier: 1
-        world: ANY
-  B-033:
+      - '스탯: 자연석 채굴 시 변이 확률 9/15/21/27/31.5/37.5%, 변이 반경 4/5/6/10/13/17b, 채굴 속도 +6/+12/+18/+24/+28.5/+34.5%'
+      - '카드 기믹(상시): 변이 테이블: T1(석탄/철/구리) → T2(+금/레드스톤/청금석) → T3(+다이아/에메랄드/석영) → T4(고대 잔해는 ''매우 희박'').'
+      - '특수 능력: **연금 파동** (발동: F / 궁극: Shift+F) — T2: 60s마다 다음 돌 파괴가 파동(최대 20블록 광물화) + 수호충 1~2마리 스폰. | T3: 90s, 최대 28블록. | T4: 80s, 최대 36블록 + 수호충 처치 시 경험치/점수 보너스. | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 쿨 -10%(최소 4s). | T6(궁극): **지각 폭풍** — Shift+F, 쿨 240s: 15s 동안 채굴 속도 +100%, 도구 내구도 소모 -50%, 광물 채굴 시 추가 드랍 +50%(Fortune 유사). 발동 시 24b 내 희귀 광물 3개를 10s 핑.'
+      - '태그: 연금, 채굴, 리스크'
+  B-043:
     name: 벌목의 축복
     type: BLESSING
     weight: 1.0
-    archetype: GATHERING
+    archetype: DEFENSE
     runtime:
       detail_ko:
-      - '발동 트리거: 도끼로 원목/줄기(Overworld 로그/네더 균류 줄기) 파괴 시'
-      - '연결 나무 연쇄 파괴량: T1 32개, T2 64개, T3 96개, T4 128개'
-      - '벌목 속도: T1 +10.0%, T2 +20.0%, T3 +30.0%, T4 +40.0%'
-      - '도구 내구도 소모 규칙: 연쇄 파괴된 블럭 수만큼 추가 소모(블럭당 1)'
-      - 'T2+ 네더 균류/거대 버섯 적용: T1 비활성, T2 활성, T3 활성, T4 활성'
-      - 'T2+ 연결 잎 제거: T1 비활성, T2 활성, T3 활성, T4 활성'
-      - 'T3+ 드랍 아이템 유저 위치 전송: T1 비활성, T2 비활성, T3 활성, T4 활성'
-      - '카드 기믹: 내부 쿨타임(ICD) 2s, 전투 상태에서는 연쇄 파괴 상한 50.0% 적용'
-      modifiers:
-      - type: DAMAGE_DEALT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.02
-        min_total_tier: 1
-        world: ANY
-  B-034:
-    name: 연금/낚시 장부
+      - '스탯: 벌목 속도 +9/+18/+27/+36/+43/+52%, 연결 원목 연쇄 파괴량 24/48/72/96/114/138, 도구 내구도 소모 -7.5/-15/-22.5/-30/-35.5/-43%'
+      - '카드 기믹(상시): T3~: 잎사귀 자동 수확(주변 9b, 3s 지연) + 드랍 흡인.'
+      - '특수 능력: **삼림의 호출** (발동: F / 궁극: Shift+F) — T2: 나무 1그루 완전 벌목 시 30s 이속 +20%+재생 I(쿨 20s). | T3: 벌목 시 묘목 자동 회수+웅크리면 자동 심기. | T4: 120s마다 1회 ''씨앗 폭발''(60s 동안 주변 묘목 성장 확률 +400%). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 쿨 -10%(최소 4s). | T6(궁극): **각성** — Shift+F, 쿨 180s: 12s 동안 공격 피해 +25%, 받는 피해 -10%, 이동 속도 +25%. 처치/채굴/낚시 등 행동 성공 시 2s씩 연장(최대 +6s).'
+      - '태그: 벌목, 유틸, 자원'
+  B-044:
+    name: 농부의 수확제
+    type: BLESSING
+    weight: 1.0
+    archetype: DEFENSE
+    runtime:
+      detail_ko:
+      - '스탯: 작물 수확량 +7.5/+15/+22.5/+30/+35.5/+43%, 동물 교배 쿨타임 -15/-30/-45/-60/-71/-86%, 음식/회복 효율 +7.5/+15/+22.5/+30/+35.5/+43%'
+      - '카드 기믹(상시): 수확 시 소량 경험치/점수 추가(소규모, 중첩 제한).'
+      - '특수 능력: **자동 재파종** (발동: F / 궁극: Shift+F) — T2: 성숙 작물 파괴 시 자동 재파종(인벤 씨앗 필요) + 씨앗 무소모 40%. | T3: 70% + 네더와트 적용. | T4: 90s마다 24s ''풍년''(수확물 +1, 농사 점수 +20%). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 쿨 -10%(최소 4s). | T6(궁극): **장인의 축제** — Shift+F, 쿨 240s: 30s 동안 제작/수리 비용 -60%, 제작 재료 무소모 +50%p, 드랍/XP 자동 흡수 반경 +18b. 30s 내 첫 3회 제작은 추가 1개 복제(고재료 레시피는 50% 확률).'
+      - '태그: 농사, 경제, 점수'
+  B-045:
+    name: 어부의 행운
+    type: BLESSING
+    weight: 1.0
+    archetype: DEFENSE
+    runtime:
+      detail_ko:
+      - '스탯: 낚시 전리품 +12/+24/+36/+48/+57/+69%, 보물 테이블 확률 +7.5/+15/+22.5/+30/+35.5/+43%, 포션 지속 +7.5/+15/+22.5/+30/+35.5/+43%'
+      - '카드 기믹(상시): 낚시 성공 후 30s 내 첫 포션은 지속 +22.5/+37.5/+52.5/+75/+92/+114.5%(1회).'
+      - '특수 능력: **심해 인양** (발동: F / 궁극: Shift+F) — T2: 60s마다 다음 낚시는 ''낚시터'' 생성(20s, 수중 이동+호흡 보조) + 보너스 전리품 1개. | T3: 90s, 30s. | T4: 낚시터가 20s 거품 기둥 생성(적대 수중몹 밀어냄) + 수영속도 추가 +40%. | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 쿨 -10%(최소 4s). | T6(궁극): **질풍 폭주** — Shift+F, 쿨 180s: 10s 동안 이동 속도 +70%, 낙하 피해 0, 대시 2회(재사용 3s). 대시 경로 4b 내 몹에게 4 피해 + 넉백.'
+      - '태그: 낚시, 탐험, 버프'
+  B-046:
+    name: 대장장이의 손길
     type: BLESSING
     weight: 1.0
     archetype: GATHERING
     runtime:
       detail_ko:
-      - '낚시 전리품 획득량: T1 +10.0%, T2 +20.0%, T3 +30.0%, T4 +40.0%'
-      - '낚시 보물 테이블 선택 확률: T1 +10.0%, T2 +20.0%, T3 +30.0%, T4 +40.0%'
-      - '양조 재료 무소모 확률: T1 +10.0%, T2 +20.0%, T3 +30.0%, T4 +40.0%'
-      - '포션 효과 지속시간: T1 +10.0%, T2 +20.0%, T3 +30.0%, T4 +40.0%'
-      - '부정효과 지속(독/위더/약화/실명/다크니스): T1 -5.0%, T2 -10.0%, T3 -20.0%, T4 -35.0%'
-      - '포션 사용 후 5s 받는 피해: T1 -5.0%, T2 -10.0%, T3 -15.0%, T4 -20.0%'
-      - '카드 기믹 1: 낚시 성공 후 30s 내 포션 사용 시 해당 포션 지속시간 추가 T1 +20.0%, T2 +30.0%, T3 +40.0%, T4 +50.0% (1회 소모)'
-      - '카드 기믹 2: 양조 완료 시 T1 10.0%, T2 15.0%, T3 20.0%, T4 25.0% 확률로 재료 1개 반환 (ICD 10s)'
-      modifiers:
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.05
-        min_total_tier: 1
-        world: ANY
-  B-035:
+      - '스탯: 내구도 소모 -12/-24/-36/-48/-57/-69%, 모루 수리 비용 -15/-30/-45/-60/-71/-86%, 수리 시 내구도 회복량 +15/+30/+45/+60/+71/+86%'
+      - '카드 기믹(상시): 몹 처치 시 손에 든 무기 내구도 0/0/+1/+2/+3/+4(쿨 2s).'
+      - '특수 능력: **휴대 모루** (발동: F / 궁극: Shift+F) — T2: 모루 아이템 우클릭으로 배치 없이 모루 UI(쿨 90s). | T3: 쿨 60s + XP 비용 추가 -20%. | T4: 30m마다 1회, 휴대 모루 사용이 ''작업 패널티'' 증가를 1회 무시(고급 유지보수). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 쿨 -10%(최소 4s). | T6(궁극): **장인의 축제** — Shift+F, 쿨 240s: 30s 동안 제작/수리 비용 -60%, 제작 재료 무소모 +50%p, 드랍/XP 자동 흡수 반경 +18b. 30s 내 첫 3회 제작은 추가 1개 복제(고재료 레시피는 50% 확률).'
+      - '태그: 제작, 수리, 경제'
+  B-047:
+    name: 요리사의 비법
+    type: BLESSING
+    weight: 1.0
+    archetype: GATHERING
+    runtime:
+      detail_ko:
+      - '스탯: 음식 포만감/포화도 효율 +7.5/+15/+22.5/+30/+35.5/+43%, 음식 섭취 속도 +7.5/+15/+22.5/+30/+35.5/+43%, 음식 섭취 후 12s 받는 피해(몹) -4.5/-9/-13.5/-18/-21.5/-26%'
+      - '카드 기믹(상시): 요리 결과 7.5/15/22.5/30/35.5/43% 확률로 ''특제''(15s 임의 버프 1개).'
+      - '특수 능력: **미식 각성** (발동: F / 궁극: Shift+F) — T2: 120s마다 1회, 음식 섭취 시 즉시 ''미식''(16s 속도/힘/저항 중 1). | T3: 쿨 90s, 20s. | T4: 미식이 20s ''안락 오라''(아군 4HP 회복 + 몹 탐지 반경 -60%). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 쿨 -10%(최소 4s). | T6(궁극): **성역 전개** — Shift+F, 쿨 240s: 12s 동안 12b 내 아군에게 흡수 +15HP, 재생 II, 받는 피해 -15%. 영역 내 몹은 약화 I + 둔화 30%.'
+      - '태그: 요리, 지원, 생존'
+  B-048:
     name: 제작 최적화
     type: BLESSING
     weight: 1.0
     archetype: GATHERING
     runtime:
       detail_ko:
-      - '능동 트리거: 제작대를 들고 우클릭 시 설치 대신 개인 제작 UI 오픈'
-      - '제작 재료 무소모 확률: T1 0.0%, T2 10.0%, T3 20.0%, T4 30.0%'
-      - '고재료 레시피 무소모 배율: T1 재료 9개 이상 시 1.5배, T2 재료 8개 이상 시 1.5배, T3 재료 7개 이상 시 1.5배, T4 재료 6개 이상 시 1.5배'
-      - '동일 레시피 연속 제작 추가 무소모: T1 +0.0%p, T2 +5.0%p, T3 +10.0%p, T4 +15.0%p (10s 내 재제작, 최대 3중첩, 레시피 변경 시 초기화)'
-      - '카드 기믹: 제작 성공 시 20s 내 다음 제작 1회의 무소모 확률 추가 T1 +5.0%p, T2 +10.0%p, T3 +15.0%p, T4 +20.0%p (중첩 불가)'
-      modifiers:
-      - type: DAMAGE_DEALT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.02
-        min_total_tier: 1
-        world: ANY
-  B-036:
-    name: 전리품 포탈
+      - '스탯: 제작 재료 무소모 확률 0/12/24/36/45/57%, 연속 제작 추가 무소모 0/+6/+12/+18/+22.5/+28.5%p(최대 3중첩), 제작/수리 점수 +7.5/+15/+22.5/+30/+35.5/+43%'
+      - '카드 기믹(상시): 제작대 아이템 우클릭으로 배치 없이 제작 UI(기본, 쿨 없음).'
+      - '특수 능력: **프로토타입** (발동: F / 궁극: Shift+F) — T2: 180s마다 1회, 도구/무기 제작 시 10m 동안 효율/피해 +30% (대신 내구도 소모 +30%). | T3: 보너스 +40%, 패널티 +20%. | T4: 제작 시 추가로 1회 ''무료 수리''(내구도 50% 회복) 포함. | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 쿨 -10%(최소 4s). | T6(궁극): **장인의 축제** — Shift+F, 쿨 240s: 30s 동안 제작/수리 비용 -60%, 제작 재료 무소모 +50%p, 드랍/XP 자동 흡수 반경 +18b. 30s 내 첫 3회 제작은 추가 1개 복제(고재료 레시피는 50% 확률).'
+      - '태그: 제작, 경제, 리스크'
+  B-049:
+    name: 모험가의 주머니
     type: BLESSING
     weight: 1.0
-    archetype: UTILITY
+    archetype: GATHERING
     runtime:
       detail_ko:
-      - '능동 트리거: 일반 우클릭=흡수, 잠행 우클릭=회수 UI 오픈'
-      - '재사용 대기시간: T1 10s, T2 8s, T3 6s, T4 4s'
-      - '드랍 흡수 반경: T1 10b, T2 15b, T3 20b, T4 25b'
-      - '임시 창고 용량/유지시간: T1 9칸/60분, T2 18칸/60분, T3 27칸/60분, T4 36칸/60분 (마지막 저장 시점 기준)'
-      - 'T2+ XP 오브 저장: T1 비활성, T2 활성, T3 활성, T4 활성 (경험치 포션 형태로 저장)'
-      - 'T3+ 사망 시 인벤 자동 보관: T1 비활성, T2 비활성, T3 활성, T4 활성 (드랍 대신 임시 창고 저장)'
-      - '카드 기믹 1: 흡수 발동 후 3s 동안 반경 내 신규 드랍 아이템/XP 오브 즉시 흡수'
-      - '카드 기믹 2: 회수 UI 오픈 시 동일 아이템 자동 병합 정렬 후 표시'
-      modifiers:
-      - type: DAMAGE_DEALT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.02
-        min_total_tier: 1
-        world: ANY
-  B-037:
-    name: 보더 레이더
+      - '스탯: 상자/구조물 전리품 품질 +7.5/+15/+22.5/+30/+35.5/+43%, 아이템/XP 흡수 반경 +1/+2/+3/+6/+8/+11b, 이동 속도 0/+6/+12/+18/+22.5/+28.5%'
+      - '카드 기믹(상시): 전투 종료 후 15s 동안 드랍 자동 흡인(반경 8/10/12/21/28/37b).'
+      - '특수 능력: **자기 수집** (발동: F / 궁극: Shift+F) — T2: 45s마다 12s 자력(아이템/XP 24b 끌어당김). | T3: 16s, 32b. | T4: 자력 중 넘치는 드랍은 ''임시 보관함''(18칸, 30m 유지)으로 저장, 전용 키로 회수. | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 쿨 -10%(최소 4s). | T6(궁극): **각성** — Shift+F, 쿨 180s: 12s 동안 공격 피해 +25%, 받는 피해 -10%, 이동 속도 +25%. 처치/채굴/낚시 등 행동 성공 시 2s씩 연장(최대 +6s).'
+      - '태그: 인벤, 전리품, 유틸'
+  B-050:
+    name: 유물 감정
     type: BLESSING
     weight: 1.0
-    archetype: UTILITY
+    archetype: GATHERING
     runtime:
       detail_ko:
-      - '위더 피해: T1 -15.0%, T2 -30.0%, T3 -45.0%, T4 -60.0%'
-      - '받는 피해: T1 -5.0%, T2 -10.0%, T3 -15.0%, T4 -20.0%'
-      - '자기장 단계 상승 필요 시간: T1 +15.0%, T2 +30.0%, T3 +45.0%, T4 +60.0%'
-      - '생존 점수: T1 +10.0%, T2 +15.0%, T3 +20.0%, T4 +25.0%'
-      - '카드 기믹 1: `/information <구조물ID>` 명령어로 원하는 구조물 좌표를 locate 형식으로 조회(현재 차원 기준, 개인 쿨타임 120s)'
-      - '카드 기믹 2: 자기장 밖 체류 후 안쪽으로 복귀하면 10s 받는 피해 추가 감소 T1 -5.0%, T2 -10.0%, T3 -15.0%, T4 -20.0% (ICD 60s)'
-      modifiers:
-      - type: WITHER_DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.15
-        min_total_tier: 1
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.05
-        min_total_tier: 1
-        world: ANY
-      - type: BORDER_WITHER_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.15
-        min_total_tier: 1
-        world: ANY
-      - type: SURVIVAL_SCORE_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.1
-        min_total_tier: 1
-        world: ANY
-      - type: SURVIVAL_SCORE_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.025
-        min_total_tier: 2
-        world: ANY
-      - type: SURVIVAL_SCORE_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.008333
-        min_total_tier: 3
-        world: ANY
-      - type: SURVIVAL_SCORE_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.004167
-        min_total_tier: 4
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.05
-        min_total_tier: 1
-        world: ANY
-        conditions:
-        - OUTSIDE_BORDER
-  B-038:
-    name: 추격자 예측망
+      - '스탯: 희귀 전리품 등장 +6/+12/+18/+24/+28.5/+34.5%, 행운(Luck) +1/+2/+3/+4/+5/+6, 탐험/구조물 점수 +12/+21/+30/+42/+51/+63%'
+      - '카드 기믹(상시): 희귀 아이템 획득 시 15s ''감정'' 상태: 다음 상자 1개 전리품 품질 +15%p.'
+      - '특수 능력: **감정 주문** (발동: F / 궁극: Shift+F) — T2: 구조물 상자 개봉 시 1슬롯 재추첨(쿨 120s). | T3: 최대 2슬롯, 쿨 90s. | T4: 600s마다 1회, 재추첨 결과 1개를 ''희귀 이상''으로 고정(잡템 방지). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 쿨 -10%(최소 4s). | T6(궁극): **장인의 축제** — Shift+F, 쿨 240s: 30s 동안 제작/수리 비용 -60%, 제작 재료 무소모 +50%p, 드랍/XP 자동 흡수 반경 +18b. 30s 내 첫 3회 제작은 추가 1개 복제(고재료 레시피는 50% 확률).'
+      - '태그: 전리품, 탐험, 경제'
+  B-051:
+    name: 네더 방랑자
     type: BLESSING
     weight: 1.0
-    archetype: UTILITY
+    archetype: GATHERING
     runtime:
       detail_ko:
-      - '스토커 스폰 예고 선행시간: T1 10s, T2 12s, T3 14s, T4 16s'
-      - '스토커 스폰 간격: T1 +25.0%, T2 +50.0%, T3 +75.0%, T4 +100.0%'
-      - '스토커에게 받는 피해: T1 -10.0%, T2 -20.0%, T3 -30.0%, T4 -40.0%'
-      - '생존 점수: T1 -5.0%, T2 +0.0%, T3 +5.0%, T4 +5.0%'
-      - '카드 기믹 1: 이 효과 적용 중 스폰된 `나를 목표로 한` 스토커 이동 속도 감소 T1 -30.0%, T2 -45.0%, T3 -60.0%, T4 -75.0%'
-      - '카드 기믹 2: 동시 추격자 최대치 보정(기본 최대치 기준) T1 +0, T2 -1, T3 -2, T4 -2'
-      modifiers:
-      - type: STALKER_SPAWN_INTERVAL_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.25
-        min_total_tier: 1
-        world: ANY
-      - type: STALKER_DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.1
-        min_total_tier: 1
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.1
-        min_total_tier: 1
-        world: ANY
-      - type: SURVIVAL_SCORE_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.05
-        min_total_tier: 1
-        world: ANY
-      - type: SURVIVAL_SCORE_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.05
-        min_total_tier: 2
-        world: ANY
-      - type: SURVIVAL_SCORE_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.016667
-        min_total_tier: 3
-        world: ANY
-      - type: SURVIVAL_SCORE_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.004167
-        min_total_tier: 4
-        world: ANY
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.3
-        min_total_tier: 1
-        world: ANY
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.075
-        min_total_tier: 2
-        world: ANY
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.025
-        min_total_tier: 3
-        world: ANY
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.0125
-        min_total_tier: 4
-        world: ANY
-  B-039:
-    name: 오라 지휘
+      - '스탯: 화염/용암 피해 -12/-24/-36/-48/-57/-69%, 네더 이동 속도 +6/+12/+18/+27/+34/+43%, 고대 잔해/석영 탐지 반경 12/18/24/45/61/82b'
+      - '카드 기믹(상시): 피글린 거래 추가 획득 확률 +7.5/+15/+22.5/+30/+35.5/+43%.'
+      - '특수 능력: **황금 통행증** (발동: F / 궁극: Shift+F) — T2: 금 갑옷 1부위 이상 착용 시 피글린 중립 반경 32b + 포탈 진입 시 30s 화염저항(쿨 120s). | T3: 44b, 40s. | T4: 180s마다 1회 ''지옥 질주''(32b 대시+화염 궤적, 블록 무피해, 몹 2 피해/초 12s). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 쿨 -10%(최소 4s). | T6(궁극): **화염의 왕관** — Shift+F, 쿨 240s: 12s 동안 화염/폭발 피해 -40%, 공격 시 적에게 6s 화상(초당 2 피해). 발동 시 10b 화염 고리(몹 8 피해 + 6s 공포(둔화 40%)).'
+      - '태그: 네더, 탐험, 생존'
+  B-052:
+    name: 엔드 개척자
     type: BLESSING
     weight: 1.0
-    archetype: ENDGAME
+    archetype: GATHERING
     runtime:
       detail_ko:
-      - '오라 적용 몹 체력: T1 -20.0%, T2 -35.0%, T3 -50.0%, T4 -70.0%'
-      - '오라 적용 몹 공격력: T1 -20.0%, T2 -35.0%, T3 -50.0%, T4 -70.0%'
-      - '오라 스캔 반경: T1 12b, T2 16b, T3 20b, T4 24b'
-      - '오라 스캔 주기: T1 60s, T2 40s, T3 20s, T4 10s'
-      - '오라 적용 몹 표기 지속시간: 5s'
-      - '오라 적용 몹 처치 점수: T1 +15.0%, T2 +30.0%, T3 +45.0%, T4 +60.0%'
-      - '카드 기믹 1: T3+ 능동 발동(쿨타임 T3 120s, T4 60s / 지속시간 T3 20s, T4 30s) 중 오라 적용 몹에게 1s마다 피해(T3 3, T4 6)'
-      - '카드 기믹 2: 능동 발동 지속시간 동안 오라 적용 몹 처치 점수 추가 T1 +0.0%, T2 +0.0%, T3 +20.0%, T4 +35.0%'
-      modifiers:
-      - type: AURA_MONSTER_POWER_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.2
-        min_total_tier: 1
-        world: ANY
-      - type: AURA_MONSTER_POWER_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.025
-        min_total_tier: 2
-        world: ANY
-      - type: AURA_MONSTER_POWER_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.008333
-        min_total_tier: 3
-        world: ANY
-      - type: AURA_MONSTER_POWER_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.008333
-        min_total_tier: 4
-        world: ANY
-      - type: AURA_MONSTER_POWER_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.2
-        min_total_tier: 1
-        world: ANY
-      - type: AURA_MONSTER_POWER_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.025
-        min_total_tier: 2
-        world: ANY
-      - type: AURA_MONSTER_POWER_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.008333
-        min_total_tier: 3
-        world: ANY
-      - type: AURA_MONSTER_POWER_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.008333
-        min_total_tier: 4
-        world: ANY
-      - type: MOB_SCORE_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.15
-        min_total_tier: 1
-        world: ANY
-      - type: MOB_SCORE_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.066667
-        min_total_tier: 3
-        world: ANY
-      - type: MOB_SCORE_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.020833
-        min_total_tier: 4
-        world: ANY
-  B-040:
-    name: 시즌의 축복
+      - '스탯: 엔드에서 받는 피해(몹/환경) -7.5/-15/-22.5/-30/-35.5/-43%, 엔드에서 공격 피해(몹) +15/+30/+45/+60/+71/+86%, 엔드 낙하 피해 판정 여유 +150/+300/+300/+300/+300/+300%'
+      - '카드 기믹(상시): 엔드에서 엔더 진주 사용 후 9s 받는 피해(몹) -7.5/-12/-16.5/-22.5/-27/-33%.'
+      - '특수 능력: **공허 표시** (발동: F / 궁극: Shift+F) — T2: 엔드스톤에 진주 우클릭으로 240s ''공허 비콘'' 설치(공허 추락 시 1회 회수, 쿨 240s). | T3: 270s, 쿨 200s. | T4: 비콘 주변 20b 엔더맨 텔포 봉인 + 회수 후 16s 느린 낙하. | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 쿨 -10%(최소 4s). | T6(궁극): **오라 역전** — Shift+F, 쿨 240s: 20s 동안 24b 내 **엔더맨 강화 오라를 역전**해 오라 범위의 몹에게 약화 I + 둔화 30% + 받는 피해 +15% 적용. 또한 내/아군(12b)은 공격 피해 +25% & 투사체 피해 -20%.'
+      - '태그: 엔드, 공허, 안전'
+  B-053:
+    name: 드래곤 학살자
     type: BLESSING
     weight: 1.0
-    archetype: ENDGAME
+    archetype: GATHERING
     runtime:
       detail_ko:
-      - '공격 피해 [엔드]: T1 +25.0%, T2 +50.0%, T3 +80.0%, T4 +120.0%'
-      - '받는 피해 [엔드]: T1 -10.0%, T2 -20.0%, T3 -30.0%, T4 -40.0%'
-      - '이동 속도 [엔드]: T1 +15.0%, T2 +30.0%, T3 +45.0%, T4 +60.0%'
-      - '스텝 업 높이 [엔드]: T1 +20.0%, T2 +40.0%, T3 +60.0%, T4 +90.0%'
-      - '카드 기믹 1: 낙하 피해 판정 높이 [엔드] +800.0%/+1400.0%/+2200.0%/+3200.0%(기본 판정 대비), 주변 플레이어 축복 공유 40.0%/55.0%/70.0%/85.0%'
-      - '카드 기믹 2: 엔드에서 몹 처치 시 10s 전투 가속 버프 획득(공격 피해 추가 T1 +10.0%, T2 +15.0%, T3 +20.0%, T4 +30.0%, 최대 3중첩)'
-      modifiers:
-      - type: DAMAGE_DEALT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.25
-        min_total_tier: 1
-        world: END
-      - type: DAMAGE_DEALT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.016667
-        min_total_tier: 3
-        world: END
-      - type: DAMAGE_DEALT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.033333
-        min_total_tier: 4
-        world: END
-      - type: END_DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.1
-        min_total_tier: 1
-        world: END
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.1
-        min_total_tier: 1
-        world: END
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.15
-        min_total_tier: 1
-        world: END
-      - type: STEP_HEIGHT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.2
-        min_total_tier: 1
-        world: END
-      - type: STEP_HEIGHT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.025
-        min_total_tier: 4
-        world: END
-      - type: FALL_DAMAGE_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 8.0
-        min_total_tier: 1
-        world: END
-      - type: FALL_DAMAGE_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -1.0
-        min_total_tier: 2
-        world: END
-      - type: FALL_DAMAGE_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.333333
-        min_total_tier: 3
-        world: END
-      - type: FALL_DAMAGE_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.666667
-        min_total_tier: 4
-        world: END
-      - type: DAMAGE_DEALT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.1
-        min_total_tier: 1
-        world: END
-      - type: DAMAGE_DEALT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.025
-        min_total_tier: 2
-        world: END
-      - type: DAMAGE_DEALT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.008333
-        min_total_tier: 3
-        world: END
-      - type: DAMAGE_DEALT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.008333
-        min_total_tier: 4
-        world: END
+      - '스탯: 엔더드래곤 피해 +22.5/+45/+67.5/+90/+107/+129.5%, 브레스 피해(엔드) -15/-30/-45/-67.5/-84.5/-107%, 엔드 크리스탈 폭발 피해(엔드) -15/-30/-45/-60/-71/-86%'
+      - '카드 기믹(상시): 엔드 크리스탈 파괴 시 15s 이속 +15/+22.5/+30/+45/+56/+71% + 흡수 +2/+4/+6/+12/+16.5/+22.5HP(쿨 20s).'
+      - '특수 능력: **용살 균열** (발동: F / 궁극: Shift+F) — T2: 드래곤 적중 시 ''살상 스택'' 1(최대 5). 5스택에서 다음 적중이 추가 16 피해(쿨 20s). | T3: 추가 24 피해 + 20s 드래곤 피해 -20%(본인만 적용). | T4: 균열 발동 시 20s 파티 ''용살 오라''(24b, 드래곤 대상 피해 +20%). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 쿨 -10%(최소 4s). | T6(궁극): **오라 역전** — Shift+F, 쿨 240s: 20s 동안 24b 내 **엔더맨 강화 오라를 역전**해 오라 범위의 몹에게 약화 I + 둔화 30% + 받는 피해 +15% 적용. 또한 내/아군(12b)은 공격 피해 +25% & 투사체 피해 -20%.'
+      - '태그: 보스, 엔드, 결전'
+  B-054:
+    name: 포탈 정박
+    type: BLESSING
+    weight: 1.0
+    archetype: GATHERING
+    runtime:
+      detail_ko:
+      - '스탯: 차원 이동/텔포 후 12s 받는 피해(몹) -7.5/-15/-22.5/-30/-35.5/-43%, 엔더 진주 피해 -15/-30/-45/-60/-71/-86%, 차원 이동 후 12s 이동 속도 +6/+12/+18/+27/+34/+43%'
+      - '카드 기믹(상시): 차원 이동 직후 부정효과 지속 -15/-30/-45/-60/-71/-86%.'
+      - '특수 능력: **정박 룬** (발동: F / 궁극: Shift+F) — T2: 막대기 우클릭으로 ''정박'' 지정/귀환(동일 차원, 쿨 180s). | T3: 쿨 120s + 귀환 후 10s 저항 I. | T4: 정박 2개(A/B) 저장 가능 + 귀환 시 반경 20b 길들인 동물 동반. | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 쿨 -10%(최소 4s). | T6(궁극): **각성** — Shift+F, 쿨 180s: 12s 동안 공격 피해 +25%, 받는 피해 -10%, 이동 속도 +25%. 처치/채굴/낚시 등 행동 성공 시 2s씩 연장(최대 +6s).'
+      - '태그: 유틸, 귀환, 안전'
+  B-055:
+    name: 공허의 안전줄
+    type: BLESSING
+    weight: 1.0
+    archetype: GATHERING
+    runtime:
+      detail_ko:
+      - '스탯: 낙하 피해 -22.5/-45/-67.5/-90/-107/-129.5%, 공중 이동 속도(활공/낙하) 0/+9/+18/+27/+34/+43%, 엔드 이동 속도 +6/+12/+18/+27/+34/+43%'
+      - '카드 기믹(상시): 12b 이상 낙하 시 4.5s 느린 낙하(쿨 25/20/15/12/10/7s).'
+      - '특수 능력: **안전줄 발사** (발동: F / 궁극: Shift+F) — T2: 낙하 중 우클릭으로 36b 내 바라본 블록에 안전줄 발사(당김, 쿨 25s). | T3: 36b, 쿨 18s. | T4: 180s마다 1회 공허 추락 시 자동 발동(마지막 접촉 블록으로 당김) + 12s 피해 -30%. | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 쿨 -10%(최소 4s). | T6(궁극): **질풍 폭주** — Shift+F, 쿨 180s: 10s 동안 이동 속도 +70%, 낙하 피해 0, 대시 2회(재사용 3s). 대시 경로 4b 내 몹에게 4 피해 + 넉백.'
+      - '태그: 공허, 이동, 생존'
+  B-056:
+    name: 유적 탐색자
+    type: BLESSING
+    weight: 1.0
+    archetype: GATHERING
+    runtime:
+      detail_ko:
+      - '스탯: 상자/구조물 전리품 품질 +7.5/+15/+22.5/+30/+35.5/+43%, 함정 감지 반경 10/14/18/36/49.5/67.5b, 구조물 내부 몹 처치 점수 +15/+30/+45/+60/+71/+86%'
+      - '카드 기믹(상시): 새 구조물 진입 시 90s 출구 방향 표시(미니 가이드).'
+      - '특수 능력: **유적 스캔** (발동: F / 궁극: Shift+F) — T2: 180s마다 96b 스캔(상자/스포너 최대 5개 24s 하이라이트). | T3: 128b, 30s. | T4: 스캔된 스포너가 60s 동안 약화(스폰몹 HP -40%) + 처치 점수 +20%. | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 쿨 -10%(최소 4s). | T6(궁극): **각성** — Shift+F, 쿨 180s: 12s 동안 공격 피해 +25%, 받는 피해 -10%, 이동 속도 +25%. 처치/채굴/낚시 등 행동 성공 시 2s씩 연장(최대 +6s).'
+      - '태그: 유적, 점수, 던전'
+  B-057:
+    name: 에테르 활공
+    type: BLESSING
+    weight: 1.0
+    archetype: GATHERING
+    runtime:
+      detail_ko:
+      - '스탯: 활공 속도 +7.5/+15/+22.5/+30/+35.5/+43%, 불꽃 로켓 소모 확률 감소 0/15/30/45/56/71%, 활공 중 받는 피해 -7.5/-15/-22.5/-30/-35.5/-43%'
+      - '카드 기믹(상시): 활공 중 매 5s마다 겉날개 내구도 0/0/+1/+1/+1/+1(전투 중 제외).'
+      - '특수 능력: **공중 기동** (발동: F / 궁극: Shift+F) — T2: 활공 중 웅크림 더블탭으로 회피 롤(투사체 4s 무적, 쿨 30s). | T3: 쿨 25s, 무적 5s. | T4: 롤이 돌풍 발사(4b 넉백) + 화상/불꽃 즉시 제거. | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 쿨 -10%(최소 4s). | T6(궁극): **질풍 폭주** — Shift+F, 쿨 180s: 10s 동안 이동 속도 +70%, 낙하 피해 0, 대시 2회(재사용 3s). 대시 경로 4b 내 몹에게 4 피해 + 넉백.'
+      - '태그: 활공, 회피, 이동'
+  B-058:
+    name: 영혼 수집가
+    type: BLESSING
+    weight: 1.0
+    archetype: GATHERING
+    runtime:
+      detail_ko:
+      - '스탯: 몹 처치 경험치 +15/+30/+45/+60/+71/+86%, 부정효과 지속 -7.5/-15/-22.5/-30/-35.5/-43%, 받는 피해(몹) -3/-6/-9/-12/-14/-17%'
+      - '카드 기믹(상시): 적대 몹 처치 시 영혼 1 획득(최대 10/12/14/16/17.5/19.5, 비전투 60s마다 1 감소).'
+      - '특수 능력: **영혼 사용** (발동: F / 궁극: Shift+F) — T2: 뼈 우클릭으로 영혼 5 소비 ''영혼 불꽃'' 24s(가까운 적대 몹에 4 피해/초, 쿨 60s). | T3: 비용 4, 30s. | T4: 영혼 8 소비 ''영혼 방벽'' 16s(받는 피해 80%를 저장→종료 후 최대 16HP 치유). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 쿨 -10%(최소 4s). | T6(궁극): **불사 선언** — Shift+F, 쿨 240s: 12s 동안 흡수 +30HP, 재생 III, 받는 피해 -20%. 치명 피해 1회 무효(발동 시 3s 무적).'
+      - '태그: 영혼, 유틸, 생존'
+  B-059:
+    name: 시즌 각성
+    type: BLESSING
+    weight: 1.0
+    archetype: GATHERING
+    runtime:
+      detail_ko:
+      - '스탯: 엔드/보스 공격 피해 +15/+30/+52.5/+75/+92/+114.5%, 엔드/보스 받는 피해 -6/-12/-18/-24/-28.5/-34.5%, 엔드 이동 속도 +6/+12/+18/+27/+34/+43%'
+      - '카드 기믹(상시): 엔드에서 몹 처치 시 15s 전투 가속(공속 +7.5/+15/+22.5/+30/+35.5/+43%, 최대 3중첩).'
+      - '특수 능력: **각성 파동** (발동: F / 궁극: Shift+F) — T2: 엔드에서 10마리 처치 시 30s 파동(아군 야간시야 + 엔드몹 피해 +22.5%, 쿨 180s). | T3: 8마리, 40s. | T4: 파동 중 레비테이션 면역 + 엔더맨 진주 드랍 확률 +50%. | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 쿨 -10%(최소 4s). | T6(궁극): **오라 역전** — Shift+F, 쿨 240s: 20s 동안 24b 내 **엔더맨 강화 오라를 역전**해 오라 범위의 몹에게 약화 I + 둔화 30% + 받는 피해 +15% 적용. 또한 내/아군(12b)은 공격 피해 +25% & 투사체 피해 -20%.'
+      - '태그: 엔드, 파티, 점수'
+  B-060:
+    name: 결전의 축복
+    type: BLESSING
+    weight: 1.0
+    archetype: GATHERING
+    runtime:
+      detail_ko:
+      - '스탯: 보스 공격 피해 +18/+33/+48/+67.5/+82/+101.5%, 보스에게 받는 피해 -6/-12/-18/-24/-28.5/-34.5%, 보스 처치 점수 +22.5/+45/+67.5/+90/+107/+129.5%'
+      - '카드 기믹(상시): 보스 72b 이내 전투 10s마다 ''결의'' 1스택(최대 3): 스택당 피해 -4.5% + 피해 +7.5%.'
+      - '특수 능력: **결전 선포** (발동: F / 궁극: Shift+F) — T2: 300s마다 보스에게 우클릭 선포(40s): 해당 보스 피해 +50%, 해당 보스에게 받는 피해 -30% / 대신 다른 몹에게 받는 피해 +20%. | T3: 50s, 패널티 +12%. | T4: 지속 종료까지 생존 시 60s ''승전''(이속 +30% + 재생 II 12s + 처치 점수 +40%). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 쿨 -10%(최소 4s). | T6(궁극): **결전 선언** — Shift+F, 쿨 240s: 15s 동안 보스/대형 몹에게 주는 피해 +60%, 보스에게 받는 피해 -15%. 15s 내 보스에게 준 피해의 20%를 흡수(최대 20HP).'
+      - '태그: 보스, 하이리스크, 하이리턴'
 curses:
   C-001:
-    name: 발목 족쇄
+    name: 무거운 발목
     type: CURSE
     weight: 1.0
     archetype: MOBILITY
     runtime:
       detail_ko:
-      - '이동 속도: T1 -6.2%, T2 -12.5%, T3 -18.8%, T4 -25.0%'
-      - '포만감 소모: T1 +0.0%, T2 +30.0%, T3 +45.0%, T4 +60.0%'
-      - '자기장 밖 체류 시 위더 단계 누적 속도: T1 +0.0%, T2 +10.0%, T3 +15.0%, T4 +20.0%'
-      - '카드 기믹 1: 체력 35.0% 이하 받는 피해 추가 T1 +0.0%, T2 +0.0%, T3 +13.8%, T4 +18.4%'
-      - '카드 기믹 2: 점프 후 2s 이동 속도 추가 감소 T1 -5.0%, T2 -10.0%, T3 -15.0%, T4 -20.0%'
-      modifiers:
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.062
-        min_total_tier: 1
-        world: ANY
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.0005
-        min_total_tier: 2
-        world: ANY
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.000167
-        min_total_tier: 3
-        world: ANY
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.000167
-        min_total_tier: 4
-        world: ANY
-      - type: HUNGER_DRAIN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.15
-        min_total_tier: 2
-        world: ANY
-      - type: BORDER_WITHER_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.05
-        min_total_tier: 2
-        world: ANY
-        conditions:
-        - OUTSIDE_BORDER
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.046
-        min_total_tier: 3
-        world: ANY
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.05
-        min_total_tier: 1
-        world: ANY
+      - '스탯: 이동 속도 -4.5/-9/-13.5/-18/-21.5/-26%, 낙하 피해 +22.5/+45/+67.5/+90/+107/+129.5%, 포만감 소모 +12/+24/+36/+48/+57/+69%'
+      - '카드 기믹(상시): 점프 후 3s 추가 이속 -3/-6/-9/-12/-14/-17%.'
+      - '특수 능력: **중력 파동** (자동 발동) — T2: 50s마다 12s ''중력 강화''(점프력 -70% + 채굴 -20%). | T3: 40s마다 14s. | T4: 중력 강화 중 주변 20b 적대 몹 이속 +30% + 넉백 저항 +40%. | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 발동 빈도 +10%(ICD/주기 0.9배). | T6(재앙): **중력 붕괴** — (자동) 질주 6s 유지 시 180s마다 1회: 10s 동안 이속 -40%, 점프력 -80%, 낙하 피해 +100%. 10s 내 점프하면 3s 속박(이속 -90%).'
+      - '태그: 이동, 리스크, 중력'
   C-002:
     name: 유리뼈
     type: CURSE
@@ -1826,67 +678,10 @@ curses:
     archetype: MOBILITY
     runtime:
       detail_ko:
-      - '낙하 피해: T1 +35.0%, T2 +70.0%, T3 +105.0%, T4 +140.0%'
-      - '이동 속도: T1 +0.0%, T2 -4.0%, T3 -6.0%, T4 -8.0%'
-      - '받는 피해: T1 +0.0%, T2 +6.0%, T3 +9.0%, T4 +12.0%'
-      - '카드 기믹 1: 설원/빙판 조건(눈·얼음·파우더 스노우 접촉 또는 설원 계열 바이옴)에서는 위 3개 페널티를 각각 1.25배 적용'
-      - '카드 기믹 2: 낙하 피해를 받으면 6s 동안 받는 피해 추가 T1 +5.0%, T2 +8.0%, T3 +11.0%, T4 +15.0% (ICD 10s)'
-      modifiers:
-      - type: FALL_DAMAGE_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.35
-        min_total_tier: 1
-        world: ANY
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.02
-        min_total_tier: 2
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.03
-        min_total_tier: 2
-        world: ANY
-      - type: FALL_DAMAGE_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.05
-        min_total_tier: 1
-        world: ANY
-      - type: FALL_DAMAGE_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.01
-        min_total_tier: 2
-        world: ANY
-      - type: FALL_DAMAGE_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.003333
-        min_total_tier: 3
-        world: ANY
-      - type: FALL_DAMAGE_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.000833
-        min_total_tier: 4
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.05
-        min_total_tier: 1
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.01
-        min_total_tier: 2
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.003333
-        min_total_tier: 3
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.000833
-        min_total_tier: 4
-        world: ANY
+      - '스탯: 낙하 피해 +37.5/+75/+112.5/+150/+178/+215.5%, 받는 넉백 +15/+30/+45/+60/+71/+86%, 이동 속도 0/-3/-6/-9/-11/-14%'
+      - '카드 기믹(상시): 낙하 피해를 받으면 9s ''균열''(받는 피해 +7.5/+12/+16.5/+22.5/+27/+33%, 쿨 12s).'
+      - '특수 능력: **골절 경보** (자동 발동) — T2: 낙하 피해 발생 시 48b 몹이 내 위치로 몰림(12s, 쿨 60s). | T3: 64b. | T4: 경보 시 120s마다 1회, 추가로 적대 몹 1마리 증원(구조물/동굴 우선). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 발동 빈도 +10%(ICD/주기 0.9배). | T6(재앙): **불길한 예고** — (자동) 240s마다 1회: 15s 동안 받는 피해 +20%, 이동 속도 -20%, 주변 16b 몹이 내 위치를 우선 타겟팅(도발).'
+      - '태그: 낙하, 위치노출, 리스크'
   C-003:
     name: 숨 막힘
     type: CURSE
@@ -1894,37 +689,10 @@ curses:
     archetype: MOBILITY
     runtime:
       detail_ko:
-      - '산소 소모: T1 +50.0%, T2 +100.0%, T3 +150.0%, T4 +200.0%'
-      - '다크니스 지속: T1 +6.4%, T2 +12.8%, T3 +19.2%, T4 +25.6%'
-      - '실명 지속: T1 +0.0%, T2 +0.0%, T3 +27.6%, T4 +36.8%'
-      - '카드 기믹 1: 수중 조건(머리 잠수/수영 상태/거품기둥 접촉)에서는 위 3개 페널티를 각각 1.25배 적용'
-      - '카드 기믹 2: 산소 게이지 50.0% 이하 구간에서 받는 피해 추가 T1 +5.0%, T2 +8.0%, T3 +12.0%, T4 +16.0%'
-      modifiers:
-      - type: OXYGEN_DRAIN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.5
-        min_total_tier: 1
-        world: ANY
-      - type: DARKNESS_DURATION_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.064
-        min_total_tier: 1
-        world: ANY
-      - type: BLINDNESS_DURATION_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.092
-        min_total_tier: 3
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.05
-        min_total_tier: 1
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.01
-        min_total_tier: 2
-        world: ANY
+      - '스탯: 산소 소모 +45/+90/+135/+180/+214/+259%, 수영 속도 -7.5/-15/-22.5/-30/-35.5/-43%, 물속 받는 피해(몹) +4.5/+9/+13.5/+18/+21.5/+26%'
+      - '카드 기믹(상시): 산소가 40%↓일 때 받는 피해 +6/+12/+18/+24/+28.5/+34.5%.'
+      - '특수 능력: **폐활량 경련** (자동 발동) — T2: 산소 53.5%↓에서 8s마다 1회 ''기침''(4s 둔화, 쿨 8s) + 수중몹 주목도 증가. | T3: 산소 66.5%↓, 주목 반경 증가. | T4: 기침이 6s 약화 I를 추가로 부여(물속). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 발동 빈도 +10%(ICD/주기 0.9배). | T6(재앙): **불길한 예고** — (자동) 240s마다 1회: 15s 동안 받는 피해 +20%, 이동 속도 -20%, 주변 16b 몹이 내 위치를 우선 타겟팅(도발).'
+      - '태그: 수중, 호흡, 리스크'
   C-004:
     name: 화상 체질
     type: CURSE
@@ -1932,82 +700,10 @@ curses:
     archetype: MOBILITY
     runtime:
       detail_ko:
-      - '화염 피해: T1 +50.0%, T2 +100.0%, T3 +150.0%, T4 +200.0%'
-      - '화상 지속 시간: T1 +50.0%, T2 +100.0%, T3 +150.0%, T4 +200.0%'
-      - '화염 피해 [네더]: T1 +20.0%, T2 +30.0%, T3 +40.0%, T4 +50.0%'
-      - '카드 기믹 1: 점화/화상 상태에서는 받는 피해 추가 T1 +10.0%, T2 +15.0%, T3 +20.0%, T4 +30.0%'
-      - '카드 기믹 2: 생존 점수 T1 -15.0%, T2 -25.0%, T3 -35.0%, T4 -45.0%'
-      modifiers:
-      - type: FIRE_DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.5
-        min_total_tier: 1
-        world: ANY
-      - type: BURNING_TIME_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.5
-        min_total_tier: 1
-        world: ANY
-      - type: FIRE_DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.2
-        min_total_tier: 1
-        world: NETHER
-      - type: FIRE_DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.05
-        min_total_tier: 2
-        world: NETHER
-      - type: FIRE_DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.016667
-        min_total_tier: 3
-        world: NETHER
-      - type: FIRE_DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.008333
-        min_total_tier: 4
-        world: NETHER
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.1
-        min_total_tier: 1
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.025
-        min_total_tier: 2
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.008333
-        min_total_tier: 3
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.008333
-        min_total_tier: 4
-        world: ANY
-      - type: SURVIVAL_SCORE_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.15
-        min_total_tier: 1
-        world: ANY
-      - type: SURVIVAL_SCORE_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.025
-        min_total_tier: 2
-        world: ANY
-      - type: SURVIVAL_SCORE_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.008333
-        min_total_tier: 3
-        world: ANY
-      - type: SURVIVAL_SCORE_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.004167
-        min_total_tier: 4
-        world: ANY
+      - '스탯: 화염 피해 +45/+90/+135/+180/+214/+259%, 화상 지속 +45/+90/+135/+180/+214/+259%, 네더에서 받는 피해(몹) +4.5/+9/+13.5/+18/+21.5/+26%'
+      - '카드 기믹(상시): 불타는 동안 받는 피해 추가 +7.5/+12/+16.5/+22.5/+27/+33%.'
+      - '특수 능력: **불꽃 패닉** (자동 발동) — T2: 화상 최초 발생 시 10s ''패닉''(이속 -7.5/-12/-16.5/-30% + 자연회복 중단)(쿨 45s). | T3: 패닉 중 2s 어둠(짧게). | T4: 패닉 동안 주변 몹 이속 +40%. | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 발동 빈도 +10%(ICD/주기 0.9배). | T6(재앙): **불길한 예고** — (자동) 240s마다 1회: 15s 동안 받는 피해 +20%, 이동 속도 -20%, 주변 16b 몹이 내 위치를 우선 타겟팅(도발).'
+      - '태그: 화염, 네더, 리스크'
   C-005:
     name: 독 체질
     type: CURSE
@@ -2015,63 +711,10 @@ curses:
     archetype: MOBILITY
     runtime:
       detail_ko:
-      - '독 지속: T1 +50.0%, T2 +100.0%, T3 +150.0%, T4 +200.0%'
-      - '위더 지속: T1 +50.0%, T2 +100.0%, T3 +150.0%, T4 +200.0%'
-      - '위더 피해: T1 +50.0%, T2 +100.0%, T3 +150.0%, T4 +200.0%'
-      - '위더 역흡수(추가 손실): T1 30.0%, T2 40.0%, T3 50.0%, T4 60.0% (위더 피해를 받을 때 해당 피해량의 추가 고정 피해)'
-      - '카드 기믹 1: 이동 속도 T1 +0.0%, T2 +0.0%, T3 -6.9%, T4 -9.2%'
-      - '카드 기믹 2: 독/위더 상태에서는 받는 피해 추가 T1 +5.0%, T2 +8.0%, T3 +12.0%, T4 +16.0%'
-      modifiers:
-      - type: POISON_DURATION_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.5
-        min_total_tier: 1
-        world: ANY
-      - type: WITHER_DURATION_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.5
-        min_total_tier: 1
-        world: ANY
-      - type: WITHER_DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.5
-        min_total_tier: 1
-        world: ANY
-      - type: WITHER_DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.3
-        min_total_tier: 1
-        world: ANY
-      - type: WITHER_DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.1
-        min_total_tier: 2
-        world: ANY
-      - type: WITHER_DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.033333
-        min_total_tier: 3
-        world: ANY
-      - type: WITHER_DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.016667
-        min_total_tier: 4
-        world: ANY
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.023
-        min_total_tier: 3
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.05
-        min_total_tier: 1
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.01
-        min_total_tier: 2
-        world: ANY
+      - '스탯: 독 지속 +45/+90/+135/+180/+214/+259%, 위더 지속 +45/+90/+135/+180/+214/+259%, 위더 피해 +30/+60/+90/+120/+142.5/+172.5%'
+      - '카드 기믹(상시): 독/위더 상태일 때 받는 피해 +6/+12/+18/+24/+28.5/+34.5%.'
+      - '특수 능력: **독성 과민** (자동 발동) — T2: 독/위더 부여 시 16s 동안 몹 탐지 반경 +50%(위치 노출). | T3: 24s. | T4: 독/위더 중 흡수 체력 획득량 -100%(방벽 약화). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 발동 빈도 +10%(ICD/주기 0.9배). | T6(재앙): **오염 역류** — (자동) 포션/음식 사용 시 180s마다 1회: 즉시 부정효과 2종(약화 I 8s + 구속 I 6s) 강제 부여. 추가로 10s 동안 받는 회복 50%가 고정 피해로 전환.'
+      - '태그: 상태이상, 리스크'
   C-006:
     name: 야간 공포
     type: CURSE
@@ -2079,37 +722,10 @@ curses:
     archetype: MOBILITY
     runtime:
       detail_ko:
-      - '밤 + 블록밝기 7 이하일 때 다크니스 펄스(주기/지속): T1 10s/2s, T2 10s/3s, T3 10s/4s, T4 10s/5s'
-      - '실명 지속: T1 +0.0%, T2 +0.0%, T3 +27.6%, T4 +36.8%'
-      - '이동 속도: T1 +0.0%, T2 +0.0%, T3 -6.9%, T4 -9.2%'
-      - '카드 기믹 1: 밤 + 블록밝기 7 이하 상태에서 30s마다 5s 공포 발작(나우지아 I, 이동 속도 추가 T1 -5.0%, T2 -10.0%, T3 -15.0%, T4 -20.0%)'
-      - '카드 기믹 2: T3+ 공포 발작 중 받는 피해 추가 T1 +0.0%, T2 +0.0%, T3 +10.0%, T4 +15.0%'
-      modifiers:
-      - type: BLINDNESS_DURATION_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.092
-        min_total_tier: 3
-        world: ANY
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.023
-        min_total_tier: 3
-        world: ANY
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.05
-        min_total_tier: 1
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.033333
-        min_total_tier: 3
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.004167
-        min_total_tier: 4
-        world: ANY
+      - '스탯: 밤/저조도 이동 속도 0/-4.5/-9/-13.5/-17/-21.5%, 밤/저조도 공격 속도 0/-4.5/-9/-13.5/-17/-21.5%, 다크니스 발생 주기 12/10/8/9/10/11s(3s 지속)'
+      - '카드 기믹(상시): 밤/저조도에서 30s마다 6s ''공포''(받는 피해 +7.5/+12/+16.5/+22.5/+27/+33%).'
+      - '특수 능력: **악몽 발작** (자동 발동) — T2: 공포 발동 시 90s마다 1회, 환영(전리품 없음) 1체가 40s 추격. | T3: 출현 주기 112.5s. | T4: 공포 중 주변 몹 탐지 반경 +100% + 이속 +30%. | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 발동 빈도 +10%(ICD/주기 0.9배). | T6(재앙): **악몽 파장** — (자동) 밤+밝기≤7에서 240s마다 1회: 15s 동안 다크니스 펄스(5s/3s) + 공포(나우지아 I) 3회. 공포 중 받는 피해 +15%.'
+      - '태그: 야간, 시야, 리스크'
   C-007:
     name: 차원 멀미
     type: CURSE
@@ -2117,104 +733,21 @@ curses:
     archetype: MOBILITY
     runtime:
       detail_ko:
-      - '차원 이동/텔레포트 후 8s 받는 피해: T1 +10.0%, T2 +15.0%, T3 +20.0%, T4 +25.0%'
-      - '텔레포트 좌표 산포: T1 ±2b, T2 ±4b, T3 ±6b, T4 ±8b (최종 좌표 기준 무작위 오프셋)'
-      - '텔레포트 후 나우지아 지속: T1 2s, T2 2s, T3 3s, T4 4s'
-      - '이동 속도: T1 +0.0%, T2 -4.0%, T3 -6.0%, T4 -8.0%'
-      - '카드 기믹 1: 텔레포트 후 질주 봉인 T1 0s, T2 1s, T3 2s, T4 3s'
-      - '카드 기믹 2: 나무 막대 핑 정보 왜곡(방향 오차 T1 ±15도, T2 ±30도, T3 ±45도, T4 ±60도 / 거리 오차 T1 ±10.0%, T2 ±20.0%, T3 ±30.0%, T4 ±40.0%)'
-      modifiers:
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.1
-        min_total_tier: 1
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.025
-        min_total_tier: 2
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.008333
-        min_total_tier: 3
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.004167
-        min_total_tier: 4
-        world: ANY
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.02
-        min_total_tier: 2
-        world: ANY
+      - '스탯: 텔레포트/포탈 사용 후 12s 받는 피해(몹) +7.5/+12/+16.5/+22.5/+27/+33%, 텔레포트 착지 오차 ±1/±2/±3/±6b, 이동 속도 0/-3/-6/-9/-11/-14%'
+      - '카드 기믹(상시): 텔레포트 직후 0/1/2/4.5/6.5/9s 동안 질주 불가.'
+      - '특수 능력: **공간 뒤틀림** (자동 발동) — T2: 텔포 시 12s ''균열'' 생성(근처 몹 이속 +20%로 추격, 쿨 20s). | T3: 16s + 이속 +30%. | T4: 균열이 40% 확률로 엔더마이트 1체 소환(쿨 120s). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 발동 빈도 +10%(ICD/주기 0.9배). | T6(재앙): **불길한 예고** — (자동) 240s마다 1회: 15s 동안 받는 피해 +20%, 이동 속도 -20%, 주변 16b 몹이 내 위치를 우선 타겟팅(도발).'
+      - '태그: 차원, 텔포, 리스크'
   C-008:
-    name: 자기장 취약
+    name: 경계선 취약
     type: CURSE
     weight: 1.0
     archetype: MOBILITY
     runtime:
       detail_ko:
-      - '자기장 단계 상승 필요 시간: T1 -15.0%, T2 -30.0%, T3 -45.0%, T4 -60.0% (단계가 더 빠르게 상승)'
-      - '위더 피해: T1 +15.0%, T2 +30.0%, T3 +45.0%, T4 +60.0%'
-      - '이동 속도: T1 -15.0%, T2 -30.0%, T3 -45.0%, T4 -60.0%'
-      - '생존 점수: T1 -10.0%, T2 -20.0%, T3 -30.0%, T4 -40.0%'
-      - '카드 기믹 1: 자기장 밖 체류 5s 이상 상태에서 받는 피해 추가 T1 +5.0%, T2 +10.0%, T3 +15.0%, T4 +20.0%'
-      - '카드 기믹 2: 자기장 밖에서 안쪽으로 복귀 후 8s 이동 속도 추가 감소 T1 -10.0%, T2 -15.0%, T3 -20.0%, T4 -25.0% (ICD 30s)'
-      modifiers:
-      - type: BORDER_WITHER_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.15
-        min_total_tier: 1
-        world: ANY
-      - type: WITHER_DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.15
-        min_total_tier: 1
-        world: ANY
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.15
-        min_total_tier: 1
-        world: ANY
-      - type: SURVIVAL_SCORE_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.1
-        min_total_tier: 1
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.05
-        min_total_tier: 1
-        world: ANY
-        conditions:
-        - OUTSIDE_BORDER
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.1
-        min_total_tier: 1
-        world: ANY
-        conditions: &id006
-        - OUTSIDE_BORDER
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.025
-        min_total_tier: 2
-        world: ANY
-        conditions: *id006
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.008333
-        min_total_tier: 3
-        world: ANY
-        conditions: *id006
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.004167
-        min_total_tier: 4
-        world: ANY
-        conditions: *id006
+      - '스탯: 자기장/경계 단계 상승 속도 +15/+30/+45/+60/+71/+86%, 이동 속도 -6/-10.5/-15/-19.5/-23/-27.5%, 경계 피해(위더/독) +15/+30/+45/+60/+71/+86%'
+      - '카드 기믹(상시): 경계 밖에 7.5s 이상 있으면 받는 피해(몹) +7.5/+12/+16.5/+22.5/+27/+33%.'
+      - '특수 능력: **경계 떨림** (자동 발동) — T2: 경계 단계 상승 시 16s 동안 몹 탐지 반경 +100% + 6s 둔화 II. | T3: 24s. | T4: 경계 밖 체류가 지속되면 120s마다 1회, 추가 추격자(구현체) 스폰. | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 발동 빈도 +10%(ICD/주기 0.9배). | T6(재앙): **불길한 예고** — (자동) 240s마다 1회: 15s 동안 받는 피해 +20%, 이동 속도 -20%, 주변 16b 몹이 내 위치를 우선 타겟팅(도발).'
+      - '태그: 경계, 하이리스크'
   C-009:
     name: 무딘 칼날
     type: CURSE
@@ -2222,57 +755,10 @@ curses:
     archetype: MOBILITY
     runtime:
       detail_ko:
-      - '공격 피해(모든 대상): T1 -8.8%, T2 -17.5%, T3 -26.2%, T4 -35.0%'
-      - '무기 내구도 소모: T1 +10.0%, T2 +20.0%, T3 +30.0%, T4 +40.0%'
-      - '위더 지속: T1 +0.0%, T2 +0.0%, T3 +24.1%, T4 +32.2%'
-      - '카드 기믹 1: 근접 공격 적중 후 3s 공격 속도 추가 감소 T1 -5.0%, T2 -10.0%, T3 -15.0%, T4 -20.0%'
-      - '카드 기믹 2: 무기 내구도 20.0% 이하 상태에서는 공격 피해 추가 T1 -5.0%, T2 -10.0%, T3 -15.0%, T4 -20.0%'
-      modifiers:
-      - type: DAMAGE_DEALT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.088
-        min_total_tier: 1
-        world: ANY
-      - type: DAMAGE_DEALT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.0005
-        min_total_tier: 2
-        world: ANY
-      - type: DAMAGE_DEALT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.000167
-        min_total_tier: 3
-        world: ANY
-      - type: DAMAGE_DEALT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.000167
-        min_total_tier: 4
-        world: ANY
-      - type: ITEM_DURABILITY_LOSS_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.1
-        min_total_tier: 1
-        world: ANY
-      - type: WITHER_DURATION_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.080333
-        min_total_tier: 3
-        world: ANY
-      - type: WITHER_DURATION_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.000167
-        min_total_tier: 4
-        world: ANY
-      - type: ATTACK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.05
-        min_total_tier: 1
-        world: ANY
-      - type: DAMAGE_DEALT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.05
-        min_total_tier: 1
-        world: ANY
+      - '스탯: 근접 공격 피해(몹) -9/-18/-27/-36/-43/-52%, 무기 내구도 소모 +15/+27/+39/+51/+60/+72%, 근접 적중 후 4.5s 공격 속도 -4.5/-9/-13.5/-18/-21.5/-26%'
+      - '카드 기믹(상시): 무기 내구도 20%↓일 때 추가 피해 -7.5/-12/-16.5/-22.5/-27/-33%.'
+      - '특수 능력: **손목 저림** (자동 발동) — T2: 8s 내 ''헛스윙'' 3회 시 8s 약화 I(쿨 20s). | T3: 약화 12s. | T4: 매 10번째 적중이 2s ''걸림''(공속 -100%) + 10s 받는 피해 +20%. | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 발동 빈도 +10%(ICD/주기 0.9배). | T6(재앙): **부식 폭주** — (자동) 전투 상태에서 240s마다 1회: 20s 동안 무기/방어구 내구도 소모 2배, 피격/공격 시 추가 내구도 -2. 종료 후 10s 동안 공격 속도 -10%.'
+      - '태그: 근접, 내구도, 리스크'
   C-010:
     name: 둔한 활
     type: CURSE
@@ -2280,262 +766,65 @@ curses:
     archetype: MOBILITY
     runtime:
       detail_ko:
-      - '공격 피해(원거리): T1 -10.0%, T2 -20.0%, T3 -30.0%, T4 -40.0%'
-      - '이동 중 조준 불안정: T1 +15.0%, T2 +30.0%, T3 +45.0%, T4 +60.0%'
-      - '이동 속도: T1 +0.0%, T2 -20.0%, T3 -30.0%, T4 -40.0%'
-      - '카드 기믹 1: 이동 상태(걷기/질주/점프)에서 발사한 투사체는 조준 불안정 수치를 1.25배 적용'
-      - '카드 기믹 2: 최근 3s 내 8b 이상 이동한 상태에서는 원거리 공격 피해 추가 T1 -5.0%, T2 -10.0%, T3 -15.0%, T4 -20.0%'
-      modifiers:
-      - type: DAMAGE_DEALT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.1
-        min_total_tier: 1
-        world: ANY
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.1
-        min_total_tier: 2
-        world: ANY
-      - type: DAMAGE_DEALT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.05
-        min_total_tier: 1
-        world: ANY
+      - '스탯: 원거리 공격 피해(몹) -12/-24/-36/-48/-57/-69%, 조준 중 이동 속도 0/-6/-9/-12/-14/-17%, 투사체 분산 +15/+30/+45/+60/+71/+86%'
+      - '카드 기믹(상시): 최근 3s 내 8b 이상 이동했으면 원거리 피해 추가 -7.5/-12/-16.5/-22.5/-27/-33%.'
+      - '특수 능력: **조준 흔들림** (자동 발동) — T2: 이동 중 사격 시 40% 확률로 ''빗나감''(큰 분산) + 4s 둔화(쿨 10s). | T3: 60%. | T4: 빗나감 발생 시 12s 몹 탐지 반경 +100%. | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 발동 빈도 +10%(ICD/주기 0.9배). | T6(재앙): **불길한 예고** — (자동) 240s마다 1회: 15s 동안 받는 피해 +20%, 이동 속도 -20%, 주변 16b 몹이 내 위치를 우선 타겟팅(도발).'
+      - '태그: 원거리, 정밀저하, 리스크'
   C-011:
-    name: 방패 파기
+    name: 방패 균열
     type: CURSE
     weight: 1.0
-    archetype: COMBAT
+    archetype: MOBILITY
     runtime:
       detail_ko:
-      - '방패 방어 효율: T1 -20.0%, T2 -40.0%, T3 -60.0%, T4 -80.0%'
-      - '방패 방어 중 이동 속도: T1 -10.0%, T2 -15.0%, T3 -20.0%, T4 -25.0%'
-      - '투사체 받는 피해: T1 +12.0%, T2 +24.0%, T3 +36.0%, T4 +48.0%'
-      - '카드 기믹 1: 전투 상태(최근 6s 내 피해를 주거나 받음) 받는 피해 추가 T1 +0.0%, T2 +10.0%, T3 +15.0%, T4 +20.0%'
-      - '카드 기믹 2: 방패 방어 성공 후 3s 이동 속도 추가 감소 T1 -5.0%, T2 -10.0%, T3 -15.0%, T4 -20.0%'
-      modifiers:
-      - type: SHIELD_BLOCK_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.2
-        min_total_tier: 1
-        world: ANY
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.1
-        min_total_tier: 1
-        world: ANY
-        conditions: &id007
-        - BLOCKING
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.025
-        min_total_tier: 2
-        world: ANY
-        conditions: *id007
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.008333
-        min_total_tier: 3
-        world: ANY
-        conditions: *id007
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.004167
-        min_total_tier: 4
-        world: ANY
-        conditions: *id007
-      - type: PROJECTILE_DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.12
-        min_total_tier: 1
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.12
-        min_total_tier: 1
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.05
-        min_total_tier: 2
-        world: ANY
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.05
-        min_total_tier: 1
-        world: ANY
+      - '스탯: 방패 방어 효율 -22.5/-45/-67.5/-90/-107/-129.5%, 방패 방어 중 이동 속도 -7.5/-12/-16.5/-22.5/-27/-33%, 투사체 받는 피해 +12/+24/+36/+48/+57/+69%'
+      - '카드 기믹(상시): 방어 성공 후 4.5s 받는 피해 +4.5/+9/+13.5/+18/+21.5/+26%(쿨 8s).'
+      - '특수 능력: **균열 충격** (자동 발동) — T2: 투사체 방어 시 50% 확률로 방패 4s 비활성(쿨 15s). | T3: 70%, 5s. | T4: 6s + 8s 약화 I. | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 발동 빈도 +10%(ICD/주기 0.9배). | T6(재앙): **불길한 예고** — (자동) 240s마다 1회: 15s 동안 받는 피해 +20%, 이동 속도 -20%, 주변 16b 몹이 내 위치를 우선 타겟팅(도발).'
+      - '태그: 방패, 원거리위험'
   C-012:
     name: 폭발 공포
     type: CURSE
     weight: 1.0
-    archetype: COMBAT
+    archetype: MOBILITY
     runtime:
       detail_ko:
-      - '폭발 피해: T1 +20.0%, T2 +40.0%, T3 +60.0%, T4 +80.0%'
-      - '받는 피해: T1 +5.0%, T2 +10.0%, T3 +15.0%, T4 +20.0%'
-      - '엔더드래곤 브레스 피해 [엔드]: T1 +20.0%, T2 +40.0%, T3 +60.0%, T4 +80.0%'
-      - '카드 기믹 1: 함정/레드스톤(압력판/트립와이어/레버/버튼/TNT) 8b 이내 접근 시 본인 위치 핑 5s 노출 (재발동 T1 60s, T2 40s, T3 20s, T4 10s)'
-      - '카드 기믹 2: 폭발 피해를 받으면 6s 이동 속도 추가 감소 T1 -10.0%, T2 -15.0%, T3 -20.0%, T4 -25.0% (ICD 10s)'
-      modifiers:
-      - type: EXPLOSION_DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.2
-        min_total_tier: 1
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.05
-        min_total_tier: 1
-        world: ANY
-      - type: EXPLOSION_DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.1
-        min_total_tier: 1
-        world: ANY
-      - type: EXPLOSION_DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.025
-        min_total_tier: 2
-        world: ANY
-      - type: EXPLOSION_DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.008333
-        min_total_tier: 3
-        world: ANY
-      - type: EXPLOSION_DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.004167
-        min_total_tier: 4
-        world: ANY
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.1
-        min_total_tier: 1
-        world: ANY
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.025
-        min_total_tier: 2
-        world: ANY
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.008333
-        min_total_tier: 3
-        world: ANY
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.004167
-        min_total_tier: 4
-        world: ANY
+      - '스탯: 폭발 피해 +15/+30/+45/+60/+71/+86%, 받는 피해(몹) +4.5/+9/+13.5/+18/+21.5/+26%, 폭발 후 9s 이동 속도 -7.5/-12/-16.5/-22.5/-27/-33%'
+      - '카드 기믹(상시): TNT/크리퍼 12b 접근 시 7.5s ''불길한 표식''(몹 탐지 반경 +37.5/+60/+82.5/+105/+122/+144.5%).'
+      - '특수 능력: **패닉 폭주** (자동 발동) — T2: 폭발 피해를 받으면 20s 흡수 체력 획득 불가(쿨 45s). | T3: 28s. | T4: 폭발 후 16s 동안 받는 피해 +30%(몹). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 발동 빈도 +10%(ICD/주기 0.9배). | T6(재앙): **불길한 예고** — (자동) 240s마다 1회: 15s 동안 받는 피해 +20%, 이동 속도 -20%, 주변 16b 몹이 내 위치를 우선 타겟팅(도발).'
+      - '태그: 폭발, 리스크'
   C-013:
     name: 무기 부식
     type: CURSE
     weight: 1.0
-    archetype: COMBAT
+    archetype: MOBILITY
     runtime:
       detail_ko:
-      - '무기 내구도 소모: T1 +20.0%, T2 +30.0%, T3 +40.0%, T4 +50.0%'
-      - '공격 피해(모든 대상): T1 -5.0%, T2 -10.0%, T3 -15.0%, T4 -20.0%'
-      - '전투 상태 주기적 내구 손실(30s 주기): T1 +1, T2 +2, T3 +3, T4 +4'
-      - '카드 기믹 1: 전투 상태(최근 6s 내 피해를 주거나 받음)에서는 `무기 내구도 소모`와 `공격 피해 감소`를 1.25배 적용'
-      - '카드 기믹 2: 무기 내구도 20.0% 이하 상태에서는 공격 속도 추가 T1 -5.0%, T2 -10.0%, T3 -15.0%, T4 -20.0%'
-      modifiers:
-      - type: ITEM_DURABILITY_LOSS_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.2
-        min_total_tier: 1
-        world: ANY
-      - type: ITEM_DURABILITY_LOSS_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.05
-        min_total_tier: 2
-        world: ANY
-      - type: ITEM_DURABILITY_LOSS_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.016667
-        min_total_tier: 3
-        world: ANY
-      - type: ITEM_DURABILITY_LOSS_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.008333
-        min_total_tier: 4
-        world: ANY
-      - type: DAMAGE_DEALT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.05
-        min_total_tier: 1
-        world: ANY
-      - type: ATTACK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.05
-        min_total_tier: 1
-        world: ANY
+      - '스탯: 무기 내구도 소모 +22.5/+37.5/+52.5/+67.5/+79/+94%, 공격 피해(몹) -6/-12/-18/-24/-28.5/-34.5%, 전투 중(최근 6s) 위 페널티 1.25배'
+      - '카드 기믹(상시): 전투 중 30/25/20/15/11/6s마다 손에 든 무기 내구도 추가 -1/-2/-3/-4/-5/-6.'
+      - '특수 능력: **녹슨 찌꺼기** (자동 발동) — T2: 내구도 감소 발생 시 20% 확률로 8s 약화 I(쿨 20s). | T3: 30%. | T4: 무기 내구도 26.5%↓에서 적중 시 40% 확률로 4s 질주 불가+받는 피해 +15%(쿨 30s). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 발동 빈도 +10%(ICD/주기 0.9배). | T6(재앙): **부식 폭주** — (자동) 전투 상태에서 240s마다 1회: 20s 동안 무기/방어구 내구도 소모 2배, 피격/공격 시 추가 내구도 -2. 종료 후 10s 동안 공격 속도 -10%.'
+      - '태그: 내구도, 전투'
   C-014:
     name: 갑옷 부식
     type: CURSE
     weight: 1.0
-    archetype: COMBAT
+    archetype: MOBILITY
     runtime:
       detail_ko:
-      - '갑옷 내구도 소모: T1 +20.0%, T2 +30.0%, T3 +40.0%, T4 +50.0%'
-      - '받는 피해: T1 +10.0%, T2 +20.0%, T3 +30.0%, T4 +40.0%'
-      - '흡수 획득량 감소량: T1 -1HP, T2 -2HP, T3 -3HP, T4 -4HP (황금사과/포션 등으로 흡수 획득 시 즉시 적용)'
-      - '카드 기믹 1: 피격 시 갑옷 내구도 추가 손실 T1 +1, T2 +1, T3 +2, T4 +2'
-      - '카드 기믹 2: 흡수 체력이 존재할 때 받는 피해 추가 T1 +5.0%, T2 +10.0%, T3 +15.0%, T4 +20.0%'
-      modifiers:
-      - type: ITEM_DURABILITY_LOSS_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.2
-        min_total_tier: 1
-        world: ANY
-      - type: ITEM_DURABILITY_LOSS_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.05
-        min_total_tier: 2
-        world: ANY
-      - type: ITEM_DURABILITY_LOSS_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.016667
-        min_total_tier: 3
-        world: ANY
-      - type: ITEM_DURABILITY_LOSS_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.008333
-        min_total_tier: 4
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.1
-        min_total_tier: 1
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.05
-        min_total_tier: 1
-        world: ANY
+      - '스탯: 갑옷 내구도 소모 +22.5/+37.5/+52.5/+67.5/+79/+94%, 받는 피해(몹) +7.5/+15/+22.5/+30/+35.5/+43%, 흡수 획득량 -1/-2/-3/-6/-8/-11HP'
+      - '카드 기믹(상시): 피격 시 갑옷 내구도 추가 -1/-1/-2/-2/-2/-2.'
+      - '특수 능력: **균열 노출** (자동 발동) — T2: 갑옷 부위 파괴 시 40s 받는 피해 +22.5%(쿨 120s). | T3: 50s. | T4: 노출 중 주변 40b 몹 이속 +30%. | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 발동 빈도 +10%(ICD/주기 0.9배). | T6(재앙): **부식 폭주** — (자동) 전투 상태에서 240s마다 1회: 20s 동안 무기/방어구 내구도 소모 2배, 피격/공격 시 추가 내구도 -2. 종료 후 10s 동안 공격 속도 -10%.'
+      - '태그: 내구도, 방어저하'
   C-015:
     name: 포션 역류
     type: CURSE
     weight: 1.0
-    archetype: COMBAT
+    archetype: MOBILITY
     runtime:
       detail_ko:
-      - '포션 효율(지속시간/증폭 효율): T1 -20.0%, T2 -30.0%, T3 -40.0%, T4 -50.0%'
-      - '포션/섭취 시 부정효과 부여 확률: T1 15.0%, T2 25.0%, T3 35.0%, T4 45.0%'
-      - '스플래시/잔류 포션 오염 적용: T1 비활성, T2 비활성, T3 활성, T4 활성'
-      - '카드 기믹 1: 부정효과 부여 시 약화 I/나우지아 I/구속 I 중 1개를 6s 적용'
-      - '카드 기믹 2: 오염된 스플래시/잔류 포션에 적중되면 5s 받는 피해 추가 T1 +0.0%, T2 +0.0%, T3 +10.0%, T4 +15.0%'
-      modifiers:
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.033333
-        min_total_tier: 3
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.004167
-        min_total_tier: 4
-        world: ANY
+      - '스탯: 포션 효과 -15/-30/-45/-60/-71/-86%, 포션 사용 시 부정효과 확률 22.5/37.5/52.5/67.5/79/94%, 부정효과 지속 +15/+30/+45/+60/+71/+86%'
+      - '카드 기믹(상시): 스플래시/잔류 포션이 나에게 적용되는 시간 1.25배.'
+      - '특수 능력: **역류 발작** (자동 발동) — T2: 역류 시 추가로 임의 디버프(둔화/약화/멀미 중 1) 6s(쿨 20s). | T3: 12s. | T4: 역류 시 10s ''독성 웅덩이''(본인 이속 -80%+초당 2 피해, 쿨 30s). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 발동 빈도 +10%(ICD/주기 0.9배). | T6(재앙): **오염 역류** — (자동) 포션/음식 사용 시 180s마다 1회: 즉시 부정효과 2종(약화 I 8s + 구속 I 6s) 강제 부여. 추가로 10s 동안 받는 회복 50%가 고정 피해로 전환.'
+      - '태그: 포션, 상태이상'
   C-016:
     name: 음식 역겨움
     type: CURSE
@@ -2543,47 +832,10 @@ curses:
     archetype: COMBAT
     runtime:
       detail_ko:
-      - '포만감 소모: T1 +22.5%, T2 +45.0%, T3 +67.5%, T4 +90.0%'
-      - '공격 속도: T1 +0.0%, T2 -6.0%, T3 -9.0%, T4 -12.0%'
-      - '근접 공격 후 3s 받는 피해: T1 +0.0%, T2 +8.0%, T3 +12.0%, T4 +16.0%'
-      - '카드 기믹 1: 음식 섭취 후 8s 이동 속도 추가 T1 +0.0%, T2 -5.0%, T3 -10.0%, T4 -15.0%'
-      - '카드 기믹 2: 생존 점수 T1 +0.0%, T2 +0.0%, T3 +0.0%, T4 -50.0%'
-      modifiers:
-      - type: HUNGER_DRAIN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.225
-        min_total_tier: 1
-        world: ANY
-      - type: ATTACK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.03
-        min_total_tier: 2
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.04
-        min_total_tier: 2
-        world: ANY
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.025
-        min_total_tier: 2
-        world: ANY
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.008333
-        min_total_tier: 3
-        world: ANY
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.004167
-        min_total_tier: 4
-        world: ANY
-      - type: SURVIVAL_SCORE_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.125
-        min_total_tier: 4
-        world: ANY
+      - '스탯: 포만감 소모 +18/+36/+54/+72/+85.5/+103.5%, 음식 섭취 속도 -7.5/-15/-22.5/-30/-35.5/-43%, 음식 섭취 후 9s 이동 속도 -4.5/-9/-13.5/-18/-21.5/-26%'
+      - '카드 기믹(상시): 배고픔(포만감 6↓)일 때 받는 피해 +7.5/+12/+16.5/+22.5/+27/+33%.'
+      - '특수 능력: **구역질** (자동 발동) — T2: 음식 섭취 시 40% 확률로 6s 멀미+4s 질주 불가(쿨 15s). | T3: 60%. | T4: 70% + 8s 약화 I. | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 발동 빈도 +10%(ICD/주기 0.9배). | T6(재앙): **불길한 예고** — (자동) 240s마다 1회: 15s 동안 받는 피해 +20%, 이동 속도 -20%, 주변 16b 몹이 내 위치를 우선 타겟팅(도발).'
+      - '태그: 생존, 식량'
   C-017:
     name: 전투 피로
     type: CURSE
@@ -2591,50 +843,21 @@ curses:
     archetype: COMBAT
     runtime:
       detail_ko:
-      - '전투 상태 자연 회복량: T1 -10.0%, T2 -20.0%, T3 -30.0%, T4 -40.0%'
-      - '전투 상태 이동 속도: T1 -5.0%, T2 -10.0%, T3 -15.0%, T4 -20.0%'
-      - '받는 피해(모든 대상): T1 +0.0%, T2 +0.0%, T3 +0.0%, T4 +13.8%'
-      - '카드 기믹 1: 전투 상태(최근 6s 내 피해를 주거나 받음)에서는 위 3개 페널티를 1.25배 적용'
-      - '카드 기믹 2: 전투 종료 후 5s 동안 자연 회복량 추가 T1 -5.0%, T2 -10.0%, T3 -15.0%, T4 -20.0%'
-      modifiers:
-      - type: NATURAL_REGEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.1
-        min_total_tier: 1
-        world: ANY
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.05
-        min_total_tier: 1
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.0345
-        min_total_tier: 4
-        world: ANY
-      - type: NATURAL_REGEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.05
-        min_total_tier: 1
-        world: ANY
+      - '스탯: 전투 중 자연 회복량 -15/-30/-45/-60/-71/-86%, 전투 중 이동 속도 -4.5/-9/-13.5/-18/-21.5/-26%, 전투 중 받는 피해 0/+4.5/+9/+13.5/+17/+21.5%'
+      - '카드 기믹(상시): 전투가 30s 이상 지속되면 종료까지 포만감 소모 +30/+45/+60/+90/+112.5/+142.5%.'
+      - '특수 능력: **피로 누적** (자동 발동) — T2: 전투 중 10s마다 피로 1(최대 3): 스택당 공속 -6%. 전투 종료 16s 후 해제. | T3: 8s마다. | T4: 3스택일 때 포션/버프 효과 100% 감소 12s + 받는 피해 +20% 12s. | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 발동 빈도 +10%(ICD/주기 0.9배). | T6(재앙): **불길한 예고** — (자동) 240s마다 1회: 15s 동안 받는 피해 +20%, 이동 속도 -20%, 주변 16b 몹이 내 위치를 우선 타겟팅(도발).'
+      - '태그: 전투, 지구력'
   C-018:
-    name: 회복 봉인
+    name: 회복 왜곡
     type: CURSE
     weight: 1.0
     archetype: COMBAT
     runtime:
       detail_ko:
-      - '자연 회복: T1 OFF, T2 OFF, T3 OFF, T4 OFF'
-      - '흡수 획득량 감소량: T1 -1HP, T2 -2HP, T3 -3HP, T4 -4HP (황금사과/포션 등으로 흡수 획득 시 즉시 적용)'
-      - '회복량 피해 전환: T1 50.0%, T2 75.0%, T3 100.0%, T4 125.0% (즉시 회복/재생/흡혈으로 얻는 회복량의 일부를 고정 피해로 전환)'
-      - '카드 기믹 1: T3+ 회복 시 약화 I 3s 적용'
-      - '카드 기믹 2: 회복량 피해 전환 발동 시 4s 이동 속도 추가 T1 -5.0%, T2 -10.0%, T3 -15.0%, T4 -20.0%'
-      modifiers:
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.05
-        min_total_tier: 1
-        world: ANY
+      - '스탯: 자연 회복량 -22.5/-45/-67.5/-90/-107/-129.5%, 즉시 회복/재생 효율 -15/-30/-45/-60/-71/-86%, 회복 발생 시 6s 이동 속도 -4.5/-9/-13.5/-18/-21.5/-26%'
+      - '카드 기믹(상시): 체력 70% 초과 구간의 회복은 30/45/60/75/86/101%가 ''빠르게 소멸하는 흡수''로 전환.'
+      - '특수 능력: **역치 통증** (자동 발동) — T2: 6.5s 내 12HP↑ 회복 시 2 진실 피해 + 8s 약화 I(쿨 45s). | T3: 6 피해 + 12s 약화. | T4: + 8s 둔화 II. | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 발동 빈도 +10%(ICD/주기 0.9배). | T6(재앙): **불길한 예고** — (자동) 240s마다 1회: 15s 동안 받는 피해 +20%, 이동 속도 -20%, 주변 16b 몹이 내 위치를 우선 타겟팅(도발).'
+      - '태그: 회복, 리스크'
   C-019:
     name: 해독 실패
     type: CURSE
@@ -2642,69 +865,10 @@ curses:
     archetype: COMBAT
     runtime:
       detail_ko:
-      - '독 지속: T1 +20.0%, T2 +30.0%, T3 +40.0%, T4 +50.0%'
-      - '위더 지속: T1 +20.0%, T2 +30.0%, T3 +40.0%, T4 +50.0%'
-      - '화상 지속: T1 +20.0%, T2 +30.0%, T3 +40.0%, T4 +50.0%'
-      - '부정효과 지속: T1 +20.0%, T2 +30.0%, T3 +40.0%, T4 +50.0%'
-      - '다크니스 지속: T1 +6.4%, T2 +12.8%, T3 +19.2%, T4 +25.6%'
-      - '카드 기믹 1: 정화/해제 성공 시 동일 부정효과 재적용 확률 T1 10.0%, T2 15.0%, T3 20.0%, T4 25.0% (재적용 지속시간은 기존의 50.0%)'
-      - '카드 기믹 2: 부정효과 2개 이상 동시 보유 시 받는 피해 추가 T1 +5.0%, T2 +8.0%, T3 +12.0%, T4 +16.0%'
-      modifiers:
-      - type: POISON_DURATION_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.2
-        min_total_tier: 1
-        world: ANY
-      - type: POISON_DURATION_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.05
-        min_total_tier: 2
-        world: ANY
-      - type: POISON_DURATION_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.016667
-        min_total_tier: 3
-        world: ANY
-      - type: POISON_DURATION_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.008333
-        min_total_tier: 4
-        world: ANY
-      - type: WITHER_DURATION_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.2
-        min_total_tier: 1
-        world: ANY
-      - type: WITHER_DURATION_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.05
-        min_total_tier: 2
-        world: ANY
-      - type: WITHER_DURATION_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.016667
-        min_total_tier: 3
-        world: ANY
-      - type: WITHER_DURATION_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.008333
-        min_total_tier: 4
-        world: ANY
-      - type: DARKNESS_DURATION_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.064
-        min_total_tier: 1
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.05
-        min_total_tier: 1
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.01
-        min_total_tier: 2
-        world: ANY
+      - '스탯: 부정효과 지속 +15/+30/+45/+60/+71/+86%, 독/위더/화상 지속 +15/+30/+45/+60/+71/+86%, 부정효과 2개↑일 때 받는 피해 +6/+12/+18/+24/+28.5/+34.5%'
+      - '카드 기믹(상시): 부정효과를 제거할 때 15/22.5/30/37.5/43/50.5% 확률로 같은 효과가 75% 지속으로 재부여.'
+      - '특수 능력: **해독 반동** (자동 발동) — T2: 우유/꿀 사용 시 60% 확률로 12s 약화 I(쿨 30s). | T3: + 12s 둔화 I. | T4: 반동 시 120s마다 1회, 추가로 해충 1체 소환(엔더마이트/은벌레). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 발동 빈도 +10%(ICD/주기 0.9배). | T6(재앙): **오염 역류** — (자동) 포션/음식 사용 시 180s마다 1회: 즉시 부정효과 2종(약화 I 8s + 구속 I 6s) 강제 부여. 추가로 10s 동안 받는 회복 50%가 고정 피해로 전환.'
+      - '태그: 상태이상, 정화방해'
   C-020:
     name: 취약의 각인
     type: CURSE
@@ -2712,1148 +876,447 @@ curses:
     archetype: COMBAT
     runtime:
       detail_ko:
-      - '받는 피해: T1 +15.0%, T2 +30.0%, T3 +45.0%, T4 +60.0%'
-      - '체력 35.0% 이하 받는 피해 추가: T1 +0.0%, T2 +0.0%, T3 +13.8%, T4 +18.4%'
-      - '공격 피해(모든 대상): T1 +0.0%, T2 +0.0%, T3 +0.0%, T4 -13.8%'
-      - '카드 기믹 1: 피격 누적 3회마다 나우지아/공황 5s 발생 (ICD 30s)'
-      - '카드 기믹 2: 나우지아/공황 상태에서는 공격 피해 추가 T1 -5.0%, T2 -10.0%, T3 -15.0%, T4 -20.0%'
-      modifiers:
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.15
-        min_total_tier: 1
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.046
-        min_total_tier: 3
-        world: ANY
-      - type: DAMAGE_DEALT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.0345
-        min_total_tier: 4
-        world: ANY
-      - type: DAMAGE_DEALT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.05
-        min_total_tier: 1
-        world: ANY
+      - '스탯: 받는 피해(전체) +9/+18/+27/+36/+43/+52%, 체력 35% 이하 추가 받는 피해 0/0/+12/+18/+22.5/+28.5%, T3~ 공격 피해(몹) -7.5/-15%'
+      - '카드 기믹(상시): 피격 3회마다 7.5s ''허점''(공속 -15% + 이속 -7.5%, 쿨 30s).'
+      - '특수 능력: **취약 폭주** (자동 발동) — T2: 허점 발동 시 나를 때린 몹 1체가 12s 강화(이속/공격 +40%). | T3: 16s. | T4: 강화 몹에 흡수 +20HP + 넉백 저항 +100%. | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 발동 빈도 +10%(ICD/주기 0.9배). | T6(재앙): **불길한 예고** — (자동) 240s마다 1회: 15s 동안 받는 피해 +20%, 이동 속도 -20%, 주변 16b 몹이 내 위치를 우선 타겟팅(도발).'
+      - '태그: 취약, 하이리스크'
   C-021:
     name: 둔한 곡괭이
     type: CURSE
     weight: 1.0
-    archetype: DEFENSE
+    archetype: COMBAT
     runtime:
       detail_ko:
-      - '채굴 속도: T1 -13.8%, T2 -27.5%, T3 -41.2%, T4 -55.0%'
-      - '채굴 점수: T1 -13.8%, T2 -27.5%, T3 -41.2%, T4 -55.0%'
-      - '채굴 소음 노출 주기: T1 60s, T2 45s, T3 30s, T4 20s'
-      - '카드 기믹 1: 20s 내 자연석/광물 16개 이상 연속 채굴 시 6s 채굴 속도 추가 T1 -10.0%, T2 -15.0%, T3 -20.0%, T4 -25.0% (ICD 20s)'
-      - '카드 기믹 2: 광물 채굴 성공 시 곡괭이 내구도 추가 소모 T1 +1, T2 +1, T3 +2, T4 +2'
-      modifiers:
-      - type: BLOCK_BREAK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.138
-        min_total_tier: 1
-        world: ANY
-      - type: BLOCK_BREAK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.0005
-        min_total_tier: 2
-        world: ANY
-      - type: BLOCK_BREAK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.000167
-        min_total_tier: 3
-        world: ANY
-      - type: BLOCK_BREAK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.000167
-        min_total_tier: 4
-        world: ANY
-      - type: MINING_SCORE_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.138
-        min_total_tier: 1
-        world: ANY
-      - type: MINING_SCORE_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.0005
-        min_total_tier: 2
-        world: ANY
-      - type: MINING_SCORE_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.000167
-        min_total_tier: 3
-        world: ANY
-      - type: MINING_SCORE_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.000167
-        min_total_tier: 4
-        world: ANY
-      - type: BLOCK_BREAK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.1
-        min_total_tier: 1
-        world: ANY
-      - type: BLOCK_BREAK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.025
-        min_total_tier: 2
-        world: ANY
-      - type: BLOCK_BREAK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.008333
-        min_total_tier: 3
-        world: ANY
-      - type: BLOCK_BREAK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.004167
-        min_total_tier: 4
-        world: ANY
+      - '스탯: 채굴 속도 -12/-24/-36/-48/-57/-69%, 채굴 점수 -12/-24/-36/-48/-57/-69%, 광물 채굴 시 추가 내구도 소모 +1/+1/+2/+2/+2/+2'
+      - '카드 기믹(상시): 50/40/30/25/21/16s마다 채굴 ''메아리''(9s 몹 탐지 반경 +75%).'
+      - '특수 능력: **굴착 패닉** (자동 발동) — T2: 26.5s 내 16블록 이상 채굴 시 12s 성급함 저하(채굴피로 I, 쿨 25s). | T3: 14블록. | T4: 채굴피로 II + 60s마다 1회 은벌레 1~2 소환. | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 발동 빈도 +10%(ICD/주기 0.9배). | T6(재앙): **붕락** — (자동) 20s 내 블록 24개 이상 채굴 시 180s마다 1회: 10s 동안 주변 8b 자연석이 자갈/모래로 변이(최대 16개) + 다크니스 6s. 변이 중 채굴 속도 -30%.'
+      - '태그: 채굴, 리스크'
   C-022:
     name: 광물 저주
     type: CURSE
     weight: 1.0
-    archetype: DEFENSE
+    archetype: COMBAT
     runtime:
       detail_ko:
-      - '광물 채굴 보상: T1 -20.0%, T2 -30.0%, T3 -40.0%, T4 -50.0%'
-      - '30s 주기 광물→돌 변환: T1 0.16%(최대1), T2 0.26%(최대1), T3 0.38%(최대2), T4 0.50%(최대2)'
-      - '루팅/획득 운: T1 -10.0%, T2 -20.0%, T3 -30.0%, T4 -40.0%'
-      - '카드 기믹 1: 광물 채굴 시 주변 자연석 1개 추가 변환 시도 반경 T1 4b, T2 5b, T3 6b, T4 7b (ICD 5s)'
-      - '카드 기믹 2: 변환 발동 후 8s 채굴 속도 추가 T1 -10.0%, T2 -15.0%, T3 -20.0%, T4 -25.0%'
-      modifiers:
-      - type: BLOCK_BREAK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.1
-        min_total_tier: 1
-        world: ANY
-      - type: BLOCK_BREAK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.025
-        min_total_tier: 2
-        world: ANY
-      - type: BLOCK_BREAK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.008333
-        min_total_tier: 3
-        world: ANY
-      - type: BLOCK_BREAK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.004167
-        min_total_tier: 4
-        world: ANY
+      - '스탯: 광물 채굴 보상 -15/-30/-45/-60/-71/-86%, 행운(Luck) -1/-2/-3/-4/-5/-6, 광물→돌 변환 확률 0.5/0.5/0.5/1/1/1%(45s당 최대 1/1/2/2/2/2회)'
+      - '카드 기믹(상시): 광물 채굴 시 반경 5/6/7/12/16/21b 자연석에 추가 변환 판정(쿨 5s).'
+      - '특수 능력: **탐욕의 돌** (자동 발동) — T2: 변환 발동 시 16s 채굴 -20% + 받는 피해 +10%(몹). | T3: 20s. | T4: 변환 시 90s마다 1회 ''돌 정령''(20s 공격, 낮은 HP) 소환. | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 발동 빈도 +10%(ICD/주기 0.9배). | T6(재앙): **붕락** — (자동) 20s 내 블록 24개 이상 채굴 시 180s마다 1회: 10s 동안 주변 8b 자연석이 자갈/모래로 변이(최대 16개) + 다크니스 6s. 변이 중 채굴 속도 -30%.'
+      - '태그: 자원, 채굴, 리스크'
   C-023:
     name: 조잡한 제작
     type: CURSE
     weight: 1.0
-    archetype: DEFENSE
+    archetype: COMBAT
     runtime:
       detail_ko:
-      - '제작 실패/저품질 확률: T1 10.0%, T2 20.0%, T3 30.0%, T4 40.0%'
-      - '수리 비용: T1 +20.0%, T2 +30.0%, T3 +40.0%, T4 +50.0%'
-      - '운반 중 이동 속도: T1 -5.0%, T2 -10.0%, T3 -15.0%, T4 -20.0%'
-      - '카드 기믹 1: 제작 성공한 도구/무기의 초기 내구도 감소 T1 -10.0%, T2 -15.0%, T3 -20.0%, T4 -25.0%'
-      - '카드 기믹 2: 15s 내 동일 레시피 연속 제작 시 실패 확률 추가 T1 +5.0%p, T2 +10.0%p, T3 +15.0%p, T4 +20.0%p (최대 3중첩)'
-      modifiers:
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.05
-        min_total_tier: 1
-        world: ANY
+      - '스탯: 제작 불량/저품질 확률 12/24/36/48/57/69%, 수리 비용 +22.5/+37.5/+52.5/+67.5/+79/+94%, 제작한 도구 초기 내구도 -12/-18/-24/-30/-34.5/-40.5%'
+      - '카드 기믹(상시): 15s 내 같은 레시피 반복 시 불량 확률 +6/+9/+12/+15/+17/+20%p(최대 3중첩).'
+      - '특수 능력: **불량품** (자동 발동) — T2: 저품질 제작 시 10s 둔화(쿨 20s) + 아이템에 ''결함''(내구 -20% 또는 인챈트 -1레벨). | T3: 둔화 12s. | T4: 불량 발생 시 20s 몹 탐지 반경 +100%(제작 소음). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 발동 빈도 +10%(ICD/주기 0.9배). | T6(재앙): **징수자** — (자동) 희귀 전리품(보물/네더라이트/에메랄드 등) 획득 시 240s마다 1회: 인벤에서 무작위 아이템 1개가 ''압류''(30s 잠금) + 이동 속도 -20% 6s.'
+      - '태그: 제작, 경제, 리스크'
   C-024:
-    name: 제작 붕괴
+    name: 화로 낭비
     type: CURSE
     weight: 1.0
-    archetype: DEFENSE
+    archetype: COMBAT
     runtime:
       detail_ko:
-      - '설치 블록 자동 파괴: T1 30s, T2 20s, T3 10s, T4 8s'
-      - '블록/활 사용 봉인 주기: T1 30s, T2 25s, T3 20s, T4 15s'
-      - '봉인 지속: T1 10s, T2 15s, T3 20s, T4 25s'
-      - '카드 기믹 1: 전투 상태(최근 6s 내 피해를 주거나 받음)에서는 설치 블록 자동 파괴 시간이 추가 단축 T1 -20.0%, T2 -30.0%, T3 -40.0%, T4 -50.0%'
-      - '카드 기믹 2: 봉인 발동 직후 3s 받는 피해 추가 T1 +5.0%, T2 +10.0%, T3 +15.0%, T4 +20.0%'
-      modifiers:
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.05
-        min_total_tier: 1
-        world: ANY
+      - '스탯: 제련 연료 소모 +15/+30/+45/+60/+71/+86%, 제련 속도 -7.5/-15/-22.5/-30/-35.5/-43%, 제련 경험치 -15/-30/-45/-60/-71/-86%'
+      - '카드 기믹(상시): 음식 제련/조리 시 15/22.5/30/37.5/43/50.5% 확률로 ''탄 맛''(포화도 -30%).'
+      - '특수 능력: **과열** (자동 발동) — T2: 제련 완료 시 30% 확률로 2 피해+8s 약화(쿨 15s). | T3: 40%. | T4: 과열 시 손에 든 도구 내구도 -2(쿨 30s). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 발동 빈도 +10%(ICD/주기 0.9배). | T6(재앙): **징수자** — (자동) 희귀 전리품(보물/네더라이트/에메랄드 등) 획득 시 240s마다 1회: 인벤에서 무작위 아이템 1개가 ''압류''(30s 잠금) + 이동 속도 -20% 6s.'
+      - '태그: 제련, 경제'
   C-025:
-    name: 핫바 윤회
+    name: 연금 오염
     type: CURSE
     weight: 1.0
-    archetype: DEFENSE
+    archetype: COMBAT
     runtime:
       detail_ko:
-      - '핫바 회전 주기: T1 90s, T2 60s, T3 60s, T4 45s'
-      - '랜덤 슬롯 잠금: T1 20s, T2 30s, T3 30s, T4 40s'
-      - '잠금 슬롯 수: T1 1칸, T2 1칸, T3 2칸, T4 2칸'
-      - '카드 기믹 1: 피격 시 잠금 슬롯 재추첨 확률 T1 15.0%, T2 20.0%, T3 25.0%, T4 30.0% (ICD 5s)'
-      - '카드 기믹 2: 현재 손 슬롯이 잠금 상태일 때 공격 피해(모든 대상) 추가 T1 -10.0%, T2 -15.0%, T3 -20.0%, T4 -25.0%'
-      modifiers:
-      - type: DAMAGE_DEALT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.1
-        min_total_tier: 1
-        world: ANY
-      - type: DAMAGE_DEALT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.025
-        min_total_tier: 2
-        world: ANY
-      - type: DAMAGE_DEALT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.008333
-        min_total_tier: 3
-        world: ANY
-      - type: DAMAGE_DEALT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.004167
-        min_total_tier: 4
-        world: ANY
+      - '스탯: 양조 시간 +15/+30/+45/+60/+71/+86%, 포션 지속 -15/-30/-45/-60/-71/-86%, 부정효과 지속 +15/+30/+45/+60/+71/+86%'
+      - '카드 기믹(상시): 포션 섭취 시 15/22.5/30/37.5/43/50.5% 확률로 7.5s 둔화 또는 약화(경미).'
+      - '특수 능력: **오염 확산** (자동 발동) — T2: 스플래시/잔류 포션 투척 시 40% 확률로 본인에게 100% 지속 적용. | T3: 60%. | T4: 오염 적용 시 20s 몹 탐지 반경 +120%(냄새). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 발동 빈도 +10%(ICD/주기 0.9배). | T6(재앙): **오염 역류** — (자동) 포션/음식 사용 시 180s마다 1회: 즉시 부정효과 2종(약화 I 8s + 구속 I 6s) 강제 부여. 추가로 10s 동안 받는 회복 50%가 고정 피해로 전환.'
+      - '태그: 포션, 연금, 리스크'
   C-026:
-    name: 도구 금단
+    name: 씨앗 불운
     type: CURSE
     weight: 1.0
-    archetype: DEFENSE
+    archetype: COMBAT
     runtime:
       detail_ko:
-      - '랜덤 도구군 봉인 주기/지속: T1 120s/20s, T2 120s/30s, T3 120s/40s, T4 120s/50s'
-      - '공격 시 주/보조 손 강제 교체 확률: T1 10.0%, T2 18.0%, T3 26.0%, T4 34.0%'
-      - '봉인 중 이동 속도: T1 +0.0%, T2 +0.0%, T3 -20.0%, T4 -30.0%'
-      - '카드 기믹 1: 봉인된 도구군 사용 시도 시 4s 채굴 속도 추가 T1 -20.0%, T2 -30.0%, T3 -40.0%, T4 -50.0% (ICD 8s)'
-      - '카드 기믹 2: 봉인 중 약화 디버프: T1 비활성, T2 비활성, T3 약화 I, T4 약화 II'
-      modifiers:
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.066667
-        min_total_tier: 3
-        world: ANY
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.008333
-        min_total_tier: 4
-        world: ANY
-      - type: BLOCK_BREAK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.2
-        min_total_tier: 1
-        world: ANY
-      - type: BLOCK_BREAK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.05
-        min_total_tier: 2
-        world: ANY
-      - type: BLOCK_BREAK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.016667
-        min_total_tier: 3
-        world: ANY
-      - type: BLOCK_BREAK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.008333
-        min_total_tier: 4
-        world: ANY
+      - '스탯: 작물 수확량 -7.5/-15/-22.5/-30/-35.5/-43%, 동물 교배 쿨타임 +15/+30/+45/+60/+71/+86%, 농사 점수 -7.5/-15/-22.5/-30/-35.5/-43%'
+      - '카드 기믹(상시): 수확 시 15/22.5/30/37.5/43/50.5% 확률로 씨앗/묘목 소모가 1개 추가(인벤 보유 시).'
+      - '특수 능력: **해충** (자동 발동) — T2: 90s마다 수확 동작이 해충 무리(은벌레 2~4) 유발. | T3: 150s, 3~5마리. | T4: 해충 공격에 6s 독 I 부여(농장 근처만). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 발동 빈도 +10%(ICD/주기 0.9배). | T6(재앙): **불길한 예고** — (자동) 240s마다 1회: 15s 동안 받는 피해 +20%, 이동 속도 -20%, 주변 16b 몹이 내 위치를 우선 타겟팅(도발).'
+      - '태그: 농사, 리스크'
   C-027:
-    name: 전투 조작 왜곡
+    name: 벌목 피로
     type: CURSE
     weight: 1.0
-    archetype: DEFENSE
+    archetype: COMBAT
     runtime:
       detail_ko:
-      - '피격 시 나우지아: T1 2s, T2 3s, T3 4s, T4 5s'
-      - '피격 시 시야 yaw 왜곡: T1 ±25°, T2 ±35°, T3 ±45°, T4 20% 확률 180° 반전'
-      - '피격 후 경직(감속): T1 1.0s, T2 1.5s, T3 2.0s, T4 2.5s'
-      - '카드 기믹 1: 8s 내 피격 3회 누적 시 5s 강제 왜곡 상태(나우지아 I + 이동 속도 추가 T1 -30.0%, T2 -40.0%, T3 -50.0%, T4 -60.0%) (ICD 30s)'
-      - '카드 기믹 2: 피격 직후 질주 봉인: T1 2.0s, T2 2.5s, T3 3.0s, T4 3.5s'
-      modifiers:
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.3
-        min_total_tier: 1
-        world: ANY
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.1
-        min_total_tier: 2
-        world: ANY
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.033333
-        min_total_tier: 3
-        world: ANY
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.016667
-        min_total_tier: 4
-        world: ANY
+      - '스탯: 벌목 속도 -9/-18/-27/-36/-43/-52%, 도끼 내구도 소모 +15/+27/+39/+51/+60/+72%, 이동 속도 0/-3/-6/-9/-11/-14%'
+      - '카드 기믹(상시): 원목 30/25/20/15/11/6개마다 15s 몹 탐지 반경 +75% + 7.5s 둔화(벌목 소음).'
+      - '특수 능력: **톱날 튐** (자동 발동) — T2: 원목 파괴 시 40% 확률로 2 피해(파편) + 4s 후 추가 2 피해(쿨 10s). | T3: 50%. | T4: 파편 발생 시 8s 공속 -20%. | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 발동 빈도 +10%(ICD/주기 0.9배). | T6(재앙): **부식 폭주** — (자동) 전투 상태에서 240s마다 1회: 20s 동안 무기/방어구 내구도 소모 2배, 피격/공격 시 추가 내구도 -2. 종료 후 10s 동안 공격 속도 -10%.'
+      - '태그: 벌목, 내구도, 리스크'
   C-028:
-    name: 광산 공황
+    name: 도굴수의 불청객
     type: CURSE
     weight: 1.0
-    archetype: DEFENSE
+    archetype: COMBAT
     runtime:
       detail_ko:
-      - '자연석 채굴 자갈화 확률/반경: T1 10.0%/4b, T2 18.0%/5b, T3 18.0%/6b, T4 25.0%/7b'
-      - '밀폐(공기 20% 이하) 유지 시 다크니스: T1 12s, T2 10s, T3 8s, T4 6s'
-      - '사막/지하 조건 포만감 소모 증가: T1 +6.0%, T2 +9.0%, T3 +12.0%, T4 +16.0%'
-      - '카드 기믹 1: 지하 조건(Y<40)에서는 자갈화 확률 추가 T1 +5.0%p, T2 +8.0%p, T3 +11.0%p, T4 +15.0%p'
-      - '카드 기믹 2: 자갈화 발동 시 4s 이동 속도 추가 T1 -10.0%, T2 -15.0%, T3 -20.0%, T4 -25.0% (ICD 6s)'
-      modifiers:
-      - type: HUNGER_DRAIN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.06
-        min_total_tier: 1
-        world: ANY
-      - type: HUNGER_DRAIN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.015
-        min_total_tier: 2
-        world: ANY
-      - type: HUNGER_DRAIN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.005
-        min_total_tier: 3
-        world: ANY
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.1
-        min_total_tier: 1
-        world: ANY
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.025
-        min_total_tier: 2
-        world: ANY
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.008333
-        min_total_tier: 3
-        world: ANY
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.004167
-        min_total_tier: 4
-        world: ANY
+      - '스탯: 구조물 전리품 품질 -7.5/-15/-22.5/-30/-35.5/-43%, 상자 개봉 후 15s 받는 피해(몹) +7.5/+12/+16.5/+22.5/+27/+33%, 함정 감지 반경 0/-2/-4/-9/-13/-18b'
+      - '카드 기믹(상시): 상자 개봉 15/22.5/30/37.5/43/50.5% 확률로 ''경보''(9s 위치 노출).'
+      - '특수 능력: **2단계 경보** (자동 발동) — T2: 경보 시 상자 10s 잠금 + 적대 몹 1 증원(쿨 90s). | T3: 2 증원. | T4: 180s마다 1회, ''정예'' 1체 포함(HP +60%). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 발동 빈도 +10%(ICD/주기 0.9배). | T6(재앙): **징수자** — (자동) 희귀 전리품(보물/네더라이트/에메랄드 등) 획득 시 240s마다 1회: 인벤에서 무작위 아이템 1개가 ''압류''(30s 잠금) + 이동 속도 -20% 6s.'
+      - '태그: 유적, 전리품, 리스크'
   C-029:
-    name: 위치 누출
+    name: 가방 구멍
+    type: CURSE
+    weight: 1.0
+    archetype: COMBAT
+    runtime:
+      detail_ko:
+      - '스탯: 아이템/XP 흡수 반경 -1/-2/-3/-6/-8/-11b, 인벤 80%↑일 때 이동 속도 -4.5/-9/-13.5/-18/-21.5/-26%, 인벤 80%↑일 때 받는 피해(몹) +4.5/+9/+13.5/+18/+21.5/+26%'
+      - '카드 기믹(상시): 60s마다 22.5/30/37.5/45/50.5/58% 확률로 ''미끄럼 드랍''(줍자마자 바닥에 떨어짐, 소실 없음).'
+      - '특수 능력: **흩뿌림** (자동 발동) — T2: 미끄럼 드랍 시 32b 몹 주목(쿨 20s). | T3: 48b. | T4: 미끄럼 드랍 시 120s마다 1회 엔더마이트 1체 소환 + 20s 자력/흡인 효과 무효. | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 발동 빈도 +10%(ICD/주기 0.9배). | T6(재앙): **불길한 예고** — (자동) 240s마다 1회: 15s 동안 받는 피해 +20%, 이동 속도 -20%, 주변 16b 몹이 내 위치를 우선 타겟팅(도발).'
+      - '태그: 인벤, 리스크'
+  C-030:
+    name: 지도 왜곡
+    type: CURSE
+    weight: 1.0
+    archetype: COMBAT
+    runtime:
+      detail_ko:
+      - '스탯: 구조물/스캔/핑 오차 ±10/±20/±30/±60%, 이동 속도 0/-3/-6/-9/-11/-14%, 탐험/구조물 점수 -7.5/-15/-22.5/-30/-35.5/-43%'
+      - '카드 기믹(상시): 45/35/25/20/16/11s마다 나침반 방향이 7.5s 동안 임의로 흔들림.'
+      - '특수 능력: **가짜 표식** (자동 발동) — T2: 스캔/핑 사용 시 60% 확률로 40s 가짜 표식 생성. | T3: 60s. | T4: 가짜 표식을 20s 이상 추적하면 매 180s 1회 매복(몹 2~3 증원). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 발동 빈도 +10%(ICD/주기 0.9배). | T6(재앙): **전투 붕괴** — (자동) 전투 상태 240s마다 1회: 12s 동안 스킬/활/방패 사용이 ''혼선''(20% 확률 실패) + 피격 시 yaw 왜곡 ±60°.'
+      - '태그: 탐험, 혼선, 리스크'
+  C-031:
+    name: 바람 역류
     type: CURSE
     weight: 1.0
     archetype: DEFENSE
     runtime:
       detail_ko:
-      - '노출 표식 지속: T1 +5.6%, T2 +11.2%, T3 +16.8%, T4 +22.4%'
-      - '잠행 이동 속도: T1 -2.4%, T2 -4.8%, T3 -7.2%, T4 -9.6%'
-      - '받는 피해: T1 +2.4%, T2 +4.8%, T3 +7.2%, T4 +9.6%'
-      - '카드 기믹 1: 질주 상태 5s 유지 시 본인 위치 핑 3s 노출 (ICD: T1 20s, T2 16s, T3 12s, T4 8s)'
-      - '카드 기믹 2: 잠행 해제 후 5s 받는 피해 추가 T1 +10.0%, T2 +15.0%, T3 +20.0%, T4 +25.0%'
-      modifiers:
-      - type: GLOWING_DURATION_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.056
-        min_total_tier: 1
-        world: ANY
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.024
-        min_total_tier: 1
-        world: ANY
-      - type: SNEAK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.024
-        min_total_tier: 1
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.024
-        min_total_tier: 1
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.1
-        min_total_tier: 1
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.025
-        min_total_tier: 2
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.008333
-        min_total_tier: 3
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.004167
-        min_total_tier: 4
-        world: ANY
-  C-030:
+      - '스탯: 낙하 피해 +15/+30/+45/+60/+71/+86%, 활공 조작성 -15/-30/-45/-60/-71/-86%, 공중 판정 중 받는 피해(몹) +6/+12/+18/+24/+28.5/+34.5%'
+      - '카드 기믹(상시): 로켓 가속 사용 시 30/45/60/75/86/101% 확률로 3s 측면 드리프트(쏠림).'
+      - '특수 능력: **돌풍 방해** (자동 발동) — T2: 공중에서 40s마다 1회, 측면 돌풍(8b 밀침, 피해 없음). | T3: 60s, 12b. | T4: 돌풍이 6s 느린 낙하/부유 계열 버프를 약화(효율 -100%). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 발동 빈도 +10%(ICD/주기 0.9배). | T6(재앙): **불길한 예고** — (자동) 240s마다 1회: 15s 동안 받는 피해 +20%, 이동 속도 -20%, 주변 16b 몹이 내 위치를 우선 타겟팅(도발).'
+      - '태그: 공중, 활공, 리스크'
+  C-032:
+    name: 얼음 족쇄
+    type: CURSE
+    weight: 1.0
+    archetype: DEFENSE
+    runtime:
+      detail_ko:
+      - '스탯: 빙결 진행 +30/+52.5/+75/+97.5/+114.5/+137%, 눈/얼음 이동 속도 -6/-10.5/-15/-19.5/-23/-27.5%, 공격 속도 0/-4.5/-9/-13.5/-17/-21.5%'
+      - '카드 기믹(상시): 빙결 피해를 받으면 12s ''취약''(받는 피해 +15%).'
+      - '특수 능력: **서리 경련** (자동 발동) — T2: 한랭 바이옴에서 60s마다 10s ''떨림''(채굴 -40%+이속 -20%). | T3: 90s. | T4: 떨림 중 적대 몹 투사체가 20% 더 강해짐(냉기 취약). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 발동 빈도 +10%(ICD/주기 0.9배). | T6(재앙): **불길한 예고** — (자동) 240s마다 1회: 15s 동안 받는 피해 +20%, 이동 속도 -20%, 주변 16b 몹이 내 위치를 우선 타겟팅(도발).'
+      - '태그: 빙설, 이동저하'
+  C-033:
+    name: 뜨거운 모래
+    type: CURSE
+    weight: 1.0
+    archetype: DEFENSE
+    runtime:
+      detail_ko:
+      - '스탯: 사막/악지대 포만감 소모 +15/+30/+45/+60/+71/+86%, 사막/악지대 화염 피해 +15/+30/+45/+60/+71/+86%, 모래 위 이동 속도 0/-4.5/-9/-13.5/-17/-21.5%'
+      - '카드 기믹(상시): 모래에서 질주 중 15/22.5/30/37.5/43/50.5% 확률로 1.5s 비틀거림(둔화).'
+      - '특수 능력: **모래폭풍** (자동 발동) — T2: 사막에서 90s마다 20s 폭풍(4s 어둠 펄스 + 몹 탐지 반경 +40%). | T3: 150s, 24s. | T4: 폭풍 중 투사체 분산 +60% + 10s마다 허스크 1(최대 2) 증원. | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 발동 빈도 +10%(ICD/주기 0.9배). | T6(재앙): **악몽 파장** — (자동) 밤+밝기≤7에서 240s마다 1회: 15s 동안 다크니스 펄스(5s/3s) + 공포(나우지아 I) 3회. 공포 중 받는 피해 +15%.'
+      - '태그: 사막, 시야, 리스크'
+  C-034:
+    name: 깊은 숨
+    type: CURSE
+    weight: 1.0
+    archetype: DEFENSE
+    runtime:
+      detail_ko:
+      - '스탯: 지하(Y<40) 포만감 소모 +15/+30/+45/+60/+71/+86%, 지하 이동 속도 0/-4.5/-9/-13.5/-17/-21.5%, 다크니스/실명 지속 +15/+30/+45/+60/+71/+86%'
+      - '카드 기믹(상시): 좁은 공간(주변 공기 적음)에서 받는 피해 +7.5/+12/+16.5/+22.5/+27/+33%.'
+      - '특수 능력: **공기 공포** (자동 발동) — T2: 좁은 공간에 20s 이상 있으면 8s 채굴피로 I + 48b 몹 주목(쿨 45s). | T3: 64b. | T4: 90s마다 1회, 추가로 동굴 해충(동굴거미/은벌레) 1~2 소환. | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 발동 빈도 +10%(ICD/주기 0.9배). | T6(재앙): **붕락** — (자동) 20s 내 블록 24개 이상 채굴 시 180s마다 1회: 10s 동안 주변 8b 자연석이 자갈/모래로 변이(최대 16개) + 다크니스 6s. 변이 중 채굴 속도 -30%.'
+      - '태그: 동굴, 리스크'
+  C-035:
+    name: 은신 노출
+    type: CURSE
+    weight: 1.0
+    archetype: DEFENSE
+    runtime:
+      detail_ko:
+      - '스탯: 웅크림 이동 속도 -9/-15/-21/-27/-31.5/-37.5%, 웅크림 중 몹 탐지 반경 +22.5/+37.5/+52.5/+67.5/+79/+94%, 웅크림 중 받는 피해 0/+4.5/+9/+13.5/+17/+21.5%'
+      - '카드 기믹(상시): 웅크림을 6s 유지하면 3s ''호흡 소리''(위치 노출, 쿨 12/10/8/6/4.5/2.5s).'
+      - '특수 능력: **숨결 소리** (자동 발동) — T2: 웅크림 중 8s마다 소음 발생(24b 몹 유인). | T3: 36b. | T4: 유인된 몹 8s 이속 +40%. | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 발동 빈도 +10%(ICD/주기 0.9배). | T6(재앙): **불길한 예고** — (자동) 240s마다 1회: 15s 동안 받는 피해 +20%, 이동 속도 -20%, 주변 16b 몹이 내 위치를 우선 타겟팅(도발).'
+      - '태그: 은신, 위치노출'
+  C-036:
+    name: 종말의 메아리
+    type: CURSE
+    weight: 1.0
+    archetype: DEFENSE
+    runtime:
+      detail_ko:
+      - '스탯: 엔드 이동 속도 -4.5/-9/-13.5/-18/-21.5/-26%, 엔드에서 받는 피해(몹) +7.5/+15/+22.5/+30/+35.5/+43%, 공중 판정 중 추가 받는 피해 +7.5/+12/+16.5/+22.5/+27/+33%'
+      - '카드 기믹(상시): 엔더맨 36b 내 존재 시 받는 피해 +7.5/+12/+16.5/+22.5/+27/+33% 추가(종말 불안).'
+      - '특수 능력: **공허 속삭임** (자동 발동) — T2: 엔드에서 60s마다 12s ''속삭임''(약한 끌림/중력+점프력 -40%). | T3: 90s. | T4: 속삭임 중 느린 낙하/부유 계열 효과 효율 -100% + 120s마다 엔더마이트 1체. | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 발동 빈도 +10%(ICD/주기 0.9배). | T6(재앙): **오라 폭주** — (자동) 엔드에서 240s마다 1회: 20s 동안 24b 내 엔더맨 강화 오라가 2배 강해짐. 오라 범위의 몹 공격/체력 +40%, 동시에 ''스토커'' 이벤트 확률 +50%.'
+      - '태그: 엔드, 공허, 리스크'
+  C-037:
+    name: 네더 열기
+    type: CURSE
+    weight: 1.0
+    archetype: DEFENSE
+    runtime:
+      detail_ko:
+      - '스탯: 네더 포만감 소모 +15/+30/+45/+60/+71/+86%, 네더 화염 피해 +15/+30/+45/+60/+71/+86%, 네더에서 받는 피해(몹) +4.5/+9/+13.5/+18/+21.5/+26%'
+      - '카드 기믹(상시): 네더에서 30/25/20/15/11/6s마다 2/2/3/6/8/11s 화상(경미).'
+      - '특수 능력: **열기 폭주** (자동 발동) — T2: 네더에서 화상 시 12s 약화 I + 20s 피글린 적대(쿨 60s). | T3: 28s 적대. | T4: 120s마다 1회 블레이즈 1체 증원(네더 한정). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 발동 빈도 +10%(ICD/주기 0.9배). | T6(재앙): **불길한 예고** — (자동) 240s마다 1회: 15s 동안 받는 피해 +20%, 이동 속도 -20%, 주변 16b 몹이 내 위치를 우선 타겟팅(도발).'
+      - '태그: 네더, 리스크'
+  C-038:
+    name: 공허 유혹
+    type: CURSE
+    weight: 1.0
+    archetype: DEFENSE
+    runtime:
+      detail_ko:
+      - '스탯: 낙하 피해 +22.5/+45/+67.5/+90/+107/+129.5%, 엔더 진주 피해 +15/+30/+45/+60/+71/+86%, 활공 중 받는 피해 +7.5/+15/+22.5/+30/+35.5/+43%'
+      - '카드 기믹(상시): 낙하 피해를 받으면 6s 현기증(이속 -7.5/-12/-16.5/-22.5/-27/-33%).'
+      - '특수 능력: **유혹의 끌림** (자동 발동) — T2: 엔드 또는 고고도(Y>180)에서 45s마다 6s 중력 증가(점프력 -60%). | T3: 70s. | T4: 끌림 중 안전줄/귀환류 스킬 쿨타임이 30s 연장(한 번만). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 발동 빈도 +10%(ICD/주기 0.9배). | T6(재앙): **중력 붕괴** — (자동) 질주 6s 유지 시 180s마다 1회: 10s 동안 이속 -40%, 점프력 -80%, 낙하 피해 +100%. 10s 내 점프하면 3s 속박(이속 -90%).'
+      - '태그: 공허, 이동, 리스크'
+  C-039:
+    name: 드래곤 저주
+    type: CURSE
+    weight: 1.0
+    archetype: DEFENSE
+    runtime:
+      detail_ko:
+      - '스탯: 드래곤 브레스 피해 +15/+30/+45/+60/+71/+86%, 엔드 크리스탈 폭발 피해 +15/+30/+45/+60/+71/+86%, 엔드 전체 받는 피해 +4.5/+9/+13.5/+18/+21.5/+26%'
+      - '카드 기믹(상시): 엔드 크리스탈 파괴 시 2/3/4/5/6/7 진실 피해(쿨 8s).'
+      - '특수 능력: **저주의 크리스탈** (자동 발동) — T2: 드래곤전 중 90s마다 1회 ''저주 크리스탈''이 내 근처 생성, 20s 후 폭발(본인에게만 16 피해, 파괴로 회피 가능). | T3: 폭발까지 16s. | T4: 크리스탈이 2개 연속 생성될 수 있음(연속 360s 제한). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 발동 빈도 +10%(ICD/주기 0.9배). | T6(재앙): **오라 폭주** — (자동) 엔드에서 240s마다 1회: 20s 동안 24b 내 엔더맨 강화 오라가 2배 강해짐. 오라 범위의 몹 공격/체력 +40%, 동시에 ''스토커'' 이벤트 확률 +50%.'
+      - '태그: 드래곤, 엔드, 리스크'
+  C-040:
+    name: 엔더맨 원한
+    type: CURSE
+    weight: 1.0
+    archetype: DEFENSE
+    runtime:
+      detail_ko:
+      - '스탯: 엔더맨에게 받는 피해 +15/+30/+45/+60/+71/+86%, 엔더맨 주변(36b) 몹에게 받는 피해 +4.5/+9/+13.5/+18/+21.5/+26%, 엔더 진주 사용 후 7.5s 받는 피해 +15/+22.5/+30/+37.5/+43/+50.5%'
+      - '카드 기믹(상시): 엔더맨 시선 트리거 범위 +30/+45/+60/+75/+86/+101%(더 쉽게 분노).'
+      - '특수 능력: **분노 전염** (자동 발동) — T2: 엔더맨이 분노하면 20s 동안 주변 적대 몹 이속 +22.5%(쿨 45s). | T3: +40%. | T4: 분노 시 50% 확률로 즉시 추격자 이벤트(강화 엔더맨) 발동(쿨 180s). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 발동 빈도 +10%(ICD/주기 0.9배). | T6(재앙): **추격자 습격** — (자동) 전투 상태 진입 시 180s마다 1회: 15s 동안 ''나를 목표로 한'' 추격자 2마리 추가 스폰 + 기존 추격자 이속 +50%. 추격자 피격 시 6s 나우지아 I.'
+      - '태그: 엔더맨, 추격자, 하이리스크'
+  C-041:
+    name: 사냥감 표식
+    type: CURSE
+    weight: 1.0
+    archetype: DEFENSE
+    runtime:
+      detail_ko:
+      - '스탯: 몹 탐지/추적 반경 +15/+30/+45/+60/+71/+86%, 받는 피해(몹) +4.5/+9/+13.5/+18/+21.5/+26%, 이동 속도 0/-3/-6/-9/-11/-14%'
+      - '카드 기믹(상시): 60/50/40/35/31/26s마다 12s ''표식''(적대 몹 우선 타겟).'
+      - '특수 능력: **사냥 신호** (자동 발동) — T2: 표식 동안 근처 몹 1체가 ''사냥꾼''(이속/공격 +40%)로 강화. | T3: 20s 지속. | T4: 표식 시작 시 96b 내 적대가 없으면 1체 강제 생성(정예 아님, HP +60%). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 발동 빈도 +10%(ICD/주기 0.9배). | T6(재앙): **추격자 습격** — (자동) 전투 상태 진입 시 180s마다 1회: 15s 동안 ''나를 목표로 한'' 추격자 2마리 추가 스폰 + 기존 추격자 이속 +50%. 추격자 피격 시 6s 나우지아 I.'
+      - '태그: 추적, 리스크'
+  C-042:
+    name: 추격자 과강화
+    type: CURSE
+    weight: 1.0
+    archetype: DEFENSE
+    runtime:
+      detail_ko:
+      - '스탯: 스토커/추격자 스폰 간격 -15/-30/-45/-60/-71/-86%, 스토커에게 받는 피해 +15/+30/+45/+60/+71/+86%, 스토커 이동 속도 +22.5/+37.5/+52.5/+75/+92/+114.5%'
+      - '카드 기믹(상시): 동시 추격자 최대치 0/+1/+2/+3/+4/+5.'
+      - '특수 능력: **과열 신호** (자동 발동) — T2: 추격자 스폰 시 12s 약화 I(패닉). | T3: 약화 16s + 8s 둔화 I. | T4: 추격자가 24b 오라(주변 몹 공격 +40%)를 동반. | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 발동 빈도 +10%(ICD/주기 0.9배). | T6(재앙): **추격자 습격** — (자동) 전투 상태 진입 시 180s마다 1회: 15s 동안 ''나를 목표로 한'' 추격자 2마리 추가 스폰 + 기존 추격자 이속 +50%. 추격자 피격 시 6s 나우지아 I.'
+      - '태그: 추격자, 하이리스크'
+  C-043:
     name: 가짜 경고
     type: CURSE
     weight: 1.0
     archetype: DEFENSE
     runtime:
       detail_ko:
-      - '스토커 스폰 간격: T1 +0.0%, T2 +0.0%, T3 -17.2%, T4 -23.0%'
-      - '스토커 예고 왜곡: T1 5s, T2 10s, T3 15s, T4 20s 오차'
-      - '스토커 관련 받는 피해: T1 +4.0%, T2 +8.0%, T3 +12.0%, T4 +16.0%'
-      - '카드 기믹 1: 실제 스폰과 무관한 가짜 예고 신호 주기 T1 45s, T2 35s, T3 25s, T4 15s'
-      - '카드 기믹 2: 실제 스토커 스폰 후 10s 이동 속도 추가 T1 -10.0%, T2 -15.0%, T3 -20.0%, T4 -25.0%'
-      modifiers:
-      - type: STALKER_SPAWN_INTERVAL_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.057333
-        min_total_tier: 3
-        world: ANY
-      - type: STALKER_SPAWN_INTERVAL_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.000167
-        min_total_tier: 4
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.04
-        min_total_tier: 1
-        world: ANY
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.1
-        min_total_tier: 1
-        world: ANY
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.025
-        min_total_tier: 2
-        world: ANY
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.008333
-        min_total_tier: 3
-        world: ANY
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.004167
-        min_total_tier: 4
-        world: ANY
-  C-031:
-    name: 추격자 과강화
+      - '스탯: 추격자 예고 오차 8/12/16/30/40.5/54.5s, 추격자 관련 받는 피해 +4.5/+9/+13.5/+18/+21.5/+26%, 생존 점수 -4.5/-9/-13.5/-18/-21.5/-26%'
+      - '카드 기믹(상시): 40/30/25/20/16/11s마다 가짜 경고(사운드/입자) 발생.'
+      - '특수 능력: **오경보** (자동 발동) — T2: 가짜 경고 시 4s 어둠 + 1s 질주 끊김(쿨 20s). | T3: 어둠 6s. | T4: 90s마다 1회, 오경보가 실제 매복(엔더마이트 2 또는 환영 1)과 동기화. | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 발동 빈도 +10%(ICD/주기 0.9배). | T6(재앙): **전투 붕괴** — (자동) 전투 상태 240s마다 1회: 12s 동안 스킬/활/방패 사용이 ''혼선''(20% 확률 실패) + 피격 시 yaw 왜곡 ±60°.'
+      - '태그: 심리전, 혼선, 리스크'
+  C-044:
+    name: 오라 공포
     type: CURSE
     weight: 1.0
-    archetype: GATHERING
+    archetype: DEFENSE
     runtime:
       detail_ko:
-      - '스토커 스폰 간격: T1 -20.0%, T2 -35.0%, T3 -50.0%, T4 -65.0%'
-      - '스토커에게 받는 피해: T1 +10.0%, T2 +20.0%, T3 +30.0%, T4 +40.0%'
-      - '나를 향한 스토커 이동 속도: T1 +30.0%, T2 +45.0%, T3 +60.0%, T4 +75.0%'
-      - '카드 기믹 1: 동시 추격자 최대치 보정(기본 최대치 기준): T1 +0, T2 +1, T3 +2, T4 +3'
-      - '카드 기믹 2: 스토커에게 피격되면 6s 공격 피해(모든 대상) 추가 T1 -10.0%, T2 -15.0%, T3 -20.0%, T4 -25.0% (ICD 8s)'
-      modifiers:
-      - type: STALKER_SPAWN_INTERVAL_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.2
-        min_total_tier: 1
-        world: ANY
-      - type: STALKER_SPAWN_INTERVAL_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.025
-        min_total_tier: 2
-        world: ANY
-      - type: STALKER_SPAWN_INTERVAL_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.008333
-        min_total_tier: 3
-        world: ANY
-      - type: STALKER_SPAWN_INTERVAL_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.004167
-        min_total_tier: 4
-        world: ANY
-      - type: STALKER_DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.1
-        min_total_tier: 1
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.1
-        min_total_tier: 1
-        world: ANY
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.3
-        min_total_tier: 1
-        world: ANY
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.075
-        min_total_tier: 2
-        world: ANY
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.025
-        min_total_tier: 3
-        world: ANY
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.0125
-        min_total_tier: 4
-        world: ANY
-      - type: DAMAGE_DEALT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.1
-        min_total_tier: 1
-        world: ANY
-      - type: DAMAGE_DEALT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.025
-        min_total_tier: 2
-        world: ANY
-      - type: DAMAGE_DEALT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.008333
-        min_total_tier: 3
-        world: ANY
-      - type: DAMAGE_DEALT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.004167
-        min_total_tier: 4
-        world: ANY
-  C-032:
-    name: 오라 공포 연출
-    type: CURSE
-    weight: 1.0
-    archetype: GATHERING
-    runtime:
-      detail_ko:
-      - '오라 적용 몹 체력: T1 +10.0%, T2 +20.0%, T3 +30.0%, T4 +40.0%'
-      - '오라 적용 몹 공격력: T1 +10.0%, T2 +20.0%, T3 +30.0%, T4 +40.0%'
-      - '오라 접근 시 본인 위치 핑 노출(5s) 재발동: T1 60s, T2 40s, T3 20s, T4 10s'
-      - '오라 적용 몹 처치 점수: T1 -15.0%, T2 -30.0%, T3 -45.0%, T4 -60.0%'
-      - '카드 기믹 1: 오라 적용 몹 12b 이내에서 받는 피해 추가 T1 +8.0%, T2 +12.0%, T3 +16.0%, T4 +20.0%'
-      - '카드 기믹 2: 오라 적용 몹 처치 시 위더 부여: T1 4s(위더 I), T2 5s(위더 I), T3 6s(위더 II), T4 7s(위더 II)'
-      modifiers:
-      - type: AURA_MONSTER_POWER_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.1
-        min_total_tier: 1
-        world: ANY
-      - type: AURA_MONSTER_POWER_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.1
-        min_total_tier: 1
-        world: ANY
-      - type: MOB_SCORE_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.15
-        min_total_tier: 1
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.08
-        min_total_tier: 1
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.02
-        min_total_tier: 2
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.006667
-        min_total_tier: 3
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.003333
-        min_total_tier: 4
-        world: ANY
-  C-033:
+      - '스탯: 오라 적용 몹 체력 +15/+30/+45/+60/+71/+86%, 오라 적용 몹 공격 +15/+30/+45/+60/+71/+86%, 오라 몹 처치 점수 -15/-30/-45/-60/-71/-86%'
+      - '카드 기믹(상시): 오라 몹 18b 이내에서 받는 피해 추가 +7.5/+12/+16.5/+22.5/+27/+33%.'
+      - '특수 능력: **공포 연출** (자동 발동) — T2: 오라 몹 24b 이내에서 15s마다 4s 어둠 + 위치 노출. | T3: 12s마다. | T4: 오라 몹 처치 시 본인에게 4/5/6/14s 위더 I 부여(쿨 20s). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 발동 빈도 +10%(ICD/주기 0.9배). | T6(재앙): **불길한 예고** — (자동) 240s마다 1회: 15s 동안 받는 피해 +20%, 이동 속도 -20%, 주변 16b 몹이 내 위치를 우선 타겟팅(도발).'
+      - '태그: 오라, 하이리스크'
+  C-045:
     name: 레이드 혼선
     type: CURSE
     weight: 1.0
-    archetype: GATHERING
+    archetype: DEFENSE
     runtime:
       detail_ko:
-      - '이동 속도 [엔드]: T1 -10.0%, T2 -20.0%, T3 -30.0%, T4 -40.0%'
-      - '공격 피해 [엔드]: T1 -15.0%, T2 -30.0%, T3 -45.0%, T4 -60.0%'
-      - '받는 피해 [엔드]: T1 +15.0%, T2 +25.0%, T3 +35.0%, T4 +45.0%'
-      - '카드 기믹 1: 브레스 피해 [엔드]: T1 +20.0%, T2 +40.0%, T3 +60.0%, T4 +80.0%'
-      - '카드 기믹 2: 엔드 크리스탈 폭발 피해 [엔드] 추가 T1 +20.0%, T2 +30.0%, T3 +40.0%, T4 +50.0%'
-      modifiers:
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.1
-        min_total_tier: 1
-        world: END
-      - type: DAMAGE_DEALT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.15
-        min_total_tier: 1
-        world: END
-      - type: END_DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.15
-        min_total_tier: 1
-        world: END
-      - type: END_DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.025
-        min_total_tier: 2
-        world: END
-      - type: END_DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.008333
-        min_total_tier: 3
-        world: END
-      - type: END_DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.004167
-        min_total_tier: 4
-        world: END
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.15
-        min_total_tier: 1
-        world: END
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.025
-        min_total_tier: 2
-        world: END
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.008333
-        min_total_tier: 3
-        world: END
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.004167
-        min_total_tier: 4
-        world: END
-      - type: EXPLOSION_DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.2
-        min_total_tier: 1
-        world: END
-      - type: EXPLOSION_DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.05
-        min_total_tier: 2
-        world: END
-      - type: EXPLOSION_DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.016667
-        min_total_tier: 3
-        world: END
-      - type: EXPLOSION_DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.008333
-        min_total_tier: 4
-        world: END
-  C-034:
-    name: 나침반 왜곡
+      - '스탯: 엔드 이동 속도 -6/-10.5/-15/-19.5/-23/-27.5%, 엔드에서 공격 피해(몹) -9/-18/-27/-36/-43/-52%, 엔드에서 받는 피해(몹) +9/+18/+27/+36/+43/+52%'
+      - '카드 기믹(상시): 엔드에서 브레스/투사체 피해 +15/+30/+45/+60/+71/+86%.'
+      - '특수 능력: **혼선 지휘** (자동 발동) — T2: 엔드에서 60s마다 12s ''혼선''(투사체 피해 -60% + 받는 피해 +20%). | T3: 90s. | T4: 혼선 시작 후 8s 동안 내 능동 스킬(대시/귀환/특수) 사용 불가. | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 발동 빈도 +10%(ICD/주기 0.9배). | T6(재앙): **오라 폭주** — (자동) 엔드에서 240s마다 1회: 20s 동안 24b 내 엔더맨 강화 오라가 2배 강해짐. 오라 범위의 몹 공격/체력 +40%, 동시에 ''스토커'' 이벤트 확률 +50%.'
+      - '태그: 엔드, 혼선, 리스크'
+  C-046:
+    name: 균열의 벌레
     type: CURSE
     weight: 1.0
     archetype: GATHERING
     runtime:
       detail_ko:
-      - '나무 막대 핑: 오차 좌표 저장 + 왜곡 핑 표기'
-      - '핑 표시 중 받는 피해: T1 +15.0%, T2 +20.0%, T3 +25.0%, T4 +30.0%'
-      - '이동 속도/생존 점수: T1 -5.0%, T2 -10.0%, T3 -15.0%, T4 -20.0%'
-      - '카드 기믹 1: 저장된 좌표가 주기적으로 표류: T1 60s마다 ±8b, T2 45s마다 ±12b, T3 30s마다 ±16b, T4 20s마다 ±20b'
-      - '카드 기믹 2: 핑 작동 직후 5s 공격 피해(모든 대상) 추가 T1 -10.0%, T2 -15.0%, T3 -20.0%, T4 -25.0%'
-      modifiers:
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.15
-        min_total_tier: 1
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.05
-        min_total_tier: 2
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.016667
-        min_total_tier: 3
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.008333
-        min_total_tier: 4
-        world: ANY
-      - type: SURVIVAL_SCORE_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.05
-        min_total_tier: 1
-        world: ANY
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.05
-        min_total_tier: 1
-        world: ANY
-      - type: DAMAGE_DEALT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.1
-        min_total_tier: 1
-        world: ANY
-      - type: DAMAGE_DEALT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.025
-        min_total_tier: 2
-        world: ANY
-      - type: DAMAGE_DEALT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.008333
-        min_total_tier: 3
-        world: ANY
-      - type: DAMAGE_DEALT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.004167
-        min_total_tier: 4
-        world: ANY
-  C-035:
-    name: 은신 노출
+      - '스탯: 블록 파괴 후 4.5s 받는 피해 +3/+6/+9/+12/+14/+17%, 채굴 속도 -6/-10.5/-15/-19.5/-23/-27.5%, 생존 점수 -7.5/-15/-22.5/-30/-35.5/-43%'
+      - '카드 기믹(상시): 돌/엔드스톤류 파괴 시 3/6/9/12/14/17% 확률로 균열 벌레(은벌레/엔더마이트) 스폰.'
+      - '특수 능력: **증식** (자동 발동) — T2: 근처 벌레 3↑일 때 12s 약화 I(쿨 30s). | T3: 2↑. | T4: 벌레가 독을 부여 + 짧은 순간이동(엔더마이트 방식). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 발동 빈도 +10%(ICD/주기 0.9배). | T6(재앙): **붕락** — (자동) 20s 내 블록 24개 이상 채굴 시 180s마다 1회: 10s 동안 주변 8b 자연석이 자갈/모래로 변이(최대 16개) + 다크니스 6s. 변이 중 채굴 속도 -30%.'
+      - '태그: 소환, 동굴, 리스크'
+  C-047:
+    name: 불길한 달
     type: CURSE
     weight: 1.0
     archetype: GATHERING
     runtime:
       detail_ko:
-      - '잠행 이동 속도: T1 -15.0%, T2 -30.0%, T3 -45.0%, T4 -60.0%'
-      - '잠행 중 받는 피해: T1 +0.0%, T2 +5.0%, T3 +10.0%, T4 +15.0%'
-      - '잠행 중 적대 엔티티 감지 반경 증가: T1 +20.0%, T2 +30.0%, T3 +40.0%, T4 +50.0%'
-      - '카드 기믹 1: 잠행 상태 4s 유지마다 본인 위치 핑 2s 노출 (ICD: T1 12s, T2 10s, T3 8s, T4 6s)'
-      - '카드 기믹 2: 잠행 상태에서 공격 시 5s 받는 피해 추가 T1 +10.0%, T2 +15.0%, T3 +20.0%, T4 +25.0%'
-      modifiers:
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.15
-        min_total_tier: 1
-        world: ANY
-      - type: SNEAK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.15
-        min_total_tier: 1
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.025
-        min_total_tier: 2
-        world: ANY
-        conditions: &id008
-        - SNEAKING
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.008333
-        min_total_tier: 3
-        world: ANY
-        conditions: *id008
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.004167
-        min_total_tier: 4
-        world: ANY
-        conditions: *id008
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.1
-        min_total_tier: 1
-        world: ANY
-        conditions: &id009
-        - SNEAKING
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.025
-        min_total_tier: 2
-        world: ANY
-        conditions: *id009
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.008333
-        min_total_tier: 3
-        world: ANY
-        conditions: *id009
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.004167
-        min_total_tier: 4
-        world: ANY
-        conditions: *id009
-  C-036:
-    name: 위더 중독
+      - '스탯: 밤에 몹 스폰 밀도 +7.5/+15/+22.5/+30/+35.5/+43%, 밤에 받는 피해 +4.5/+9/+13.5/+18/+21.5/+26%, 밤 이동 속도 0/-3/-6/-9/-11/-14%'
+      - '카드 기믹(상시): 밤마다 120/100/80/60/45/25s마다 15s ''불길''(몹 탐지 반경 +45%).'
+      - '특수 능력: **붉은 달** (자동 발동) — T2: 600s마다 1회, 60s 지역 달빛 강화(몹 2~4 증원, HP +20%). | T3: 80s. | T4: 100s + 정예 1체(공격 +60%) 포함. | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 발동 빈도 +10%(ICD/주기 0.9배). | T6(재앙): **악몽 파장** — (자동) 밤+밝기≤7에서 240s마다 1회: 15s 동안 다크니스 펄스(5s/3s) + 공포(나우지아 I) 3회. 공포 중 받는 피해 +15%.'
+      - '태그: 야간, 이벤트, 하이리스크'
+  C-048:
+    name: 소음의 대가
     type: CURSE
     weight: 1.0
-    archetype: UTILITY
+    archetype: GATHERING
     runtime:
       detail_ko:
-      - '위더 피해: T1 +50.0%, T2 +100.0%, T3 +150.0%, T4 +200.0%'
-      - '위더 지속: T1 +10.0%, T2 +20.0%, T3 +30.0%, T4 +40.0%'
-      - '체력 35% 이하 받는 피해: T1 +8.0%, T2 +12.0%, T3 +16.0%, T4 +20.0%'
-      - '카드 기믹 1: 위더 상태에서는 자연 회복 비활성 + 재생 효과 효율 감소 T1 -30.0%, T2 -50.0%, T3 -75.0%, T4 -100.0%'
-      - '카드 기믹 2: 위더 해제 후 잔류 붕괴 지속 T1 6s, T2 8s, T3 10s, T4 12s (2s마다 고정 피해 1)'
-      modifiers:
-      - type: WITHER_DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.5
-        min_total_tier: 1
-        world: ANY
-      - type: WITHER_DURATION_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.1
-        min_total_tier: 1
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.08
-        min_total_tier: 1
-        world: ANY
-        conditions: &id010
-        - LOW_HEALTH_35
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.02
-        min_total_tier: 2
-        world: ANY
-        conditions: *id010
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.006667
-        min_total_tier: 3
-        world: ANY
-        conditions: *id010
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.003333
-        min_total_tier: 4
-        world: ANY
-        conditions: *id010
-  C-037:
-    name: 탈출 방해
+      - '스탯: 블록 파괴/설치 시 몹 탐지 반경 +15/+30/+45/+60/+71/+86%, 채굴/벌목 속도 0/-6/-12/-18/-22.5/-28.5%, 전투 시작 후 7.5s 받는 피해 +4.5/+9/+13.5/+18/+21.5/+26%'
+      - '카드 기믹(상시): 질주 7.5s 유지 시 4.5s 소음 핑(쿨 20s).'
+      - '특수 능력: **메아리 추적** (자동 발동) — T2: 13.5s 내 블록 10개 파괴 시 ''메아리''(가까운 몹 1체 이속 +30% 12s, 쿨 30s). | T3: +40%. | T4: 48b 내 몹이 없으면 1체 추가 스폰(쿨 90s). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 발동 빈도 +10%(ICD/주기 0.9배). | T6(재앙): **추격자 습격** — (자동) 전투 상태 진입 시 180s마다 1회: 15s 동안 ''나를 목표로 한'' 추격자 2마리 추가 스폰 + 기존 추격자 이속 +50%. 추격자 피격 시 6s 나우지아 I.'
+      - '태그: 추적, 리스크'
+  C-049:
+    name: 탐욕의 빚
     type: CURSE
     weight: 1.0
-    archetype: UTILITY
+    archetype: GATHERING
     runtime:
       detail_ko:
-      - '이동 속도: T1 -15.0%, T2 -30.0%, T3 -45.0%, T4 -60.0%'
-      - '엔더 진주 사용 후 5s 받는 피해: T1 +20.0%, T2 +30.0%, T3 +40.0%, T4 +50.0%'
-      - '좌표/핑 표기: 오버월드/엔드 모두 오차 표기'
-      - '카드 기믹 1: 텔레포트/점멸/귀환 계열 이동 성공 후 3s 이동 속도 추가 T1 -20.0%, T2 -30.0%, T3 -40.0%, T4 -50.0%'
-      - '카드 기믹 2: 텔레포트/점멸/귀환 계열 이동 성공 후 5s 공격 피해(모든 대상) 추가 T1 -10.0%, T2 -15.0%, T3 -20.0%, T4 -25.0%'
-      modifiers:
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.15
-        min_total_tier: 1
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.2
-        min_total_tier: 1
-        world: ANY
-        conditions: &id011
-        - MAIN_HAND_ENDER_PEARL
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.05
-        min_total_tier: 2
-        world: ANY
-        conditions: *id011
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.016667
-        min_total_tier: 3
-        world: ANY
-        conditions: *id011
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.008333
-        min_total_tier: 4
-        world: ANY
-        conditions: *id011
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.2
-        min_total_tier: 1
-        world: ANY
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.05
-        min_total_tier: 2
-        world: ANY
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.016667
-        min_total_tier: 3
-        world: ANY
-      - type: WALK_SPEED_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.008333
-        min_total_tier: 4
-        world: ANY
-      - type: DAMAGE_DEALT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.1
-        min_total_tier: 1
-        world: ANY
-      - type: DAMAGE_DEALT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.025
-        min_total_tier: 2
-        world: ANY
-      - type: DAMAGE_DEALT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.008333
-        min_total_tier: 3
-        world: ANY
-      - type: DAMAGE_DEALT_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.004167
-        min_total_tier: 4
-        world: ANY
-  C-038:
-    name: 블레이즈/벡스 공포
-    type: CURSE
-    weight: 1.0
-    archetype: UTILITY
-    runtime:
-      detail_ko:
-      - '화염 피해 [네더]: T1 +20.0%, T2 +30.0%, T3 +40.0%, T4 +50.0%'
-      - '받는 피해 [엔드]: T1 +10.0%, T2 +20.0%, T3 +30.0%, T4 +40.0%'
-      - '투사체 받는 피해 [엔드]: T1 +15.0%, T2 +30.0%, T3 +45.0%, T4 +60.0%'
-      - '카드 기믹 1: 네더에서 주기적 강제 점화: T1 30s마다 4s, T2 25s마다 4s, T3 20s마다 5s, T4 15s마다 6s'
-      - '카드 기믹 2: 엔드에서 공중 판정(점프/낙하/활공) 중 받는 피해 추가 T1 +10.0%, T2 +15.0%, T3 +20.0%, T4 +25.0%'
-      modifiers:
-      - type: FIRE_DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.2
-        min_total_tier: 1
-        world: NETHER
-      - type: FIRE_DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.05
-        min_total_tier: 2
-        world: NETHER
-      - type: FIRE_DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.016667
-        min_total_tier: 3
-        world: NETHER
-      - type: FIRE_DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.008333
-        min_total_tier: 4
-        world: NETHER
-      - type: END_DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.1
-        min_total_tier: 1
-        world: END
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.1
-        min_total_tier: 1
-        world: END
-      - type: PROJECTILE_DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.15
-        min_total_tier: 1
-        world: END
-      - type: END_DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.15
-        min_total_tier: 1
-        world: END
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.15
-        min_total_tier: 1
-        world: END
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.1
-        min_total_tier: 1
-        world: END
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.025
-        min_total_tier: 2
-        world: END
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.008333
-        min_total_tier: 3
-        world: END
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.004167
-        min_total_tier: 4
-        world: END
-  C-039:
-    name: 레이드 붕괴
-    type: CURSE
-    weight: 1.0
-    archetype: ENDGAME
-    runtime:
-      detail_ko:
-      - '받는 피해: T1 +10.0%, T2 +15.0%, T3 +20.0%, T4 +25.0%'
-      - '몹 처치 점수: T1 -20.0%, T2 -30.0%, T3 -40.0%, T4 -60.0%'
-      - '부정효과 정화/해제 후 8s 받는 피해: T1 +8.0%, T2 +12.0%, T3 +16.0%, T4 +20.0%'
-      - '카드 기믹 1: 주변 플레이어(12b)에게 동일 저주 효과 공유 T1 30.0%, T2 40.0%, T3 50.0%, T4 60.0%'
-      - '카드 기믹 2: 주변 플레이어(12b) 사망 시 10s 받는 피해 추가 T1 +10.0%, T2 +15.0%, T3 +20.0%, T4 +25.0% (ICD 20s)'
-      modifiers:
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.1
-        min_total_tier: 1
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.025
-        min_total_tier: 2
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.008333
-        min_total_tier: 3
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.004167
-        min_total_tier: 4
-        world: ANY
-      - type: MOB_SCORE_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.2
-        min_total_tier: 1
-        world: ANY
-      - type: MOB_SCORE_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.05
-        min_total_tier: 2
-        world: ANY
-      - type: MOB_SCORE_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.016667
-        min_total_tier: 3
-        world: ANY
-      - type: MOB_SCORE_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.016667
-        min_total_tier: 4
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.08
-        min_total_tier: 1
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.02
-        min_total_tier: 2
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.006667
-        min_total_tier: 3
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.003333
-        min_total_tier: 4
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.1
-        min_total_tier: 1
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.025
-        min_total_tier: 2
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.008333
-        min_total_tier: 3
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.004167
-        min_total_tier: 4
-        world: ANY
-    severe: true
-    severe_bonus_points: 900
-  C-040:
+      - '스탯: 행운(Luck) -1/-2/-3/-4/-5/-6, 상자 전리품 품질 -7.5/-15/-22.5/-30/-35.5/-43%, 희귀 아이템 획득 후 15s 받는 피해 +7.5/+12/+16.5/+22.5/+27/+33%'
+      - '카드 기믹(상시): 경험치 오브 대량 흡수 시(임계치) 9s 포만감 소모 +75%.'
+      - '특수 능력: **빚 독촉자** (자동 발동) — T2: 희귀 아이템 획득 시 180s마다 1회, 40s 내 ''독촉자'' 1체가 생성되어 추격(정예 아님). | T3: 독촉자 이속 +40%. | T4: 독촉자가 정예(HP +60% + 공격 +40%). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 발동 빈도 +10%(ICD/주기 0.9배). | T6(재앙): **징수자** — (자동) 희귀 전리품(보물/네더라이트/에메랄드 등) 획득 시 240s마다 1회: 인벤에서 무작위 아이템 1개가 ''압류''(30s 잠금) + 이동 속도 -20% 6s.'
+      - '태그: 전리품, 하이리스크'
+  C-050:
     name: 종말의 전조
     type: CURSE
     weight: 1.0
-    archetype: ENDGAME
+    archetype: GATHERING
     runtime:
       detail_ko:
-      - '스토커 스폰 간격: T1 -4.0%, T2 -8.0%, T3 -12.0%, T4 -16.0%'
-      - '생존 점수: T1 -3.2%, T2 -6.4%, T3 -9.6%, T4 -12.8%'
-      - '체력 35% 이하 받는 피해: T1 +8.0%, T2 +12.0%, T3 +16.0%, T4 +20.0%'
-      - '카드 기믹 1: 개인 사망 누적 1회마다 생존 점수 추가 감소 T1 -2.0%, T2 -3.0%, T3 -4.0%, T4 -5.0% (최대 누적: T1 -10.0%, T2 -15.0%, T3 -20.0%, T4 -25.0%)'
-      - '카드 기믹 2: 300s 동안 플레이어/스토커 처치가 0회면 점수 세금 부여 T1 -5.0%, T2 -8.0%, T3 -12.0%, T4 -16.0% (300s 내 1회 이상 처치 시 즉시 해제)'
-      modifiers:
-      - type: STALKER_SPAWN_INTERVAL_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.04
-        min_total_tier: 1
-        world: ANY
-      - type: SURVIVAL_SCORE_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.032
-        min_total_tier: 1
-        world: ANY
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.08
-        min_total_tier: 1
-        world: ANY
-        conditions: &id012
-        - LOW_HEALTH_35
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.02
-        min_total_tier: 2
-        world: ANY
-        conditions: *id012
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.006667
-        min_total_tier: 3
-        world: ANY
-        conditions: *id012
-      - type: DAMAGE_TAKEN_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.003333
-        min_total_tier: 4
-        world: ANY
-        conditions: *id012
-      - type: SURVIVAL_SCORE_RATIO
-        scaling: CARD_TIER
-        value_per_tier: -0.02
-        min_total_tier: 1
-        world: ANY
-      - type: SURVIVAL_SCORE_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.005
-        min_total_tier: 2
-        world: ANY
-      - type: SURVIVAL_SCORE_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.001667
-        min_total_tier: 3
-        world: ANY
-      - type: SURVIVAL_SCORE_RATIO
-        scaling: CARD_TIER
-        value_per_tier: 0.000833
-        min_total_tier: 4
-        world: ANY
-    severe: true
-    severe_bonus_points: 900
+      - '스탯: 추격자 스폰 간격 -6/-12/-18/-24/-28.5/-34.5%, 생존 점수 -4.5/-9/-13.5/-18/-21.5/-26%, 체력 35% 이하 받는 피해 +7.5/+12/+16.5/+22.5/+27/+33%'
+      - '카드 기믹(상시): 450s 동안 처치가 없으면 점수 세금 -5/-8/-12/-16/-19/-23(중첩 제한).'
+      - '특수 능력: **전조 강화** (자동 발동) — T2: 세금 발동 시 40s 표식(근처 스폰 +50%). | T3: 50s. | T4: 표식 중 40s 내 추격자 1회 확정 스폰. | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 발동 빈도 +10%(ICD/주기 0.9배). | T6(재앙): **추격자 습격** — (자동) 전투 상태 진입 시 180s마다 1회: 15s 동안 ''나를 목표로 한'' 추격자 2마리 추가 스폰 + 기존 추격자 이속 +50%. 추격자 피격 시 6s 나우지아 I.'
+      - '태그: 추격자, 점수, 하이리스크'
+  C-051:
+    name: 시간 세금
+    type: CURSE
+    weight: 1.0
+    archetype: GATHERING
+    runtime:
+      detail_ko:
+      - '스탯: 능동 스킬/특수 능력 쿨타임 +15/+30/+45/+60/+71/+86%, 포션/음식 사용 후 7.5s 이동 속도 -4.5/-9/-13.5/-18/-21.5/-26%, 받는 피해(몹) 0/+4.5/+9/+13.5/+17/+21.5%'
+      - '카드 기믹(상시): 능동 스킬 사용 시 20s 내 ''시간 빚'' 1스택(최대 3).'
+      - '특수 능력: **시간 압류** (자동 발동) — T2: 시간 빚 3스택 시 4s 정지(이속 -120%) + 12s 받는 피해 +20%(스택 초기화). | T3: 정지 5s. | T4: 정지 6s + 2 진실 피해. | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 발동 빈도 +10%(ICD/주기 0.9배). | T6(재앙): **불길한 예고** — (자동) 240s마다 1회: 15s 동안 받는 피해 +20%, 이동 속도 -20%, 주변 16b 몹이 내 위치를 우선 타겟팅(도발).'
+      - '태그: 쿨타임, 리스크'
+  C-052:
+    name: 피의 향기
+    type: CURSE
+    weight: 1.0
+    archetype: GATHERING
+    runtime:
+      detail_ko:
+      - '스탯: 체력 80% 이하 몹 탐지 반경 +15/+30/+45/+60/+71/+86%, 체력 50% 이하 받는 피해 +4.5/+9/+13.5/+18/+21.5/+26%, 체력 35% 이하 이동 속도 -4.5/-9/-13.5/-18/-21.5/-26%'
+      - '카드 기믹(상시): 피격 시 9s ''피 냄새''(48b 몹이 우선 주목, 쿨 20s).'
+      - '특수 능력: **피의 추적자** (자동 발동) — T2: 피 냄새 동안 몹 1체가 ''추적자''(이속 +40%, 타겟 유지 20s)로 강화. | T3: 28s 유지. | T4: 추적자에게 넉백 저항 +100% + 공격 +20%. | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 발동 빈도 +10%(ICD/주기 0.9배). | T6(재앙): **추격자 습격** — (자동) 전투 상태 진입 시 180s마다 1회: 15s 동안 ''나를 목표로 한'' 추격자 2마리 추가 스폰 + 기존 추격자 이속 +50%. 추격자 피격 시 6s 나우지아 I.'
+      - '태그: 추적, 저체력, 리스크'
+  C-053:
+    name: 약한 조준
+    type: CURSE
+    weight: 1.0
+    archetype: GATHERING
+    runtime:
+      detail_ko:
+      - '스탯: 원거리 공격 피해(몹) -9/-18/-27/-36/-43/-52%, 투사체 속도 -7.5/-15/-22.5/-30/-35.5/-43%, 공중 사격 분산 1/1.5/1.5/1.5/1.5/2배'
+      - '카드 기믹(상시): 피격 후 8/10/12/21/28/37s 동안 다음 2발 분산 75% 증가.'
+      - '특수 능력: **손떨림** (자동 발동) — T2: 손떨림 중 사격 시 12s 몹 탐지 반경 +60%(소리). | T3: +80%. | T4: 손떨림 중 빗나감이 발생하면 추가로 12s 받는 피해 +20%. | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 발동 빈도 +10%(ICD/주기 0.9배). | T6(재앙): **불길한 예고** — (자동) 240s마다 1회: 15s 동안 받는 피해 +20%, 이동 속도 -20%, 주변 16b 몹이 내 위치를 우선 타겟팅(도발).'
+      - '태그: 원거리, 리스크'
+  C-054:
+    name: 불안정한 발판
+    type: CURSE
+    weight: 1.0
+    archetype: GATHERING
+    runtime:
+      detail_ko:
+      - '스탯: 이동 속도 0/-3/-6/-9/-11/-14%, 낙하 피해 +15/+30/+45/+60/+71/+86%, 받는 넉백 +15/+30/+45/+60/+71/+86%'
+      - '카드 기믹(상시): 질주 6s 이상 유지 시 매초 22.5% 확률로 1.5s 비틀거림(쿨 10s).'
+      - '특수 능력: **발판 붕괴** (자동 발동) — T2: 비틀거림 발생 시 6s 채굴 -30%(쿨 20s). | T3: 8s. | T4: 비틀거림이 40% 확률로 4 피해(넘어짐) + 8s 약화 I. | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 발동 빈도 +10%(ICD/주기 0.9배). | T6(재앙): **중력 붕괴** — (자동) 질주 6s 유지 시 180s마다 1회: 10s 동안 이속 -40%, 점프력 -80%, 낙하 피해 +100%. 10s 내 점프하면 3s 속박(이속 -90%).'
+      - '태그: 이동, 리스크'
+  C-055:
+    name: 부패한 버프
+    type: CURSE
+    weight: 1.0
+    archetype: GATHERING
+    runtime:
+      detail_ko:
+      - '스탯: 긍정 버프 지속 -15/-30/-45/-60/-71/-86%, 버프 적용 중 받는 피해 +3/+6/+9/+12/+14/+17%, 버프 적용 중 포만감 소모 +7.5/+15/+22.5/+30/+35.5/+43%'
+      - '카드 기믹(상시): 긍정 버프 3개 이상이면 20/15/12/10/8.5/6.5s마다 3s 어둠.'
+      - '특수 능력: **부패 전환** (자동 발동) — T2: 긍정 버프 획득 시 30% 확률로 ''부패''(12s 둔화 또는 약화 동반). | T3: 40%, 16s. | T4: 부패 중 몹 탐지 반경 +120%. | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 발동 빈도 +10%(ICD/주기 0.9배). | T6(재앙): **불길한 예고** — (자동) 240s마다 1회: 15s 동안 받는 피해 +20%, 이동 속도 -20%, 주변 16b 몹이 내 위치를 우선 타겟팅(도발).'
+      - '태그: 버프, 리스크'
+  C-056:
+    name: 굴복의 속삭임
+    type: CURSE
+    weight: 1.0
+    archetype: GATHERING
+    runtime:
+      detail_ko:
+      - '스탯: 체력 35% 이하 공격 피해 0/-7.5/-15/-22.5/-28/-35.5%, 체력 35% 이하 받는 피해 +7.5/+12/+16.5/+22.5/+27/+33%, 다크니스/실명 지속 +15/+30/+45/+60/+71/+86%'
+      - '카드 기믹(상시): 저체력에서 15s마다 4.5s ''망설임''(공속 -15%).'
+      - '특수 능력: **공황** (자동 발동) — T2: 46.5% 이하 진입 시 90s마다 1회 12s 공황(4s 질주 불가 + 몹 이속 +30%). | T3: 150s. | T4: 공황 중 회복 효율 -40%. | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 발동 빈도 +10%(ICD/주기 0.9배). | T6(재앙): **불길한 예고** — (자동) 240s마다 1회: 15s 동안 받는 피해 +20%, 이동 속도 -20%, 주변 16b 몹이 내 위치를 우선 타겟팅(도발).'
+      - '태그: 저체력, 심리, 리스크'
+  C-057:
+    name: 악몽의 환영
+    type: CURSE
+    weight: 1.0
+    archetype: GATHERING
+    runtime:
+      detail_ko:
+      - '스탯: 밤에 받는 피해 +4.5/+9/+13.5/+18/+21.5/+26%, 밤 시야 디버프 지속 +15/+30/+45/+60/+71/+86%, 수면 후 90s 이동 속도 0/-3/-6/-9/-11/-14%'
+      - '카드 기믹(상시): 3밤 이상 연속 각성 시 환영 스폰 빈도 증가.'
+      - '특수 능력: **환영 소환** (자동 발동) — T2: 밤에 120s마다 1회 환영(전리품 없음) 1체가 40s 추격. | T3: 180s. | T4: 2체까지 동시 출현 가능(360s 제한). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 발동 빈도 +10%(ICD/주기 0.9배). | T6(재앙): **악몽 파장** — (자동) 밤+밝기≤7에서 240s마다 1회: 15s 동안 다크니스 펄스(5s/3s) + 공포(나우지아 I) 3회. 공포 중 받는 피해 +15%.'
+      - '태그: 야간, 이벤트, 리스크'
+  C-058:
+    name: 한계 과부하
+    type: CURSE
+    weight: 1.0
+    archetype: GATHERING
+    runtime:
+      detail_ko:
+      - '스탯: 공격 속도 0/-4.5/-9/-13.5/-17/-21.5%, 능동 스킬 사용 후 7.5s 받는 피해 +7.5/+12/+16.5/+22.5/+27/+33%, 스킬 사용 후 7.5s 이동 속도 -4.5/-9/-13.5/-18/-21.5/-26%'
+      - '카드 기믹(상시): 20s 내 능동 스킬 2회 이상 사용 시 과부하 스택 +1.'
+      - '특수 능력: **과부하 폭발** (자동 발동) — T2: 과부하 3스택에서 4 진실 피해 + 12s 약화 II(스택 초기화). | T3: 10 피해. | T4: + 흡수 체력 제거 + 8s 둔화 II. | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 발동 빈도 +10%(ICD/주기 0.9배). | T6(재앙): **불길한 예고** — (자동) 240s마다 1회: 15s 동안 받는 피해 +20%, 이동 속도 -20%, 주변 16b 몹이 내 위치를 우선 타겟팅(도발).'
+      - '태그: 스킬, 리스크, 하이리스크'
+  C-059:
+    name: 엔트로피
+    type: CURSE
+    weight: 1.0
+    archetype: GATHERING
+    runtime:
+      detail_ko:
+      - '스탯: 받는 피해(몹) +3/+6/+9/+12/+14/+17%, 공격 피해(몹) -3/-6/-9/-12/-14/-17%, 포만감 소모 +7.5/+15/+22.5/+30/+35.5/+43%'
+      - '카드 기믹(상시): 45/35/25/20/16/11s마다 임의 디버프 1개(6s): 둔화 I/약화 I/채굴피로 I.'
+      - '특수 능력: **엔트로피 폭주** (자동 발동) — T2: 디버프 발동 시 40% 확률로 4s 어둠 추가. | T3: 60%. | T4: 전투 중 발동하면 지속 +4s + 주변 몹 이속 +20% 12s. | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 발동 빈도 +10%(ICD/주기 0.9배). | T6(재앙): **불길한 예고** — (자동) 240s마다 1회: 15s 동안 받는 피해 +20%, 이동 속도 -20%, 주변 16b 몹이 내 위치를 우선 타겟팅(도발).'
+      - '태그: 랜덤, 리스크'
+  C-060:
+    name: 세계의 반동
+    type: CURSE
+    weight: 1.0
+    archetype: GATHERING
+    runtime:
+      detail_ko:
+      - '스탯: 블록 설치/파괴 후 4.5s 이동 속도 -4.5/-9/-13.5/-18/-21.5/-26%, 블록 설치/파괴 후 4.5s 받는 피해 +4.5/+9/+13.5/+18/+21.5/+26%, 건축/채굴 점수 -7.5/-15/-22.5/-30/-35.5/-43%'
+      - '카드 기믹(상시): 20s 내 블록 작업 10회 시 ''반동'' 발동: 6s 채굴피로 I + 9s 위치 노출.'
+      - '특수 능력: **반동 파열** (자동 발동) — T2: 반동 발동 시 4 피해 + 은벌레 2체(쿨 60s). | T3: 3체. | T4: 4체 + 6s 독 I(해충만). | T5: 1단계(T3)·2단계(T4) 효과 수치 +25%(피해/반경/지속), 발동 빈도 +10%(ICD/주기 0.9배). | T6(재앙): **붕락** — (자동) 20s 내 블록 24개 이상 채굴 시 180s마다 1회: 10s 동안 주변 8b 자연석이 자갈/모래로 변이(최대 16개) + 다크니스 6s. 변이 중 채굴 속도 -30%.'
+      - '태그: 건축, 채굴, 리스크'
