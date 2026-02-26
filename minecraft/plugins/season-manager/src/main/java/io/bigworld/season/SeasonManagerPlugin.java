@@ -15,6 +15,8 @@ import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -129,6 +131,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
   private static final int SLOT_GUI_REROLL_BUTTON_SLOT = 49;
   private static final int SLOT_GUI_PAGE_BUTTON_SLOT = 50;
   private static final int SLOT_GUI_UPGRADE_BUTTON_SLOT = 51;
+  private static final int SLOT_GUI_DEBUG_OP_BUTTON_SLOT = 52;
   private static final int SLOT_GUI_PAGE_INFO_SLOT = 45;
   private static final int SLOT_GUI_RESIDUAL_PREV_PAGE_SLOT = 46;
   private static final int SLOT_GUI_RESIDUAL_FILTER_SLOT = 47;
@@ -153,7 +156,24 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
   private static final Pattern DETAIL_GAMBLE_RATIO_PATTERN = Pattern.compile(
       "^T(?<tier>[1-4]):\\s*(?<success>\\d+)\\s*/\\s*(?<fail>\\d+)\\s*$"
   );
-  private static final Pattern EFFECT80_ID_PATTERN = Pattern.compile("^(?<group>[BCX])-MOD-(?<index>\\d{2})(?:-[BC])?$");
+  private static final Pattern DETAIL_TIER_SERIES_PATTERN = Pattern.compile(
+      "T1\\s*([^,]+?)\\s*,\\s*T2\\s*([^,]+?)\\s*,\\s*T3\\s*([^,]+?)\\s*,\\s*T4\\s*([^,]+?)"
+  );
+  private static final Pattern DETAIL_TIER_GATE_PATTERN = Pattern.compile("T([1-4])\\+");
+  private static final Pattern DETAIL_TIER_TOKEN_RUN_PATTERN = Pattern.compile(
+      "(?:T[1-4]\\s*(?:(?!T[1-4]\\s)[^,])+\\s*,\\s*)+T[1-4]\\s*(?:(?!T[1-4]\\s)[^,])+"
+  );
+  private static final Pattern DETAIL_TIER_TOKEN_PATTERN = Pattern.compile(
+      "T([1-4])\\s*((?:(?!T[1-4]\\s)[^,])+?)\\s*(?=,\\s*T[1-4]\\s|$)"
+  );
+  private static final Pattern DETAIL_SINGLE_TIER_PREFIX_PATTERN = Pattern.compile("(^|[:(\\s])T([2-4])\\s+");
+  private static final Pattern DETAIL_SLASH_QUAD_PATTERN = Pattern.compile(
+      "([+-]?\\d+(?:\\.\\d+)?(?:%p?|%|[A-Za-z가-힣]+)?)\\s*/\\s*"
+          + "([+-]?\\d+(?:\\.\\d+)?(?:%p?|%|[A-Za-z가-힣]+)?)\\s*/\\s*"
+          + "([+-]?\\d+(?:\\.\\d+)?(?:%p?|%|[A-Za-z가-힣]+)?)\\s*/\\s*"
+          + "([+-]?\\d+(?:\\.\\d+)?(?:%p?|%|[A-Za-z가-힣]+)?)"
+  );
+  private static final Pattern EFFECT80_ID_PATTERN = Pattern.compile("^(?<group>[BCX])-(?<index>\\d{3})(?:-[BC])?$");
   private static final Pattern LEGACY_ID_PATTERN = Pattern.compile("^(?<group>[BC])-(?<index>\\d{3})$");
   private static final Pattern EFFECT80_COOLDOWN_PATTERN = Pattern.compile("(?<!\\d)(\\d{1,4})s");
   private static final long RHYTHM_COMBO_WINDOW_MILLIS = 2000L;
@@ -161,6 +181,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
   private static final double LEGACY_B1_TO_120_AGGRESSIVE_SCALE = 1.00D;
   private static final double LEGACY_B1_TO_120_GENERAL_BUFF_SCALE = 1.00D;
   private static final double CURSE_NEGATIVE_SOFTEN_SCALE = 1.00D;
+  private static final double CURSE_PLAYER_STAT_REDUCTION_SOFTEN_SCALE = 0.85D;
   private static final double C_MOD_RUNTIME_RATIO_SCALE = 1.18D;
   private static final double X_MOD_CURSE_VARIANT_RUNTIME_RATIO_SCALE = 1.15D;
   private static final int B_MOD_TIER_BONUS = 1;
@@ -170,6 +191,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
   private static final double B_MOD_CHANCE_FLAT_BONUS = 0.05D;
   private static final double B_MOD_RANGE_SCALE = 1.20D;
   private static final double B_MOD_DURATION_SCALE = 1.20D;
+  private static final String INFORMATION_REQUIRED_EFFECT_ID = "B-037";
   private static final Set<String> PROFILE_OVERRIDE_ROOTS = Set.of(
       "lives",
       "score",
@@ -304,6 +326,8 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
   private final Map<UUID, Double> shieldCoreOriginalMaxHealthBaseByPlayer = new HashMap<>();
   private final Map<UUID, Double> shieldCoreOriginalMaxAbsorptionBaseByPlayer = new HashMap<>();
   private final Map<UUID, Double> shieldCoreLastAbsorptionByPlayer = new HashMap<>();
+  private final Map<UUID, Double> absorptionShieldOriginalMaxAbsorptionBaseByPlayer = new HashMap<>();
+  private final Map<UUID, Double> absorptionShieldLastAbsorptionByPlayer = new HashMap<>();
   private final Map<UUID, Long> shieldCoreBreakBoostUntilEpochSecondByPlayer = new HashMap<>();
   private final Map<UUID, Long> rewindGuardUntilEpochSecondByPlayer = new HashMap<>();
   private final Map<UUID, Double> rewindGuardRatioByPlayer = new HashMap<>();
@@ -424,6 +448,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
         nextStalkerSpawnEpochSecond = roundStartedEpochSecond + stalkerFirstSpawnDelaySeconds();
       }
       syncAllParticipantSlots(false);
+      saveState();
       bootstrapTaggedSeasonEntities();
       maybeAutoCenterBorderFromStronghold(false);
     }
@@ -488,6 +513,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     restoreAllRuntimeAttributes();
     for (Player player : Bukkit.getOnlinePlayers()) {
       restoreShieldCoreMaxHealth(player);
+      restoreAbsorptionShieldCapacity(player);
     }
     clearAllAuraMonsterAttributeModifiers();
     closeAllVaultSessions();
@@ -662,10 +688,6 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     if (!isSeasonGameplayServer()) {
       return;
     }
-    applyEffect80Portal(event);
-    if (event.isCancelled()) {
-      return;
-    }
     if (state != SeasonState.FREE_PLAY || freePlayFinalized || !isWithinFreePlayEscapeWindow()) {
       return;
     }
@@ -696,7 +718,6 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     if (event.getCause() == PlayerTeleportEvent.TeleportCause.PLUGIN) {
       return;
     }
-    applyEffect80Teleport(event);
   }
 
   @EventHandler
@@ -714,8 +735,6 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
       return;
     }
 
-    applyEffect80EntityDeath(event);
-    applyLegacyNamedEntityDeath(event);
     applyMobKillScore(event);
 
     if (!freePlayAutoOnDragonKill() || state == SeasonState.FREE_PLAY) {
@@ -1061,7 +1080,6 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     if (hasNewbieProtection(player.getUniqueId())) {
       Bukkit.getScheduler().runTask(this, () -> applyNewbieProtectionEffects(player));
     }
-    applyLegacyNamedRespawn(player, data);
   }
 
   @EventHandler
@@ -1069,6 +1087,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     Player player = event.getPlayer();
     restoreRuntimeAttributeStates(player);
     restoreShieldCoreMaxHealth(player);
+    restoreAbsorptionShieldCapacity(player);
     UUID uuid = player.getUniqueId();
     initialCardSetupActivePlayers.remove(uuid);
     temporaryInvulnerableUntilEpochSecondByPlayer.remove(uuid);
@@ -1250,22 +1269,9 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
       trySeasonSlotTierUpgrade(viewer, holder);
       return;
     }
-    if (holder.page() == SLOT_GUI_PAGE_RESIDUAL) {
-      if (rawSlot == SLOT_GUI_RESIDUAL_PREV_PAGE_SLOT) {
-        switchResidualPage(viewer, holder, -1);
-        return;
-      }
-      if (rawSlot == SLOT_GUI_RESIDUAL_NEXT_PAGE_SLOT) {
-        switchResidualPage(viewer, holder, 1);
-        return;
-      }
-      if (rawSlot == SLOT_GUI_RESIDUAL_FILTER_SLOT) {
-        cycleResidualFilter(viewer, holder);
-        return;
-      }
-    }
-    if (rawSlot == SLOT_GUI_PAGE_BUTTON_SLOT) {
-      switchSeasonSlotPage(viewer, holder);
+    if (rawSlot == SLOT_GUI_DEBUG_OP_BUTTON_SLOT && seasonDebugModeEnabled()) {
+      trySeasonSlotDebugToggleOp(viewer, holder);
+      return;
     }
   }
 
@@ -1679,7 +1685,6 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
       event.setCancelled(true);
       return;
     }
-    applyEffect80ActiveInput(event, player);
   }
 
   @EventHandler(ignoreCancelled = true)
@@ -1696,7 +1701,6 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     if (data == null || data.isOut()) {
       return;
     }
-    applyEffect80BlockPlace(event, player, data);
   }
 
   @EventHandler(ignoreCancelled = true)
@@ -1730,7 +1734,6 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
       player.sendActionBar(ChatColor.RED + "해당 슬롯은 잠겨 있습니다");
       return;
     }
-    applyEffect80ItemHeldChange(event, player, data);
   }
 
   @EventHandler(ignoreCancelled = true)
@@ -1746,7 +1749,6 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     if (data == null || data.isOut()) {
       return;
     }
-    applyEffect80Move(event, player, data);
   }
 
   @EventHandler(ignoreCancelled = true)
@@ -1759,7 +1761,6 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     if (data == null || data.isOut()) {
       return;
     }
-    applyEffect80DropItem(event, player, data);
   }
 
   @EventHandler(ignoreCancelled = true)
@@ -1772,7 +1773,6 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     if (data == null || data.isOut()) {
       return;
     }
-    applyEffect80ItemConsume(event, player, data);
   }
 
   @EventHandler(ignoreCancelled = true)
@@ -1787,7 +1787,6 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     if (data == null || data.isOut()) {
       return;
     }
-    applyEffect80Craft(event, player, data);
   }
 
   @EventHandler(ignoreCancelled = true)
@@ -1802,11 +1801,6 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     if (data == null || data.isOut()) {
       return;
     }
-    applyEffect80LootGenerate(event, player, data);
-    if (event.isCancelled()) {
-      return;
-    }
-    applyLegacyNamedLootGenerate(event, player, data);
   }
 
   @EventHandler(ignoreCancelled = true)
@@ -1824,7 +1818,6 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     if (data == null || data.isOut()) {
       return;
     }
-    applyEffect80ProjectileLaunch(event, player, data);
   }
 
   @EventHandler(ignoreCancelled = true)
@@ -1848,21 +1841,13 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     if (victimData == null || victimData.isOut()) {
       return;
     }
-    applyEffect80DamageTaken(event, victim, victimData);
-    if (event.isCancelled()) {
-      return;
-    }
-    applyLegacyNamedDamageTaken(event, victim, victimData);
-    if (event.isCancelled()) {
-      return;
-    }
-
     EnumMap<RuntimeModifierType, Double> totals = computeRuntimeModifierTotals(victimData, victim.getWorld(), victim);
     double takenRatio = runtimeModifierValue(totals, RuntimeModifierType.DAMAGE_TAKEN_RATIO);
     double takenMultiplier = boundedMultiplier(1.0D + takenRatio, 0.15D, 4.0D);
     if (Math.abs(takenMultiplier - 1.0D) > 0.0001D) {
       event.setDamage(event.getDamage() * takenMultiplier);
     }
+    applyAbsorptionShieldDamageMitigation(victim, victimData, event);
 
     EntityDamageEvent.DamageCause cause = event.getCause();
     if (cause == EntityDamageEvent.DamageCause.FALL) {
@@ -1937,8 +1922,6 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
 	      }
 	    }
 
-	    applyConditionalDamageTakenBonuses(event, victim, victimData);
-
 	    if (event instanceof EntityDamageByEntityEvent byEntityEvent) {
 	      Player attackingPlayer = resolveAttackingPlayer(byEntityEvent.getDamager());
 	      if (attackingPlayer == null) {
@@ -1952,30 +1935,9 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
 	    applySingleHitDamageCap(event, victim, playerDamageCapEnvironmentRatio());
 	  }
 
-	  private void applyConditionalDamageTakenBonuses(EntityDamageEvent event, Player victim, PlayerRoundData victimData) {
-	    if (event == null || victim == null || victimData == null) {
-	      return;
-	    }
-
-	    // B-102 | 은신 신호: "잠행 중 받는 피해"는 실제 피해 이벤트에서만 조건부 적용 가능.
-	    ActiveSeasonEffect stealthSignal = victimData.getBlessingEffect("B-102");
-	    if (stealthSignal != null && victim.isSneaking()) {
-	      int tier = clampTier(stealthSignal.getTier());
-	      double ratio = switch (tier) {
-	        case 1 -> 0.0D;
-	        case 2 -> -0.05D;
-	        case 3 -> -0.10D;
-	        default -> -0.15D;
-	      };
-	      double multiplier = boundedMultiplier(1.0D + ratio, 0.05D, 5.0D);
-	      if (Math.abs(multiplier - 1.0D) > 0.0001D) {
-	        event.setDamage(event.getDamage() * multiplier);
-	      }
-	    }
-	  }
 
 	  @EventHandler(ignoreCancelled = true)
-	  public void onPlayerDamageByEntity(EntityDamageByEntityEvent event) {
+  public void onPlayerDamageByEntity(EntityDamageByEntityEvent event) {
 	    if (!isSeasonGameplayServer()) {
 	      return;
 	    }
@@ -2013,18 +1975,8 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     if (attackerData == null || attackerData.isOut()) {
       return;
     }
-    applyEffect80DamageByEntity(event, attacker, attackerData);
-    if (event.isCancelled()) {
-      return;
-    }
-    applyLegacyNamedDamageByEntity(event, attacker, attackerData);
-    if (event.isCancelled()) {
-      return;
-    }
-
     EnumMap<RuntimeModifierType, Double> totals = computeRuntimeModifierTotals(attackerData, attacker.getWorld(), attacker);
     double dealtRatio = runtimeModifierValue(totals, RuntimeModifierType.DAMAGE_DEALT_RATIO);
-    dealtRatio += b018DistanceBonusRatio(attackerData, attacker, event.getEntity());
     double dealtMultiplier = boundedMultiplier(1.0D + dealtRatio, 0.15D, 4.0D);
     if (Math.abs(dealtMultiplier - 1.0D) > 0.0001D) {
       event.setDamage(event.getDamage() * dealtMultiplier);
@@ -2073,10 +2025,48 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
           }
         }
       }
+      applyPoisonInjectionOnHit(event, attacker, attackerData);
       applySingleHitDamageCap(event, victimPlayer, playerDamageCapPvpRatio());
+      return;
     }
-    if (!event.isCancelled() && event.getFinalDamage() > 0.0D) {
-      registerRhythmComboIfEligible(attackerData, attacker);
+
+    applyPoisonInjectionOnHit(event, attacker, attackerData);
+  }
+
+  private void applyPoisonInjectionOnHit(
+      EntityDamageByEntityEvent event,
+      Player attacker,
+      PlayerRoundData attackerData
+  ) {
+    if (event == null || attacker == null || attackerData == null || event.isCancelled()) {
+      return;
+    }
+    if (event.getFinalDamage() <= 0.0D) {
+      return;
+    }
+    if (!(event.getEntity() instanceof LivingEntity victim) || victim == attacker) {
+      return;
+    }
+
+    ActiveSeasonEffect poisonInjection = attackerData.getBlessingEffect("B-017");
+    if (poisonInjection == null) {
+      return;
+    }
+
+    int tier = clampTier(poisonInjection.getTier());
+    int durationTicks = 20 * 10; // 10s
+    int poisonAmplifier = Math.max(0, tier - 1); // Lv1~Lv4
+    victim.addPotionEffect(
+        new PotionEffect(PotionEffectType.POISON, durationTicks, poisonAmplifier, true, false, true),
+        true
+    );
+
+    if (tier >= 3) {
+      int witherAmplifier = tier >= 4 ? 2 : 1; // T3 Lv2, T4 Lv3
+      victim.addPotionEffect(
+          new PotionEffect(PotionEffectType.WITHER, durationTicks, witherAmplifier, true, false, true),
+          true
+      );
     }
   }
 
@@ -2093,15 +2083,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     if (data == null || data.isOut()) {
       return;
     }
-    applyEffect80NaturalRegain(event, player, data);
-    if (event.isCancelled()) {
-      return;
-    }
     if (event.getRegainReason() != EntityRegainHealthEvent.RegainReason.SATIATED) {
-      return;
-    }
-    applyLegacyNamedNaturalRegain(event, player, data);
-    if (event.isCancelled()) {
       return;
     }
     double ratio = runtimeModifierValue(
@@ -2127,11 +2109,6 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     if (data == null || data.isOut()) {
       return;
     }
-    applyEffect80FoodLevelChange(event, player, data);
-    if (event.isCancelled()) {
-      return;
-    }
-
     int current = player.getFoodLevel();
     int next = Math.max(0, Math.min(20, event.getFoodLevel()));
     if (next == current) {
@@ -2180,15 +2157,6 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     if (data == null || data.isOut()) {
       return;
     }
-    applyEffect80ItemDamage(event, player, data);
-    if (event.isCancelled()) {
-      return;
-    }
-    applyLegacyNamedItemDamage(event, player, data);
-    if (event.isCancelled()) {
-      return;
-    }
-
     double ratio = runtimeModifierValue(
         computeRuntimeModifierTotals(data, player.getWorld(), player),
         RuntimeModifierType.ITEM_DURABILITY_LOSS_RATIO
@@ -2285,11 +2253,6 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     if (data == null || data.isOut()) {
       return;
     }
-    applyEffect80PotionMutation(event, player, data);
-    if (event.isCancelled()) {
-      return;
-    }
-
     PotionEffect newEffect = event.getNewEffect();
     if (newEffect == null || newEffect.getType() == null || newEffect.getType().isInstant()) {
       return;
@@ -2406,15 +2369,6 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     UUID uuid = player.getUniqueId();
     PlayerRoundData data = players.computeIfAbsent(uuid, ignored -> new PlayerRoundData(baseLives()));
     participants.add(uuid);
-    applyEffect80BlockBreak(event, player, data);
-    if (event.isCancelled()) {
-      return;
-    }
-    applyLegacyNamedBlockBreak(event, player, data);
-    if (event.isCancelled()) {
-      return;
-    }
-
     long points = scoreMiningPoints(event.getBlock().getType());
     if (points <= 0L) {
       return;
@@ -2433,12 +2387,6 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
       return;
     }
     PlayerRoundData data = players.get(player.getUniqueId());
-    if (data != null && !data.isOut()) {
-      applyEffect80PickupItem(event, player, data);
-      if (event.isCancelled()) {
-        return;
-      }
-    }
     UUID pickedItemId = event.getItem() == null ? null : event.getItem().getUniqueId();
     if (pickedItemId != null) {
       cursedDropOwnerByItem.remove(pickedItemId);
@@ -2510,7 +2458,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     if (lootPortalTier >= 4
         && lootPortalItemsByPlayer.containsKey(victimId)
         && !lootPortalItemsByPlayer.getOrDefault(victimId, List.of()).isEmpty()) {
-      long portalWindow = scaledBModDurationSeconds("B-MOD-20", 180L);
+      long portalWindow = 180L;
       lootPortalExpireEpochSecondByPlayer.put(victimId, Math.max(
           lootPortalExpireEpochSecondByPlayer.getOrDefault(victimId, 0L),
           nowEpochSecond() + portalWindow
@@ -2523,10 +2471,6 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     if (state == SeasonState.FREE_PLAY && freePlayIgnoresLifeRules()) {
       return;
     }
-    if (applyEffect80PlayerDeath(event, victim, victimData)) {
-      return;
-    }
-
     applyPvpSteal(victim, victimData);
 
     victimData.setDeathCount(victimData.getDeathCount() + 1);
@@ -2700,11 +2644,18 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     effectGimmicksById.clear();
 
     boolean loadedFromFile = loadEffectCatalogFromFile();
-    if (!loadedFromFile) {
+    if (!loadedFromFile && cardsCatalogLegacyFallbackEnabled()) {
       loadEffectCatalogFromConfigPools();
+    } else if (!loadedFromFile) {
+      getLogger().warning("No catalog files loaded. legacy fallback is disabled.");
     }
-    if (blessingEffectsCatalog.isEmpty() || curseEffectsCatalog.isEmpty()) {
+    if ((blessingEffectsCatalog.isEmpty() || curseEffectsCatalog.isEmpty()) && cardsCatalogLegacyFallbackEnabled()) {
       loadBuiltInSeasonOneCatalog();
+    } else if (blessingEffectsCatalog.isEmpty() || curseEffectsCatalog.isEmpty()) {
+      getLogger().warning(
+          "Catalog loaded but blessing/curse pool is incomplete (blessings=" + blessingEffectsCatalog.size()
+              + ", curses=" + curseEffectsCatalog.size() + "). legacy fallback is disabled."
+      );
     }
 
     for (EffectDefinition definition : blessingEffectsCatalog) {
@@ -2713,7 +2664,11 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     for (EffectDefinition definition : curseEffectsCatalog) {
       effectDefinitionsById.put(definition.id().toUpperCase(Locale.ROOT), definition);
     }
-    buildEffectGimmicksIndex();
+    if (cardsRuntimeEffectsEnabled()) {
+      buildEffectGimmicksIndex();
+    } else {
+      effectGimmicksById.clear();
+    }
 
     getLogger().info(
         "Loaded effects catalog: blessings=" + blessingEffectsCatalog.size()
@@ -2727,10 +2682,18 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
       return false;
     }
 
-    int count = 0;
-    count += loadEffectCatalogFile(catalogDir, cardsCatalogFileName(), cardsCatalogAutoCreate());
+    LinkedHashSet<String> filesToLoad = new LinkedHashSet<>();
+    appendCatalogFileName(filesToLoad, cardsCatalogFileName());
     for (String appendFileName : cardsCatalogAppendFileNames()) {
-      count += loadEffectCatalogFile(catalogDir, appendFileName, cardsCatalogAutoCreate());
+      appendCatalogFileName(filesToLoad, appendFileName);
+    }
+    for (String patchFileName : resolveCatalogPatchFileNames(catalogDir)) {
+      appendCatalogFileName(filesToLoad, patchFileName);
+    }
+
+    int count = 0;
+    for (String fileName : filesToLoad) {
+      count += loadEffectCatalogFile(catalogDir, fileName, cardsCatalogAutoCreate());
     }
     return count > 0;
   }
@@ -2746,8 +2709,17 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     }
 
     File catalogFile = new File(catalogDir, normalizedFileName);
-    if (!catalogFile.exists() && autoCreate) {
-      String resourcePath = "catalogs/" + normalizedFileName;
+    String resourcePath = "catalogs/" + normalizedFileName;
+    boolean syncedFromBundled = false;
+    if (cardsCatalogSyncFromResource()) {
+      try {
+        saveResource(resourcePath, true);
+        syncedFromBundled = true;
+      } catch (IllegalArgumentException ignored) {
+        // no bundled catalog file
+      }
+    }
+    if (!catalogFile.exists() && autoCreate && !syncedFromBundled) {
       try {
         saveResource(resourcePath, false);
       } catch (IllegalArgumentException ignored) {
@@ -2759,13 +2731,190 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     }
 
     YamlConfiguration yaml = YamlConfiguration.loadConfiguration(catalogFile);
+    int removed = removeEffectDefinitions(parseCatalogRemovalIds(yaml));
     int count = 0;
     count += loadEffectCatalogSection(yaml.getConfigurationSection("blessings"), EffectKind.BLESSING);
     count += loadEffectCatalogSection(yaml.getConfigurationSection("curses"), EffectKind.CURSE);
-    if (count > 0) {
-      getLogger().info("Loaded catalog file '" + normalizedFileName + "' entries=" + count);
+    if (count > 0 || removed > 0) {
+      getLogger().info(
+          "Loaded catalog file '" + normalizedFileName + "' entries=" + count + " removed=" + removed
+      );
     }
-    return count;
+    return count + removed;
+  }
+
+  private List<String> resolveCatalogPatchFileNames(File catalogDir) {
+    LinkedHashSet<String> files = new LinkedHashSet<>();
+    for (String configured : cardsCatalogPatchFileNames()) {
+      appendCatalogFileName(files, configured);
+    }
+    if (cardsCatalogPatchAutoDiscover()) {
+      for (String discovered : discoverCatalogPatchFileNames(catalogDir, cardsCatalogPatchDirName())) {
+        appendCatalogFileName(files, discovered);
+      }
+    }
+    if (files.isEmpty()) {
+      return List.of();
+    }
+    return new ArrayList<>(files);
+  }
+
+  private void appendCatalogFileName(Set<String> files, String fileName) {
+    if (files == null || fileName == null || fileName.isBlank()) {
+      return;
+    }
+    String normalized = fileName.trim().replace('\\', '/');
+    while (normalized.startsWith("./")) {
+      normalized = normalized.substring(2);
+    }
+    if (normalized.isBlank()) {
+      return;
+    }
+    if (normalized.startsWith("/") || normalized.contains("..")) {
+      getLogger().warning("Ignored catalog file path outside catalogs/: " + normalized);
+      return;
+    }
+    files.add(normalized);
+  }
+
+  private List<String> discoverCatalogPatchFileNames(File catalogDir, String patchDirName) {
+    if (catalogDir == null || patchDirName == null || patchDirName.isBlank()) {
+      return List.of();
+    }
+    File patchDir = new File(catalogDir, patchDirName);
+    if (!patchDir.exists() && !patchDir.mkdirs()) {
+      getLogger().warning("Could not create catalog patch directory: " + patchDir.getAbsolutePath());
+      return List.of();
+    }
+    if (!patchDir.isDirectory()) {
+      return List.of();
+    }
+
+    List<String> discovered = new ArrayList<>();
+    collectCatalogPatchFileNames(catalogDir, patchDir, discovered);
+    Collections.sort(discovered);
+    return discovered;
+  }
+
+  private void collectCatalogPatchFileNames(File catalogDir, File currentDir, List<String> output) {
+    if (catalogDir == null || currentDir == null || output == null) {
+      return;
+    }
+    File[] entries = currentDir.listFiles();
+    if (entries == null || entries.length == 0) {
+      return;
+    }
+    Arrays.sort(entries, Comparator.comparing(File::getName, String.CASE_INSENSITIVE_ORDER));
+    for (File entry : entries) {
+      if (entry == null) {
+        continue;
+      }
+      if (entry.isDirectory()) {
+        collectCatalogPatchFileNames(catalogDir, entry, output);
+        continue;
+      }
+      String lowerName = entry.getName().toLowerCase(Locale.ROOT);
+      if (!lowerName.endsWith(".yml") && !lowerName.endsWith(".yaml")) {
+        continue;
+      }
+      String relativePath = toCatalogRelativePath(catalogDir, entry);
+      if (!relativePath.isBlank()) {
+        output.add(relativePath);
+      }
+    }
+  }
+
+  private String toCatalogRelativePath(File rootDir, File targetFile) {
+    if (rootDir == null || targetFile == null) {
+      return "";
+    }
+    try {
+      String rootPath = rootDir.getCanonicalPath();
+      String targetPath = targetFile.getCanonicalPath();
+      String rootPrefix = rootPath.endsWith(File.separator) ? rootPath : rootPath + File.separator;
+      if (!targetPath.startsWith(rootPrefix)) {
+        return "";
+      }
+      String relative = targetPath.substring(rootPrefix.length()).replace(File.separatorChar, '/');
+      if (relative.startsWith("/") || relative.contains("..")) {
+        return "";
+      }
+      return relative;
+    } catch (IOException exception) {
+      getLogger().warning("Failed to resolve catalog relative path: " + exception.getMessage());
+      return "";
+    }
+  }
+
+  private Set<String> parseCatalogRemovalIds(YamlConfiguration yaml) {
+    if (yaml == null) {
+      return Set.of();
+    }
+    LinkedHashSet<String> removed = new LinkedHashSet<>();
+    addCatalogRemovalIds(removed, yaml.get("remove"));
+    addCatalogRemovalIds(removed, yaml.get("disable"));
+    if (removed.isEmpty()) {
+      return Set.of();
+    }
+    return removed;
+  }
+
+  private void addCatalogRemovalIds(Set<String> target, Object rawValue) {
+    if (target == null || rawValue == null) {
+      return;
+    }
+
+    if (rawValue instanceof ConfigurationSection section) {
+      for (String key : section.getKeys(false)) {
+        if (key == null || key.isBlank()) {
+          continue;
+        }
+        Object value = section.get(key);
+        if (value instanceof Boolean enabledFlag) {
+          if (enabledFlag) {
+            String normalized = normalizeEffectId(key);
+            if (!normalized.isBlank()) {
+              target.add(normalized);
+            }
+          }
+          continue;
+        }
+        if ("ids".equalsIgnoreCase(key)
+            || "effects".equalsIgnoreCase(key)
+            || "all".equalsIgnoreCase(key)
+            || "blessings".equalsIgnoreCase(key)
+            || "curses".equalsIgnoreCase(key)) {
+          addCatalogRemovalIds(target, value);
+        }
+      }
+      return;
+    }
+
+    for (String token : parseMapStringTokens(rawValue)) {
+      String normalized = normalizeEffectId(token);
+      if (!normalized.isBlank()) {
+        target.add(normalized);
+      }
+    }
+  }
+
+  private int removeEffectDefinitions(Set<String> ids) {
+    if (ids == null || ids.isEmpty()) {
+      return 0;
+    }
+    int removed = 0;
+    removed += removeEffectDefinitions(blessingEffectsCatalog, ids);
+    removed += removeEffectDefinitions(curseEffectsCatalog, ids);
+    return removed;
+  }
+
+  private int removeEffectDefinitions(List<EffectDefinition> target, Set<String> ids) {
+    if (target == null || target.isEmpty() || ids == null || ids.isEmpty()) {
+      return 0;
+    }
+    int before = target.size();
+    target.removeIf(definition -> definition != null && ids.contains(normalizeEffectId(definition.id())));
+    return Math.max(0, before - target.size());
   }
 
   private int loadEffectCatalogSection(ConfigurationSection section, EffectKind fallbackKind) {
@@ -3802,6 +3951,9 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
 
   private void buildEffectGimmicksIndex() {
     effectGimmicksById.clear();
+    if (!cardsRuntimeEffectsEnabled()) {
+      return;
+    }
     for (EffectDefinition definition : blessingEffectsCatalog) {
       EffectGimmickProfile profile = buildEffectGimmickProfile(definition);
       if (profile != null) {
@@ -3926,7 +4078,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     int baseCooldownSeconds = inferCooldownSecondsFromText(sourceText, 60);
     if (effect80Id.group() == 'X') {
       if (effect80Id.index() == 8) {
-        // X-MOD-08 has a T4 active cast even though the source text does not expose a token line.
+        // Tier 4 active cast is defined in runtime behavior.
         hasActiveTrigger = true;
         if (token == AbilityToken.NONE) {
           token = AbilityToken.OFFENSE;
@@ -3934,7 +4086,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
         mode = AbilityMode.NORMAL;
         baseCooldownSeconds = 60;
       } else if (effect80Id.index() == 11) {
-        // X-MOD-11 T4 active taunt.
+        // Tier 4 active taunt.
         hasActiveTrigger = true;
         if (token == AbilityToken.NONE) {
           token = AbilityToken.UTILITY;
@@ -3942,7 +4094,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
         mode = AbilityMode.NORMAL;
         baseCooldownSeconds = 300;
       } else if (effect80Id.index() == 15) {
-        // X-MOD-15 optional active fortress mode.
+        // Optional active fortress mode.
         hasActiveTrigger = true;
         if (token == AbilityToken.NONE) {
           token = AbilityToken.BUILD;
@@ -3950,7 +4102,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
         mode = AbilityMode.NORMAL;
         baseCooldownSeconds = 120;
       } else if (effect80Id.index() == 20) {
-        // X-MOD-20 T4 active sacrifice cleanse.
+        // Tier 4 active sacrifice cleanse.
         hasActiveTrigger = true;
         if (token == AbilityToken.NONE) {
           token = AbilityToken.UTILITY;
@@ -3967,7 +4119,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
           baseCooldownSeconds = 120;
         }
         case 6 -> {
-          // B-MOD-06 is now passive shield-block logic.
+          // Passive shield-block logic.
           hasActiveTrigger = false;
           mode = null;
         }
@@ -3990,7 +4142,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
           baseCooldownSeconds = 90;
         }
         case 11 -> {
-          // B-MOD-11 now passive only (wooden pickaxe mining trigger).
+          // Passive-only: wooden pickaxe mining trigger.
           hasActiveTrigger = false;
           mode = null;
         }
@@ -4013,7 +4165,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
           baseCooldownSeconds = 240;
         }
         case 16 -> {
-          // B-MOD-16 now periodic only.
+          // Periodic-only behavior.
           hasActiveTrigger = false;
           mode = null;
         }
@@ -4131,36 +4283,21 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
       return null;
     }
     Integer index = parseInt(indexRaw);
-    if (index == null || index < 1) {
+    if (index == null || index < 1 || index > 999) {
       return null;
     }
     return new Effect80Id(groupRaw.charAt(0), index);
   }
 
   private boolean isBModEffectId(String effectId) {
-    return normalizeEffectId(effectId).startsWith("B-MOD-");
+    return false;
   }
 
   private boolean isCModEffectId(String effectId) {
-    Effect80Id id = parseEffect80Id(effectId);
-    if (id == null || id.group() != 'C') {
-      return false;
-    }
-    String normalized = normalizeEffectId(effectId);
-    return normalized.startsWith("C-MOD-");
+    return false;
   }
 
   private char xModVariantSuffix(String effectId) {
-    String normalized = normalizeEffectId(effectId);
-    if (!normalized.startsWith("X-MOD-")) {
-      return '\0';
-    }
-    if (normalized.endsWith("-C")) {
-      return 'C';
-    }
-    if (normalized.endsWith("-B")) {
-      return 'B';
-    }
     return '\0';
   }
 
@@ -4269,6 +4406,9 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
   }
 
   private LegacyEffectId parseLegacyEffectId(String effectId) {
+    if (!cardsHardcodedIdHandlersEnabled()) {
+      return null;
+    }
     if (effectId == null || effectId.isBlank()) {
       return null;
     }
@@ -4295,7 +4435,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
   }
 
   private List<LegacyActiveEffect> collectLegacyActiveEffects(PlayerRoundData data) {
-    if (data == null) {
+    if (!cardsHardcodedIdHandlersEnabled() || data == null) {
       return List.of();
     }
     List<LegacyActiveEffect> legacy = new ArrayList<>();
@@ -4481,37 +4621,6 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     return locked.getOrDefault(slot, 0L) > now;
   }
 
-  private void tickEffects80Gimmicks() {
-    if (!isSeasonGameplayServer() || effectGimmicksById.isEmpty()) {
-      return;
-    }
-    if ((tickCounter % 20L) != 0L) {
-      return;
-    }
-
-    long now = nowEpochSecond();
-    scannerMarkedUntilEpochSecondByEntity.entrySet().removeIf(entry -> entry == null
-        || entry.getKey() == null
-        || entry.getValue() == null
-        || entry.getValue() <= now);
-    burstMineLockUntilEpochSecondByBlockKey.entrySet().removeIf(entry -> entry == null
-        || entry.getKey() == null
-        || entry.getValue() == null
-        || entry.getValue() <= now);
-    for (Player player : Bukkit.getOnlinePlayers()) {
-      if (player == null || !player.isOnline() || player.getGameMode() == GameMode.SPECTATOR || player.isDead()) {
-        continue;
-      }
-      PlayerRoundData data = players.get(player.getUniqueId());
-      if (data == null || data.isOut()) {
-        restoreShieldCoreMaxHealth(player);
-        shieldCoreLastAbsorptionByPlayer.remove(player.getUniqueId());
-        continue;
-      }
-      tickEffect80PerPlayer(player, data, now);
-    }
-    cleanupCursedDropRecords(now);
-  }
 
   private void tickEffect80PerPlayer(Player player, PlayerRoundData data, long nowEpochSecond) {
     if (player == null || data == null) {
@@ -4648,7 +4757,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
         continue;
       }
       String normalizedId = normalizeEffectId(effect.getId());
-      if ("B-MOD-01".equals(normalizedId)) {
+      if ("B-023".equals(normalizedId)) {
         shieldCoreTier = Math.max(shieldCoreTier, Math.max(1, Math.min(4, effect.getTier())));
       }
       EffectGimmickProfile profile = effectGimmicksById.get(normalizedId);
@@ -4659,7 +4768,6 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
       if (profile.tags().contains(GimmickTag.REWIND)) {
         updateRewindSnapshot(player, effect.getTier());
       }
-      applyEffect80Periodic(player, data, effect, profile, nowEpochSecond);
     }
 
     if (shieldCoreTier > 0) {
@@ -4839,25 +4947,6 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     }
   }
 
-  private void applyEffect80Periodic(
-      Player player,
-      PlayerRoundData data,
-      ActiveSeasonEffect effect,
-      EffectGimmickProfile profile,
-      long nowEpochSecond
-  ) {
-    if (player == null || data == null || effect == null || profile == null || profile.effect80Id() == null) {
-      return;
-    }
-    Effect80Id id = profile.effect80Id();
-    switch (id.group()) {
-      case 'B' -> applyBlessingEffect80Periodic(player, data, effect, profile, id.index(), nowEpochSecond);
-      case 'C' -> applyCurseEffect80Periodic(player, data, effect, profile, id.index(), nowEpochSecond);
-      case 'X' -> applyHybridEffect80Periodic(player, data, effect, profile, id.index(), nowEpochSecond);
-      default -> {
-      }
-    }
-  }
 
   private void applyBlessingEffect80Periodic(
       Player player,
@@ -4892,7 +4981,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
         }
       }
       case 5 -> {
-        // B-MOD-05 moved to ON_BLOCK_BREAK (natural stone + pickaxe).
+        // ON_BLOCK_BREAK (natural stone + pickaxe).
       }
       case 10 -> {
         ItemStack mainHand = player.getInventory().getItemInMainHand();
@@ -5201,7 +5290,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
         }
       }
       case 19 -> {
-        // C19 applies on dragon breath damage hook (applyEffect80DamageTaken).
+        // Dragon breath curse handling is resolved via runtime modifiers.
       }
       default -> {
       }
@@ -5452,7 +5541,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
         }
       }
       case 30 -> {
-        if (useEffectCooldown(uuid, "X-MOD-30", "score_investment_cycle", 300L)) {
+        if (useEffectCooldown(uuid, effect.getId(), "score_investment_cycle", 300L)) {
           processScoreInvestmentCycle(player, data, tier, nowEpochSecond);
         }
       }
@@ -5993,3026 +6082,39 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
         || entry.getValue() <= now);
   }
 
-  private void applyEffect80ActiveInput(PlayerInteractEvent event, Player player) {
-    if (event == null || player == null) {
-      return;
-    }
-    PlayerRoundData data = players.get(player.getUniqueId());
-    if (data == null || data.isOut()) {
-      return;
-    }
-    AbilityToken token = detectAbilityToken(player.getInventory().getItemInMainHand());
-    boolean debugBypass = seasonDebugModeEnabled();
-    AbilityMode mode = detectAbilityMode(player);
 
-    List<ActiveSeasonEffect> activeEffects = collectAllActiveEffects(data);
-    for (ActiveSeasonEffect effect : activeEffects) {
-      EffectGimmickProfile profile = effectGimmicksById.get(normalizeEffectId(effect.getId()));
-      if (profile == null || !profile.hasActiveTrigger()) {
-        continue;
-      }
-      if (!debugBypass) {
-        if (profile.token() != AbilityToken.NONE && profile.token() != token) {
-          continue;
-        }
-        if (profile.mode() != null && profile.mode() != mode) {
-          continue;
-        }
-      }
-      if (executeEffect80Active(event, player, data, effect, profile)) {
-        event.setCancelled(true);
-        return;
-      }
-    }
-  }
 
-  private boolean executeEffect80Active(
-      PlayerInteractEvent event,
-      Player player,
-      PlayerRoundData data,
-      ActiveSeasonEffect effect,
-      EffectGimmickProfile profile
-  ) {
-    if (player == null || data == null || effect == null || profile == null || profile.effect80Id() == null) {
-      return false;
-    }
-    UUID playerId = player.getUniqueId();
-    Effect80Id id = profile.effect80Id();
-    int tier = boostedBModTier(effect.getId(), effect.getTier());
-    int baseCooldown = Math.max(8, profile.baseCooldownSeconds() - ((tier - 1) * 2));
 
-    switch (id.group()) {
-      case 'B' -> {
-        switch (id.index()) {
-          case 6 -> {
-            // B-MOD-06 is passive shield-block logic.
-            return false;
-          }
-          case 2 -> {
-            long rewindCooldown = switch (tier) {
-              case 1 -> 120L;
-              case 2 -> 90L;
-              case 3 -> 60L;
-              default -> 30L;
-            };
-            if (!useEffectCooldown(playerId, effect.getId(), "active_rewind", rewindCooldown)) {
-              return false;
-            }
-            performTimeRewind(player, tier);
-            int extraCleanse = Math.max(0, tier - 1);
-            for (int i = 0; i < extraCleanse; i++) {
-              clearSingleNegativeEffect(player);
-            }
-            long guardSeconds = switch (tier) {
-              case 1 -> 10L;
-              case 2 -> 20L;
-              case 3 -> 30L;
-              default -> 40L;
-            };
-            double guardRatio = switch (tier) {
-              case 1 -> 0.20D;
-              case 2 -> 0.30D;
-              case 3 -> 0.40D;
-              default -> 0.50D;
-            };
-            rewindGuardUntilEpochSecondByPlayer.put(playerId, nowEpochSecond() + guardSeconds);
-            rewindGuardRatioByPlayer.put(playerId, guardRatio);
-            return true;
-          }
-          case 7 -> {
-            ItemStack mainHand = player.getInventory().getItemInMainHand();
-            if (mainHand == null || !isSwordMaterial(mainHand.getType())) {
-              return false;
-            }
-            ItemStack offHand = player.getInventory().getItemInOffHand();
-            if (offHand != null && offHand.getType() == Material.SHIELD) {
-              player.sendActionBar(ChatColor.RED + "차원 점멸: 방패를 해제해야 합니다");
-              return false;
-            }
-            long blinkCooldown = switch (tier) {
-              case 1 -> 20L;
-              case 2 -> 15L;
-              case 3 -> 10L;
-              default -> 5L;
-            };
-            if (!useEffectCooldown(playerId, effect.getId(), "active_blink", blinkCooldown)) {
-              return false;
-            }
-            double distance = switch (tier) {
-              case 1 -> 10.0D;
-              case 2 -> 15.0D;
-              case 3 -> 20.0D;
-              default -> 25.0D;
-            };
-            teleportForwardSafely(player, distance, 4);
-            int fallIgnoreSeconds = switch (tier) {
-              case 3 -> 1;
-              case 4 -> 2;
-              default -> 0;
-            };
-            if (fallIgnoreSeconds > 0) {
-              player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, (fallIgnoreSeconds * 20) + 20, 0, true, false, true));
-            }
-            return true;
-          }
-          case 8 -> {
-            ItemStack mainHand = player.getInventory().getItemInMainHand();
-            if (mainHand == null || !isSwordMaterial(mainHand.getType())) {
-              return false;
-            }
-            ItemStack offHand = player.getInventory().getItemInOffHand();
-            if (offHand != null && offHand.getType() == Material.SHIELD) {
-              player.sendActionBar(ChatColor.RED + "유령 걸음: 방패를 해제해야 합니다");
-              return false;
-            }
-            long phaseCooldown = switch (tier) {
-              case 1 -> 60L;
-              case 2 -> 50L;
-              case 3 -> 40L;
-              default -> 30L;
-            };
-            if (!useEffectCooldown(playerId, effect.getId(), "active_phase", phaseCooldown)) {
-              return false;
-            }
-            long durationSeconds = switch (tier) {
-              case 1 -> 7L;
-              case 2 -> 8L;
-              case 3 -> 9L;
-              default -> 10L;
-            };
-            noAttackUntilEpochSecond.put(playerId, nowEpochSecond() + durationSeconds);
-            noBuildUntilEpochSecond.put(playerId, nowEpochSecond() + durationSeconds);
-            temporaryInvulnerableUntilEpochSecondByPlayer.put(playerId, nowEpochSecond() + durationSeconds);
-            ghostUntilEpochSecond.put(playerId, nowEpochSecond() + durationSeconds);
-            ghostTierByPlayer.put(playerId, tier);
-            double phaseDistance = switch (tier) {
-              case 1 -> 4.0D;
-              case 2 -> 6.0D;
-              case 3 -> 8.0D;
-              default -> 10.0D;
-            };
-            executePhaseWalk(player, phaseDistance, tier);
-            return true;
-          }
-          case 9 -> {
-            ItemStack mainHand = player.getInventory().getItemInMainHand();
-            if (mainHand != null && mainHand.getType() != Material.AIR) {
-              return false;
-            }
-            long cooldown = switch (tier) {
-              case 1 -> 90L;
-              case 2 -> 75L;
-              case 3 -> 60L;
-              default -> 45L;
-            };
-            if (!useEffectCooldown(playerId, effect.getId(), "active_decoy", cooldown)) {
-              if (tier >= 3 && decoyEntityByPlayer.containsKey(playerId) && !decoySwapUsedByPlayer.getOrDefault(playerId, false)) {
-                UUID decoyId = decoyEntityByPlayer.get(playerId);
-                Entity decoy = decoyId == null ? null : Bukkit.getEntity(decoyId);
-                if (decoy != null && decoy.isValid()) {
-                  Location decoyLoc = decoy.getLocation().clone();
-                  decoy.teleport(player.getLocation(), PlayerTeleportEvent.TeleportCause.PLUGIN);
-                  player.teleport(decoyLoc, PlayerTeleportEvent.TeleportCause.PLUGIN);
-                  decoySwapUsedByPlayer.put(playerId, true);
-                  return true;
-                }
-              }
-              return false;
-            }
-            spawnOrRefreshDecoy(player, tier);
-            return true;
-          }
-          case 11 -> {
-            // B-MOD-11 is passive (wooden pickaxe mining trigger).
-            return false;
-          }
-          case 12 -> {
-            ItemStack mainHand = player.getInventory().getItemInMainHand();
-            if (mainHand == null || mainHand.getType() != Material.CRAFTING_TABLE) {
-              return false;
-            }
-            if (!useEffectCooldown(playerId, effect.getId(), "active_crafting", 1L)) {
-              return false;
-            }
-            player.openWorkbench(player.getLocation(), true);
-            return true;
-          }
-          case 13 -> {
-            ItemStack mainHand = player.getInventory().getItemInMainHand();
-            if (mainHand == null || !isSwordMaterial(mainHand.getType())) {
-              return false;
-            }
-            long cooldown = switch (tier) {
-              case 1 -> 120L;
-              case 2 -> 90L;
-              case 3 -> 60L;
-              default -> 45L;
-            };
-            if (!useEffectCooldown(playerId, effect.getId(), "active_build_burst", cooldown)) {
-              return false;
-            }
-            long duration = switch (tier) {
-              case 1 -> 30L;
-              case 2 -> 35L;
-              case 3 -> 40L;
-              default -> 45L;
-            };
-            long until = nowEpochSecond() + duration;
-            buildBurstUntilEpochSecondByPlayer.put(playerId, until);
-            buildBurstTierByPlayer.put(playerId, tier);
-            return true;
-          }
-          case 15 -> {
-            if (event == null) {
-              return false;
-            }
-            if (player.isSneaking()
-                && event.getAction() == Action.RIGHT_CLICK_BLOCK
-                && event.getClickedBlock() != null) {
-              handleAnchorAbility(event, player, tier);
-              return true;
-            }
-            if (!player.isSprinting()) {
-              return false;
-            }
-            long anchorCooldown = switch (tier) {
-              case 1 -> 240L;
-              case 2 -> 200L;
-              case 3 -> 160L;
-              default -> 120L;
-            };
-            if (!useEffectCooldown(playerId, effect.getId(), "active_anchor_return", anchorCooldown)) {
-              return false;
-            }
-            return handleAnchorAbility(event, player, tier);
-          }
-          case 16 -> {
-            // B-MOD-16 is periodic only.
-            return false;
-          }
-          case 17 -> {
-            if (tier < 3) {
-              return false;
-            }
-            long cooldown = tier >= 4 ? 60L : 120L;
-            if (!useEffectCooldown(playerId, effect.getId(), "active_aura_inversion", cooldown)) {
-              return false;
-            }
-            long now = nowEpochSecond();
-            long duration = tier >= 4 ? 30L : 20L;
-            auraInversionUntilEpochSecondByPlayer.put(playerId, now + duration);
-            player.sendActionBar(ChatColor.DARK_PURPLE + "오라 역상 활성 (" + duration + "s)");
-            return true;
-          }
-          case 18 -> {
-            // B-MOD-18 is passive.
-            return false;
-          }
-          case 20 -> {
-            long cooldown = switch (tier) {
-              case 1 -> 10L;
-              case 2 -> 8L;
-              case 3 -> 6L;
-              default -> 4L;
-            };
-            if (!useEffectCooldown(playerId, effect.getId(), "active_loot_portal", cooldown)) {
-              return false;
-            }
-            if (player.isSneaking()) {
-              openLootPortalInventory(player);
-            } else {
-              absorbNearbyDropsToLootPortal(player, tier);
-            }
-            return true;
-          }
-          default -> {
-            if (!useEffectCooldown(playerId, effect.getId(), "active_generic", baseCooldown)) {
-              return false;
-            }
-            if (profile.tags().contains(GimmickTag.TELEPORT)) {
-              teleportForwardSafely(player, 5.0D + tier, 3);
-              return true;
-            }
-            if (profile.tags().contains(GimmickTag.SCANNER)) {
-              sendScannerHint(player, false);
-              return true;
-            }
-            return false;
-          }
-        }
-      }
-      case 'X' -> {
-        switch (id.index()) {
-          case 11 -> {
-            if (tier < 4) {
-              return false;
-            }
-            if (!useEffectCooldown(playerId, effect.getId(), "active_stalker_taunt", 300L)) {
-              return false;
-            }
-            Enderman stalker = spawnStalkerNear(player);
-            if (stalker == null || !stalker.isValid()) {
-              player.sendActionBar(ChatColor.GRAY + "추격자 도발 실패: 소환 위치 없음");
-              return false;
-            }
-            stalkerEntities.add(stalker.getUniqueId());
-            stalker.addPotionEffect(new PotionEffect(PotionEffectType.STRENGTH, 600, 1, true, false, true));
-            player.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 120, 0, true, true, true));
-            player.sendActionBar(ChatColor.DARK_RED + "추격자 도발 발동");
-            return true;
-          }
-          case 8 -> {
-            if (tier < 4) {
-              return false;
-            }
-            if (!useEffectCooldown(playerId, effect.getId(), "active_swap_strike", 60L)) {
-              return false;
-            }
-            LivingEntity target = findSwapStrikeTarget(player, 12.0D);
-            if (target != null && performSwapStrike(player, target, tier, true)) {
-              return true;
-            }
-            teleportForwardSafely(player, 8.0D, 5);
-            player.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 100, 0, true, true, true));
-            player.sendActionBar(ChatColor.RED + "위치 교환 실패: 단독 전이");
-            return true;
-          }
-          case 9 -> {
-            long now = nowEpochSecond();
-            long duration = tier >= 2 ? 3L : 2L;
-            if (tier >= 4) {
-              if (!consumeRechargeCharge(
-                  playerId,
-                  ghostChargesByPlayer,
-                  ghostNextRechargeEpochSecondByPlayer,
-                  2,
-                  90L,
-                  now
-              )) {
-                player.sendActionBar(ChatColor.RED + "유령화: 충전 대기중");
-                return false;
-              }
-            } else if (!useEffectCooldown(playerId, effect.getId(), "active_ghost", Math.max(90, baseCooldown))) {
-              return false;
-            }
-            temporaryInvulnerableUntilEpochSecondByPlayer.put(playerId, now + duration);
-            noAttackUntilEpochSecond.put(playerId, now + duration);
-            noBuildUntilEpochSecond.put(playerId, now + duration);
-            ghostUntilEpochSecond.put(playerId, now + duration);
-            ghostTierByPlayer.put(playerId, tier);
-            return true;
-          }
-          case 15 -> {
-            if (tier < 4) {
-              return false;
-            }
-            if (!useEffectCooldown(playerId, effect.getId(), "active_fortress_mode", 120L)) {
-              return false;
-            }
-            long now = nowEpochSecond();
-            fortressModeUntilEpochSecondByPlayer.put(playerId, now + 120L);
-            fortressOverclockUntilEpochSecondByPlayer.put(playerId, now + 10L);
-            player.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, 200, 0, true, false, true));
-            player.sendActionBar(ChatColor.GOLD + "임시 요새 모드 활성화 (120s)");
-            return true;
-          }
-          case 16 -> {
-            ItemStack mainHand = player.getInventory().getItemInMainHand();
-            if (mainHand == null || !isSwordMaterial(mainHand.getType())) {
-              player.sendActionBar(ChatColor.RED + "검기 방출: 검 계열 무기가 필요합니다");
-              return false;
-            }
-            long swordWaveCooldown = tier >= 4 ? 60L : 45L;
-            if (!useEffectCooldown(playerId, effect.getId(), "active_sword_wave", swordWaveCooldown)) {
-              return false;
-            }
-            List<LivingEntity> hits = executeSwordWave(player, tier);
-            if (tier >= 3 && !hits.isEmpty()) {
-              for (LivingEntity hit : hits) {
-                if (hit == null || !hit.isValid()) {
-                  continue;
-                }
-                Vector pull = player.getLocation().toVector().subtract(hit.getLocation().toVector());
-                if (pull.lengthSquared() <= 0.0001D) {
-                  continue;
-                }
-                hit.setVelocity(hit.getVelocity().add(pull.normalize().multiply(0.22D).setY(0.10D)));
-              }
-              player.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 60, 0, true, true, true));
-            }
-            consumeHybridSwordWaveCost(player, tier);
-            if (tier >= 4) {
-              player.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 80, 0, true, false, true));
-            }
-            return true;
-          }
-          case 20 -> {
-            if (tier < 4) {
-              return false;
-            }
-            if (!useEffectCooldown(playerId, effect.getId(), "active_black_sanctuary_cleanse", 180L)) {
-              return false;
-            }
-            long scoreCost = 240L;
-            if (data.getScore() < scoreCost) {
-              player.sendActionBar(ChatColor.RED + "검은 성소 정화: 점수 부족 (" + data.getScore() + "/" + scoreCost + ")");
-              return false;
-            }
-            adjustPlayerScore(playerId, data, -scoreCost, false);
-            long now = nowEpochSecond();
-            blackSanctuaryCalmUntilEpochSecondByPlayer.put(playerId, now + 10L);
-            weakenNearbyHostiles(player, tier, 14.0D);
-            player.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, 120, 0, true, false, true));
-            player.sendActionBar(ChatColor.DARK_PURPLE + "검은 성소 정화 발동 (10s)");
-            return true;
-          }
-          case 24 -> {
-            if (tier < 3) {
-              return false;
-            }
-            if (tier >= 4 && player.isSneaking()) {
-              if (!useEffectCooldown(playerId, effect.getId(), "active_projectile_reflect", 180L)) {
-                return false;
-              }
-              projectileReflectUntilEpochSecondByPlayer.put(playerId, nowEpochSecond() + 1L);
-              projectileReflectPendingPlayers.add(playerId);
-              player.sendActionBar(ChatColor.DARK_AQUA + "탄도 왜곡: 반사 준비");
-              return true;
-            }
-            if (!useEffectCooldown(playerId, effect.getId(), "active_projectile_align", 90L)) {
-              return false;
-            }
-            projectileAlignUntilEpochSecondByPlayer.put(playerId, nowEpochSecond() + 5L);
-            player.sendActionBar(ChatColor.AQUA + "탄도 왜곡: 투사체 정렬");
-            return true;
-          }
-          case 30 -> {
-            if (!useEffectCooldown(playerId, effect.getId(), "active_score_invest", Math.max(20, baseCooldown))) {
-              return false;
-            }
-            long invest = Math.max(0L, Math.min(5000L * tier, data.getScore() / 5L));
-            if (invest <= 0L) {
-              return false;
-            }
-            adjustPlayerScore(playerId, data, -invest, false);
-            scoreInvestmentUntilEpochSecondByPlayer.put(playerId, nowEpochSecond() + (30L + (tier * 8L)));
-            scoreInvestmentBonusRatioByPlayer.put(playerId, Math.min(0.60D, (invest / 10000.0D)));
-            return true;
-          }
-          case 32 -> {
-            long flareCooldown = switch (tier) {
-              case 1 -> 120L;
-              case 2, 3 -> 90L;
-              default -> 75L;
-            };
-            if (!useEffectCooldown(playerId, effect.getId(), "active_flare", flareCooldown)) {
-              return false;
-            }
-            flareReveal(player, tier);
-            return true;
-          }
-          case 34 -> {
-            if (!useEffectCooldown(playerId, effect.getId(), "active_clone_pact", Math.max(35L, baseCooldown))) {
-              return false;
-            }
-            spawnOrRefreshDecoy(player, tier);
-            spawnClonePactAuxDecoys(player, tier);
-            if (tier >= 3) {
-              for (Entity entity : player.getNearbyEntities(6.0D, 4.0D, 6.0D)) {
-                if (!(entity instanceof Monster monster)) {
-                  continue;
-                }
-                monster.addPotionEffect(new PotionEffect(PotionEffectType.NAUSEA, 80, 0, true, false, true));
-                monster.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 40, 0, true, false, true));
-              }
-            }
-            return true;
-          }
-          case 39 -> {
-            long cooldown = switch (tier) {
-              case 1 -> 120L;
-              case 2 -> 110L;
-              case 3 -> 100L;
-              default -> 90L;
-            };
-            if (!useEffectCooldown(playerId, effect.getId(), "active_time_tax_field", cooldown)) {
-              return false;
-            }
-            long now = nowEpochSecond();
-            long fieldDurationSeconds = switch (tier) {
-              case 1 -> 2L;
-              case 2, 3 -> 3L;
-              default -> 3L;
-            };
-            long selfLockMillis = switch (tier) {
-              case 1 -> 1000L;
-              case 2 -> 1500L;
-              case 3 -> 2000L;
-              default -> 3000L;
-            };
-            timeTaxFieldUntilEpochSecondByPlayer.put(playerId, now + fieldDurationSeconds);
-            timeTaxFieldTierByPlayer.put(playerId, tier);
-            long selfLockUntil = now + Math.max(1L, (selfLockMillis + 999L) / 1000L);
-            noAttackUntilEpochSecond.put(playerId, Math.max(noAttackUntilEpochSecond.getOrDefault(playerId, 0L), selfLockUntil));
-            noBuildUntilEpochSecond.put(playerId, Math.max(noBuildUntilEpochSecond.getOrDefault(playerId, 0L), selfLockUntil));
-            player.setSprinting(false);
-            int slownessAmp = tier >= 4 ? 8 : 6;
-            int slownessTicks = (int) Math.max(20L, Math.round(selfLockMillis / 50.0D));
-            player.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, slownessTicks, slownessAmp, true, false, true));
-            player.getWorld().playSound(player.getLocation(), Sound.BLOCK_RESPAWN_ANCHOR_DEPLETE, 0.7F, 0.9F);
-            if (tier >= 4) {
-              Bukkit.getScheduler().runTaskLater(this, () -> {
-                Player online = Bukkit.getPlayer(playerId);
-                if (online == null || !online.isOnline() || online.isDead()) {
-                  return;
-                }
-                PlayerRoundData onlineData = players.get(playerId);
-                if (onlineData == null || onlineData.isOut() || highestEffect80Tier(onlineData, 'X', 39) <= 0) {
-                  return;
-                }
-                online.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 120, 0, true, false, true));
-                online.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 120, 0, true, false, true));
-              }, Math.max(20L, fieldDurationSeconds * 20L));
-            }
-            return true;
-          }
-          default -> {
-            if (!useEffectCooldown(playerId, effect.getId(), "active_generic_x", baseCooldown)) {
-              return false;
-            }
-            if (profile.tags().contains(GimmickTag.TELEPORT)) {
-              teleportForwardSafely(player, 4.0D + tier, 3);
-              return true;
-            }
-            if (profile.tags().contains(GimmickTag.AOE_COMBAT)) {
-              pulseKnockback(player, 4.0D + tier, 0.45D + (tier * 0.05D), true);
-              return true;
-            }
-            return false;
-          }
-        }
-      }
-      default -> {
-        return false;
-      }
-    }
-  }
 
-  private void applyEffect80Portal(PlayerPortalEvent event) {
-    if (event == null) {
-      return;
-    }
-    Player player = event.getPlayer();
-    UUID playerId = player.getUniqueId();
-    PlayerRoundData data = players.get(player.getUniqueId());
-    if (data == null || data.isOut()) {
-      return;
-    }
-    long nowEpochSecond = nowEpochSecond();
-    long nowMillis = System.currentTimeMillis();
-    List<ActiveSeasonEffect> activeEffects = collectAllActiveEffects(data);
-    for (ActiveSeasonEffect effect : activeEffects) {
-      EffectGimmickProfile profile = effectGimmicksById.get(normalizeEffectId(effect.getId()));
-      if (profile == null || profile.effect80Id() == null) {
-        continue;
-      }
-      Effect80Id id = profile.effect80Id();
-      if (id.group() == 'C' && id.index() == 9) {
-        Location to = event.getTo();
-        if (to == null) {
-          continue;
-        }
-        int tier = boostedBModTier(effect.getId(), effect.getTier());
-        double spread = tier <= 1 ? 2.0D : 4.0D;
-        Location shifted = to.clone().add(
-            ThreadLocalRandom.current().nextDouble(-spread, spread),
-            0.0D,
-            ThreadLocalRandom.current().nextDouble(-spread, spread)
-        );
-        Location safe = findNearestSafeLocation(shifted, 6);
-        if (safe != null) {
-          event.setTo(safe);
-        }
-        player.addPotionEffect(new PotionEffect(PotionEffectType.NAUSEA, 40, 0, true, false, true));
-        if (tier >= 3) {
-          cursedSprintLockUntilEpochSecondByPlayer.put(playerId, nowEpochSecond + 2L);
-          player.setSprinting(false);
-        }
-        if (tier >= 4) {
-          ominousBlinkReblinkUntilEpochSecondByPlayer.put(playerId, nowEpochSecond + 6L);
-          ominousBlinkNextPulseEpochSecondByPlayer.put(playerId, nowEpochSecond + 1L);
-        }
-        c9PortalHandledUntilEpochMilliByPlayer.put(playerId, nowMillis + 1500L);
-      }
-    }
-  }
 
-  private void applyEffect80Teleport(PlayerTeleportEvent event) {
-    if (event == null || event.getTo() == null) {
-      return;
-    }
-    Player player = event.getPlayer();
-    UUID playerId = player.getUniqueId();
-    long nowMillis = System.currentTimeMillis();
-    if (c9InternalTeleportGuardUntilEpochMilliByPlayer.getOrDefault(playerId, 0L) > nowMillis) {
-      return;
-    }
-    c9InternalTeleportGuardUntilEpochMilliByPlayer.remove(playerId);
-    PlayerRoundData data = players.get(player.getUniqueId());
-    if (data == null || data.isOut()) {
-      return;
-    }
-    long nowEpochSecond = nowEpochSecond();
-    boolean portalAlreadyHandled = isPortalTeleportCause(event.getCause())
-        && c9PortalHandledUntilEpochMilliByPlayer.getOrDefault(playerId, 0L) > nowMillis;
-    if (!portalAlreadyHandled && c9PortalHandledUntilEpochMilliByPlayer.getOrDefault(playerId, 0L) <= nowMillis) {
-      c9PortalHandledUntilEpochMilliByPlayer.remove(playerId);
-    }
-    List<ActiveSeasonEffect> activeEffects = collectAllActiveEffects(data);
-    for (ActiveSeasonEffect effect : activeEffects) {
-      EffectGimmickProfile profile = effectGimmicksById.get(normalizeEffectId(effect.getId()));
-      if (profile == null || profile.effect80Id() == null) {
-        continue;
-      }
-      Effect80Id id = profile.effect80Id();
-      int tier = boostedBModTier(effect.getId(), effect.getTier());
-      if (id.group() == 'C' && id.index() == 9) {
-        if (portalAlreadyHandled) {
-          continue;
-        }
-        double spread = tier <= 1 ? 2.0D : 4.0D;
-        Location shifted = event.getTo().clone().add(
-            ThreadLocalRandom.current().nextDouble(-spread, spread),
-            0.0D,
-            ThreadLocalRandom.current().nextDouble(-spread, spread)
-        );
-        Location safe = findNearestSafeLocation(shifted, 6);
-        if (safe != null) {
-          event.setTo(safe);
-        }
-        player.addPotionEffect(new PotionEffect(PotionEffectType.NAUSEA, 40, 0, true, false, true));
-        if (tier >= 3) {
-          cursedSprintLockUntilEpochSecondByPlayer.put(playerId, nowEpochSecond + 2L);
-          player.setSprinting(false);
-        }
-        if (tier >= 4) {
-          ominousBlinkReblinkUntilEpochSecondByPlayer.put(playerId, nowEpochSecond + 6L);
-          ominousBlinkNextPulseEpochSecondByPlayer.put(playerId, nowEpochSecond + 1L);
-        }
-      } else if (id.group() == 'X' && id.index() == 33) {
-        if (event.getCause() != PlayerTeleportEvent.TeleportCause.ENDER_PEARL) {
-          continue;
-        }
-        long afterimageDuration = tier <= 1 ? 2L : 3L;
-        enderOrbitAfterimageUntilEpochSecondByPlayer.put(playerId, nowEpochSecond + afterimageDuration);
-        enderOrbitPearlGraceUntilEpochSecondByPlayer.put(playerId, nowEpochSecond + (tier >= 3 ? 4L : 3L));
-        player.getWorld().spawnParticle(Particle.PORTAL, player.getLocation().clone().add(0.0D, 1.0D, 0.0D), 26 + (tier * 5), 0.45D, 0.65D, 0.45D, 0.03D);
-        player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 0.45F, 1.20F);
-        if (tier >= 2) {
-          player.getWorld().spawnParticle(Particle.SMOKE, player.getLocation().clone().add(0.0D, 1.0D, 0.0D), 12 + (tier * 3), 0.4D, 0.5D, 0.4D, 0.01D);
-        }
-        if (tier >= 3) {
-          deflectNearbyProjectilesSlight(player, 3.5D + tier);
-        }
-        if (tier >= 4) {
-          long followupUntil = enderOrbitRapidFollowupUntilEpochSecondByPlayer.getOrDefault(playerId, 0L);
-          if (followupUntil > nowEpochSecond) {
-            enderOrbitRapidFollowupUntilEpochSecondByPlayer.remove(playerId);
-            enderOrbitRapidFollowupCooldownUntilEpochSecondByPlayer.put(playerId, nowEpochSecond + 45L);
-            player.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 300, 0, true, true, true));
-            player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 60, 0, true, false, true));
-            player.sendActionBar(ChatColor.RED + "엔더 궤도: 2연속 전이 완료 (긴 쿨다운)");
-          } else if (enderOrbitRapidFollowupCooldownUntilEpochSecondByPlayer.getOrDefault(playerId, 0L) <= nowEpochSecond) {
-            enderOrbitRapidFollowupUntilEpochSecondByPlayer.put(playerId, nowEpochSecond + 5L);
-            player.sendActionBar(ChatColor.DARK_AQUA + "엔더 궤도: 5초 내 2연속 전이 가능");
-          }
-        }
-      } else if (id.group() == 'X' && id.index() == 8) {
-        player.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, 30, 0, true, false, true));
-      }
-    }
-  }
 
-  private void applyEffect80DamageTaken(EntityDamageEvent event, Player victim, PlayerRoundData victimData) {
-    if (event == null || victim == null || victimData == null) {
-      return;
-    }
-    UUID victimId = victim.getUniqueId();
-    long now = nowEpochSecond();
-    if (event instanceof EntityDamageByEntityEvent byEntityEvent) {
-      Player damagerPlayer = resolveAttackingPlayer(byEntityEvent.getDamager());
-      if (damagerPlayer != null && !damagerPlayer.getUniqueId().equals(victimId)) {
-        lastDamagerLocationByPlayer.put(victimId, damagerPlayer.getLocation().clone());
-      } else if (byEntityEvent.getDamager() != null && byEntityEvent.getDamager().isValid()) {
-        lastDamagerLocationByPlayer.put(victimId, byEntityEvent.getDamager().getLocation().clone());
-      }
-    }
-    if (temporaryInvulnerableUntilEpochSecondByPlayer.getOrDefault(victimId, 0L) > now) {
-      event.setCancelled(true);
-      return;
-    }
 
-    if (reflectSkinVulnerableUntilEpochSecondByPlayer.getOrDefault(victimId, 0L) > now) {
-      event.setDamage(event.getDamage() * 1.10D);
-    } else {
-      reflectSkinVulnerableUntilEpochSecondByPlayer.remove(victimId);
-    }
 
-    long rewindGuardUntil = rewindGuardUntilEpochSecondByPlayer.getOrDefault(victimId, 0L);
-    if (rewindGuardUntil > now) {
-      double guardRatio = Math.max(0.0D, Math.min(0.95D, rewindGuardRatioByPlayer.getOrDefault(victimId, 0.0D)));
-      if (guardRatio > 0.0D) {
-        event.setDamage(Math.max(0.1D, event.getDamage() * (1.0D - guardRatio)));
-      }
-    }
 
-    int shieldCoreTier = highestEffect80Tier(victimData, 'B', 1);
-    if (shieldCoreTier > 0) {
-      double baseReduction = switch (Math.max(1, Math.min(4, shieldCoreTier))) {
-        case 1 -> 0.20D;
-        case 2 -> 0.30D;
-        case 3 -> 0.40D;
-        default -> 0.50D;
-      };
-      double extraReduction = victim.getAbsorptionAmount() > 0.0D ? 0.20D : 0.0D;
-      double totalReduction = Math.max(0.0D, Math.min(0.95D, baseReduction + extraReduction));
-      event.setDamage(Math.max(0.1D, event.getDamage() * (1.0D - totalReduction)));
-    }
 
-    int ballisticTier = highestEffect80Tier(victimData, 'B', 6);
-    if (ballisticTier > 0) {
-      boolean projectileHit = event.getCause() == EntityDamageEvent.DamageCause.PROJECTILE
-          || (event instanceof EntityDamageByEntityEvent byEntityEvent
-              && byEntityEvent.getDamager() instanceof Projectile);
-      if (projectileHit) {
-        double projectileReduction = switch (Math.max(1, Math.min(4, ballisticTier))) {
-          case 1 -> 0.20D;
-          case 2 -> 0.30D;
-          case 3 -> 0.40D;
-          default -> 0.50D;
-        };
-        event.setDamage(Math.max(0.1D, event.getDamage() * (1.0D - projectileReduction)));
-      }
-      if (victim.isBlocking()) {
-        double blockReduction = switch (Math.max(1, Math.min(4, ballisticTier))) {
-          case 1 -> 0.10D;
-          case 2 -> 0.15D;
-          case 3 -> 0.20D;
-          default -> 0.25D;
-        };
-        event.setDamage(Math.max(0.1D, event.getDamage() * (1.0D - blockReduction)));
-        double gatherRadius = switch (Math.max(1, Math.min(4, ballisticTier))) {
-          case 1 -> 4.0D;
-          case 2 -> 5.0D;
-          case 3 -> 6.0D;
-          default -> 7.0D;
-        };
-        redirectNearbyProjectilesTowardDefender(victim, gatherRadius);
-      }
-      if (victim.isBlocking()
-          && event instanceof EntityDamageByEntityEvent byEntityEvent
-          && byEntityEvent.getDamager() instanceof Projectile projectile) {
-        event.setCancelled(true);
-        reflectProjectileToAttacker(projectile, victim);
-        return;
-      }
-    }
 
-    int explosionSourceTier = 0;
-    Player explosionSourcePlayer = null;
-    if (isExplosionDamageCause(event.getCause()) && event instanceof EntityDamageByEntityEvent explosionEvent) {
-      explosionSourcePlayer = resolveExplosionSourcePlayer(explosionEvent.getDamager());
-      if (explosionSourcePlayer != null) {
-        PlayerRoundData sourceData = players.get(explosionSourcePlayer.getUniqueId());
-        if (sourceData != null && !sourceData.isOut()) {
-          explosionSourceTier = highestEffect80Tier(sourceData, 'X', 36);
-        }
-      }
-      if (explosionSourceTier > 0) {
-        double dealtMultiplier = switch (explosionSourceTier) {
-          case 1 -> 1.20D;
-          case 2, 3 -> 1.35D;
-          default -> 1.50D;
-        };
-        event.setDamage(event.getDamage() * dealtMultiplier);
-        if (explosionSourceTier >= 3 && explosionSourcePlayer != null
-            && !explosionSourcePlayer.getUniqueId().equals(victimId)) {
-          Vector push = victim.getLocation().toVector().subtract(explosionSourcePlayer.getLocation().toVector());
-          if (push.lengthSquared() > 0.0001D) {
-            double strength = explosionSourceTier >= 4 ? 1.05D : 0.78D;
-            victim.setVelocity(victim.getVelocity().add(push.normalize().multiply(strength).setY(0.28D)));
-          }
-        }
-      }
-    }
 
-    List<ActiveSeasonEffect> activeEffects = collectAllActiveEffects(victimData);
-    for (ActiveSeasonEffect effect : activeEffects) {
-      EffectGimmickProfile profile = effectGimmicksById.get(normalizeEffectId(effect.getId()));
-      if (profile == null || profile.effect80Id() == null) {
-        continue;
-      }
-      int tier = boostedBModTier(effect.getId(), effect.getTier());
-      Effect80Id id = profile.effect80Id();
 
-      if (id.group() == 'B' && id.index() == 16 && event instanceof EntityDamageByEntityEvent byEntityEvent) {
-        Entity damager = byEntityEvent.getDamager();
-        UUID markedId = damager == null ? null : damager.getUniqueId();
-        if (markedId != null && scannerMarkedUntilEpochSecondByEntity.getOrDefault(markedId, 0L) > now) {
-          double reduction = switch (tier) {
-            case 1 -> 0.25D;
-            case 2 -> 0.50D;
-            case 3 -> 0.75D;
-            default -> 0.90D;
-          };
-          event.setDamage(Math.max(0.1D, event.getDamage() * (1.0D - reduction)));
-        }
-      } else if (id.group() == 'B' && id.index() == 15 && tier >= 4) {
-        EntityDamageEvent.DamageCause cause = event.getCause();
-        boolean fatalHazard = cause == EntityDamageEvent.DamageCause.FALL
-            || cause == EntityDamageEvent.DamageCause.LAVA
-            || cause == EntityDamageEvent.DamageCause.FIRE
-            || cause == EntityDamageEvent.DamageCause.FIRE_TICK;
-        if (fatalHazard
-            && anchorFatalBufferUntilEpochSecondByPlayer.getOrDefault(victimId, 0L) > now
-            && event.getFinalDamage() >= victim.getHealth()) {
-          event.setCancelled(true);
-          victim.setHealth(Math.max(2.0D, victim.getHealth()));
-          temporaryInvulnerableUntilEpochSecondByPlayer.put(victimId, now + 1L);
-          anchorFatalBufferUntilEpochSecondByPlayer.remove(victimId);
-          victim.sendActionBar(ChatColor.AQUA + "귀환 앵커 완충 발동");
-          continue;
-        }
-      } else if (id.group() == 'B' && id.index() == 19) {
-        boolean trackedRaidMobDamage = false;
-        if (event.getCause() == EntityDamageEvent.DamageCause.DRAGON_BREATH) {
-          trackedRaidMobDamage = true;
-        } else if (event instanceof EntityDamageByEntityEvent byEntityEvent) {
-          Entity damager = byEntityEvent.getDamager();
-          if (isRaidImmunityTrackedMob(damager)) {
-            trackedRaidMobDamage = true;
-          } else if (damager instanceof Projectile projectile
-              && projectile.getShooter() instanceof Entity shooter
-              && isRaidImmunityTrackedMob(shooter)) {
-            trackedRaidMobDamage = true;
-          }
-        }
-        if (victim.getWorld().getEnvironment() == World.Environment.THE_END && trackedRaidMobDamage) {
-          double reduction = switch (tier) {
-            case 1 -> 0.30D;
-            case 2 -> 0.45D;
-            case 3 -> 0.60D;
-            default -> 0.75D;
-          };
-          event.setDamage(Math.max(0.1D, event.getDamage() * (1.0D - reduction)));
-        }
-        if (victim.getWorld().getEnvironment() == World.Environment.THE_END
-            && dragonRaidPhase > 0
-            && event.getFinalDamage() >= victim.getHealth()
-            && !raidRaidwideSaveUsedByPlayer.contains(victimId)) {
-          raidRaidwideSaveUsedByPlayer.add(victimId);
-          event.setCancelled(true);
-          victim.setHealth(Math.max(2.0D, victim.getHealth()));
-          temporaryInvulnerableUntilEpochSecondByPlayer.put(victimId, now + 10L);
-          victim.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 200, 9, true, false, true));
-          victim.sendActionBar(ChatColor.GOLD + "레이드 면역막: 전투 중 1회 사망 무효");
-          continue;
-        }
-      } else if (id.group() == 'B' && id.index() == 14) {
-        double afterDamage = victim.getHealth() - event.getFinalDamage();
-        double maxHealth = victim.getAttribute(Attribute.MAX_HEALTH) == null
-            ? 20.0D
-            : victim.getAttribute(Attribute.MAX_HEALTH).getValue();
-        double triggerRatio = switch (tier) {
-          case 1 -> 0.30D;
-          case 2 -> 0.28D;
-          case 3 -> 0.26D;
-          default -> 0.20D;
-        };
-        boolean fatalIncoming = event.getFinalDamage() >= victim.getHealth();
-        boolean triggerByHp = afterDamage <= Math.max(1.0D, maxHealth * triggerRatio);
-        boolean triggerByFatal = tier >= 3 && fatalIncoming;
-        long emergencyShiftCooldown = switch (tier) {
-          case 1 -> 120L;
-          case 2 -> 100L;
-          case 3 -> 80L;
-          default -> 60L;
-        };
-        if ((triggerByHp || triggerByFatal)
-            && useEffectCooldown(victimId, effect.getId(), "emergency_shift", emergencyShiftCooldown)) {
-          double backwardDistance = switch (tier) {
-            case 1 -> 10.0D;
-            case 2 -> 12.0D;
-            case 3 -> 14.0D;
-            default -> 16.0D;
-          };
-          teleportBackwardSafely(victim, backwardDistance, 6);
-          long invulnSeconds = switch (tier) {
-            case 1 -> 2L;
-            case 2 -> 3L;
-            case 3 -> 4L;
-            default -> 5L;
-          };
-          temporaryInvulnerableUntilEpochSecondByPlayer.put(victimId, now + invulnSeconds);
-          victim.setFireTicks(0);
-          victim.setFallDistance(0.0F);
-          if (triggerByFatal) {
-            event.setCancelled(true);
-            victim.setHealth(Math.max(2.0D, Math.min(maxHealth, victim.getHealth())));
-          }
-          if (tier >= 3) {
-            victim.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, (int) (invulnSeconds * 20L), 2, true, false, true));
-          }
-          emitBModProcFeedback(victim, tier, true);
-        }
-      } else if (id.group() == 'B' && id.index() == 2 && tier >= 4 && event.getFinalDamage() >= victim.getHealth()) {
-        if (useEffectCooldown(victimId, effect.getId(), "fatal_rewind", 180L)) {
-          event.setCancelled(true);
-          performTimeRewind(victim, tier, 30);
-          victim.setHealth(Math.max(2.0D, victim.getHealth()));
-          victim.addPotionEffect(new PotionEffect(PotionEffectType.NAUSEA, 200, 0, true, false, true));
-          rewindGuardUntilEpochSecondByPlayer.put(victimId, now + 40L);
-          rewindGuardRatioByPlayer.put(victimId, 0.50D);
-          emitBModProcFeedback(victim, tier, true);
-        }
-      } else if (id.group() == 'C' && id.index() == 4) {
-        long durationSeconds = switch (tier) {
-          case 1 -> 2L;
-          case 2 -> 3L;
-          case 3 -> 4L;
-          default -> 6L;
-        };
-        controlDistortionUntilEpochSecondByPlayer.put(victimId, now + durationSeconds);
-        controlDistortionTierByPlayer.put(victimId, tier);
-        int nauseaTicks = switch (tier) {
-          case 1 -> 40;
-          case 2 -> 60;
-          case 3 -> 80;
-          default -> 120;
-        };
-        victim.addPotionEffect(new PotionEffect(PotionEffectType.NAUSEA, nauseaTicks, 0, true, false, true));
-        randomizePlayerYaw(victim, tier <= 1 ? 24.0F : 42.0F);
-        if (tier >= 3 && isPlayerInRecentCombat(victimId, 10L)) {
-          double flipChance = tier >= 4 ? 0.35D : 0.22D;
-          if (ThreadLocalRandom.current().nextDouble() < flipChance) {
-            flipPlayerYaw(victim);
-          }
-        }
-      } else if (id.group() == 'C' && id.index() == 13) {
-        if (tier >= 2 && event instanceof EntityDamageByEntityEvent byEntityEvent) {
-          Entity damager = byEntityEvent.getDamager();
-          boolean stalkerAttack = false;
-          if (damager != null && damager.getScoreboardTags().contains(STALKER_TAG)) {
-            stalkerAttack = true;
-          } else if (damager instanceof Projectile projectile
-              && projectile.getShooter() instanceof Entity shooter
-              && shooter.getScoreboardTags().contains(STALKER_TAG)) {
-            stalkerAttack = true;
-          }
-          if (stalkerAttack && useEffectCooldown(victimId, effect.getId(), "stalker_first_hit_slow", 14L)) {
-            victim.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, tier >= 4 ? 100 : 80, 0, true, false, true));
-            if (tier >= 4) {
-              victim.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 60, 0, true, false, true));
-            }
-          }
-        }
-      } else if (id.group() == 'C' && id.index() == 18) {
-        if (tier >= 4
-            && event instanceof EntityDamageByEntityEvent
-            && ThreadLocalRandom.current().nextDouble() < 0.18D) {
-          forceSwapToRandomHotbar(victim);
-        }
-      } else if (id.group() == 'C' && id.index() == 19) {
-        boolean breathSource = false;
-        if (event.getCause() == EntityDamageEvent.DamageCause.DRAGON_BREATH) {
-          breathSource = true;
-        } else if (event instanceof EntityDamageByEntityEvent byEntityEvent) {
-          Entity damager = byEntityEvent.getDamager();
-          if (damager != null && (damager.getType() == EntityType.ENDER_DRAGON || damager.getType() == EntityType.DRAGON_FIREBALL)) {
-            breathSource = true;
-          } else if (damager instanceof Projectile projectile
-              && projectile.getShooter() instanceof Entity shooter
-              && shooter.getType() == EntityType.ENDER_DRAGON) {
-            breathSource = true;
-          }
-        }
-        if (victim.getWorld().getEnvironment() == World.Environment.THE_END
-            && breathSource
-            && useEffectCooldown(victimId, effect.getId(), "doom_breath_tick", 1L)) {
-          victim.addPotionEffect(new PotionEffect(PotionEffectType.WITHER, 80 + (tier * 20), tier >= 2 ? 1 : 0, true, false, true));
-          cursedSprintLockUntilEpochSecondByPlayer.put(victimId, now + (tier >= 2 ? 3L : 2L));
-          victim.setSprinting(false);
-          if (tier >= 2) {
-            victim.addPotionEffect(new PotionEffect(PotionEffectType.DARKNESS, 60, 0, true, false, true));
-          }
-          if (tier >= 3) {
-            doomBreathHealLockUntilEpochSecondByPlayer.put(victimId, now + 4L);
-          }
-          if (tier >= 4) {
-            victim.addPotionEffect(new PotionEffect(PotionEffectType.NAUSEA, 80, 0, true, false, true));
-            victim.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 80, 0, true, false, true));
-          }
-        }
-      } else if (id.group() == 'X' && id.index() == 17) {
-        if (tier >= 3 && !victim.isOnGround() && event instanceof EntityDamageByEntityEvent) {
-          victim.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 30, 0, true, false, true));
-          Vector velocity = victim.getVelocity();
-          if (velocity != null) {
-            victim.setVelocity(velocity.clone().multiply(0.25D));
-          }
-          if (tier >= 4) {
-            noAttackUntilEpochSecond.put(victimId, Math.max(noAttackUntilEpochSecond.getOrDefault(victimId, 0L), now + 1L));
-          }
-        }
-      } else if (id.group() == 'X' && id.index() == 20) {
-        long calmUntil = blackSanctuaryCalmUntilEpochSecondByPlayer.getOrDefault(victimId, 0L);
-        if (calmUntil > now) {
-          double reduction = tier >= 4 ? 0.35D : (tier >= 2 ? 0.25D : 0.18D);
-          event.setDamage(Math.max(0.2D, event.getDamage() * (1.0D - reduction)));
-        }
-      } else if (id.group() == 'X' && id.index() == 23) {
-        double durabilityRatio = switch (tier) {
-          case 1 -> 0.15D;
-          case 2 -> 0.25D;
-          case 3 -> 0.35D;
-          default -> 0.45D;
-        };
-        if (tier >= 4
-            && event.getFinalDamage() >= victim.getHealth()
-            && useEffectCooldown(victimId, effect.getId(), "armor_sacrifice_fatal", 300L)
-            && shatterOneArmorPiece(victim)) {
-          event.setCancelled(true);
-          victim.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 200, 0, true, false, true));
-          victim.sendActionBar(ChatColor.YELLOW + "방어구 희생: 치명타 무효");
-          continue;
-        }
-        double prevented = Math.max(0.0D, event.getDamage() * durabilityRatio);
-        if (prevented > 0.0D) {
-          event.setDamage(Math.max(0.2D, event.getDamage() - prevented));
-          int broken = applyArmorDurabilitySacrifice(victim, prevented, tier);
-          if (tier >= 3 && broken > 0) {
-            victim.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 200, 0, true, false, true));
-          }
-        }
-      } else if (id.group() == 'X' && id.index() == 24
-          && event instanceof EntityDamageByEntityEvent byEntityEvent
-          && byEntityEvent.getDamager() instanceof Projectile projectile) {
-        long reflectUntil = projectileReflectUntilEpochSecondByPlayer.getOrDefault(victimId, 0L);
-        if (reflectUntil > now) {
-          event.setCancelled(true);
-          reflectProjectileToAttacker(projectile, victim);
-          projectileReflectPendingPlayers.remove(victimId);
-          continue;
-        }
-      } else if (id.group() == 'X' && id.index() == 4) {
-        applyScoreShieldDamageResponse(event, victim, victimData, effect, tier, now);
-      } else if (id.group() == 'X' && id.index() == 21) {
-        double convertRatio = switch (tier) {
-          case 1 -> 0.15D;
-          case 2 -> 0.25D;
-          case 3 -> 0.32D;
-          default -> 0.40D;
-        };
-        int hungerCost = Math.max(1, (int) Math.ceil(event.getFinalDamage() * convertRatio));
-        int nextFood = Math.max(0, victim.getFoodLevel() - hungerCost);
-        victim.setFoodLevel(nextFood);
-        if (nextFood <= 0) {
-          applyHungerExchangeStarvationPenalty(victim, tier);
-        }
-      } else if (id.group() == 'X' && id.index() == 27) {
-        if (victim.getWorld().getEnvironment() == World.Environment.NETHER) {
-          if (isFireDamageCause(event.getCause())) {
-            double fireMultiplier = switch (tier) {
-              case 1 -> 1.10D;
-              case 2 -> 1.20D;
-              case 3 -> 1.30D;
-              default -> 1.45D;
-            };
-            event.setDamage(event.getDamage() * fireMultiplier);
-          }
-          if (tier >= 4) {
-            event.setDamage(event.getDamage() * 1.10D);
-          }
-        }
-      } else if (id.group() == 'X' && id.index() == 29) {
-        double takenMultiplier = switch (tier) {
-          case 1 -> 1.10D;
-          case 2 -> 1.20D;
-          case 3 -> 1.35D;
-          default -> 1.50D;
-        };
-        event.setDamage(event.getDamage() * takenMultiplier);
-      } else if (id.group() == 'X' && id.index() == 33) {
-        long pearlGraceUntil = enderOrbitPearlGraceUntilEpochSecondByPlayer.getOrDefault(victimId, 0L);
-        if (pearlGraceUntil > now && event.getCause() == EntityDamageEvent.DamageCause.FALL) {
-          double pearlDamageMultiplier = switch (tier) {
-            case 1 -> 0.70D;
-            case 2 -> 0.55D;
-            case 3 -> 0.45D;
-            default -> 0.35D;
-          };
-          event.setDamage(Math.max(0.1D, event.getDamage() * pearlDamageMultiplier));
-          enderOrbitPearlGraceUntilEpochSecondByPlayer.remove(victimId);
-        }
-        if (tier >= 3
-            && enderOrbitAfterimageUntilEpochSecondByPlayer.getOrDefault(victimId, 0L) > now
-            && event.getCause() == EntityDamageEvent.DamageCause.PROJECTILE) {
-          event.setDamage(event.getDamage() * (tier >= 4 ? 0.65D : 0.75D));
-        }
-      } else if (id.group() == 'X' && id.index() == 34 && event instanceof EntityDamageByEntityEvent byEntityEvent) {
-        long decoyUntil = decoyExpireEpochSecondByPlayer.getOrDefault(victimId, 0L);
-        UUID decoyId = decoyEntityByPlayer.get(victimId);
-        Entity decoy = decoyId == null ? null : Bukkit.getEntity(decoyId);
-        if (decoyUntil > now && decoy != null && decoy.isValid()) {
-          long nowMillis = System.currentTimeMillis();
-          if (clonePactSharedDamageGuardUntilEpochMilliByPlayer.getOrDefault(victimId, 0L) > nowMillis) {
-            continue;
-          }
-          LivingEntity source = resolveDamageSourceLivingEntity(byEntityEvent.getDamager());
-          if (source == null || source.getUniqueId().equals(victimId)) {
-            continue;
-          }
-          boolean sourceIsPlayer = source instanceof Player;
-          if (sourceIsPlayer
-              && clonePactSharedDamageGuardUntilEpochMilliByPlayer.getOrDefault(source.getUniqueId(), 0L) > nowMillis) {
-            continue;
-          }
-          double sharedRatio = switch (tier) {
-            case 1 -> 0.10D;
-            case 2 -> 0.12D;
-            case 3 -> 0.15D;
-            default -> 0.20D;
-          };
-          double sharedDamage = Math.max(0.2D, event.getFinalDamage() * sharedRatio);
-          long guardUntil = nowMillis + 250L;
-          clonePactSharedDamageGuardUntilEpochMilliByPlayer.put(victimId, guardUntil);
-          if (sourceIsPlayer) {
-            clonePactSharedDamageGuardUntilEpochMilliByPlayer.put(source.getUniqueId(), guardUntil);
-          }
-          UUID sourceId = source.getUniqueId();
-          Bukkit.getScheduler().runTask(this, () -> {
-            Entity sourceEntity = Bukkit.getEntity(sourceId);
-            if (!(sourceEntity instanceof LivingEntity living) || !living.isValid()) {
-              return;
-            }
-            living.damage(sharedDamage, victim);
-          });
 
-          Location decoyLoc = decoy.getLocation().clone().add(0.0D, 1.0D, 0.0D);
-          decoy.getWorld().spawnParticle(Particle.SMOKE, decoyLoc, 20, 0.35D, 0.45D, 0.35D, 0.01D);
-          if (tier >= 3) {
-            source.addPotionEffect(new PotionEffect(PotionEffectType.NAUSEA, 60, 0, true, false, true));
-          }
-          List<UUID> auxIds = clonePactAuxDecoyEntityIdsByPlayer.getOrDefault(victimId, List.of());
-          for (UUID auxId : auxIds) {
-            Entity aux = auxId == null ? null : Bukkit.getEntity(auxId);
-            if (aux == null || !aux.isValid()) {
-              continue;
-            }
-            aux.getWorld().spawnParticle(Particle.CAMPFIRE_COSY_SMOKE, aux.getLocation().clone().add(0.0D, 1.0D, 0.0D), 10, 0.25D, 0.35D, 0.25D, 0.01D);
-          }
-        }
-      } else if (id.group() == 'X' && id.index() == 35 && event instanceof EntityDamageByEntityEvent byEntityEvent) {
-        long nowMillis = System.currentTimeMillis();
-        if (reflectSkinNoReentryUntilEpochMilliByPlayer.getOrDefault(victimId, 0L) > nowMillis) {
-          continue;
-        }
-        LivingEntity source = resolveDamageSourceLivingEntity(byEntityEvent.getDamager());
-        if (source == null || source.getUniqueId().equals(victimId)) {
-          continue;
-        }
-        boolean sourceIsPlayer = source instanceof Player;
-        if (sourceIsPlayer
-            && reflectSkinNoReentryUntilEpochMilliByPlayer.getOrDefault(source.getUniqueId(), 0L) > nowMillis) {
-          continue;
-        }
-        double ratio = switch (tier) {
-          case 1 -> 0.10D;
-          case 2 -> 0.15D;
-          case 3 -> 0.20D;
-          default -> 0.25D;
-        };
-        double reflectDamage = Math.max(0.2D, event.getFinalDamage() * ratio);
-        long guardUntil = nowMillis + 220L;
-        reflectSkinNoReentryUntilEpochMilliByPlayer.put(victimId, guardUntil);
-        if (sourceIsPlayer) {
-          reflectSkinNoReentryUntilEpochMilliByPlayer.put(source.getUniqueId(), guardUntil);
-        }
-        source.damage(reflectDamage, victim);
-        victim.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 20, 0, true, false, true));
-        if (tier >= 3) {
-          Vector knock = source.getLocation().toVector().subtract(victim.getLocation().toVector());
-          if (knock.lengthSquared() > 0.0001D) {
-            source.setVelocity(source.getVelocity().add(knock.normalize().multiply(0.45D).setY(0.18D)));
-          }
-        }
-        if (tier >= 4) {
-          reflectSkinVulnerableUntilEpochSecondByPlayer.put(victimId, now + 4L);
-        }
-      } else if (id.group() == 'X' && id.index() == 36 && isExplosionDamageCause(event.getCause())) {
-        double takenMultiplier = switch (tier) {
-          case 1 -> 1.15D;
-          case 2, 3 -> 1.25D;
-          default -> 1.35D;
-        };
-        if (tier >= 4 && event instanceof EntityDamageByEntityEvent byEntityEvent && byEntityEvent.getDamager() != null) {
-          Location sourceLoc = byEntityEvent.getDamager().getLocation();
-          if (sourceLoc.getWorld() == victim.getWorld() && sourceLoc.distanceSquared(victim.getLocation()) <= 16.0D) {
-            takenMultiplier = 1.75D;
-            victim.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 60, 0, true, false, true));
-          }
-        }
-        event.setDamage(event.getDamage() * takenMultiplier);
-      } else if (id.group() == 'X' && id.index() == 38 && event.getCause() == EntityDamageEvent.DamageCause.STARVATION) {
-        if (tier >= 4) {
-          event.setCancelled(true);
-          continue;
-        }
-        double starvationMultiplier = switch (tier) {
-          case 1 -> 0.70D;
-          case 2 -> 0.50D;
-          case 3 -> 0.20D;
-          default -> 0.10D;
-        };
-        event.setDamage(Math.max(0.1D, event.getDamage() * starvationMultiplier));
-      }
-    }
-  }
 
-  private void applyEffect80DamageByEntity(
-      EntityDamageByEntityEvent event,
-      Player attacker,
-      PlayerRoundData attackerData
-  ) {
-    if (event == null || attacker == null || attackerData == null) {
-      return;
-    }
-    if (isActionBlockedByTemporaryGimmick(attacker)) {
-      event.setCancelled(true);
-      return;
-    }
-    UUID attackerId = attacker.getUniqueId();
-    long now = nowEpochSecond();
-    frenzyUntilEpochSecondByPlayer.put(attackerId, now + 8L);
-    double investmentBonus = scoreInvestmentBonusRatioByPlayer.getOrDefault(attackerId, 0.0D);
-    if (investmentBonus > 0.0D) {
-      event.setDamage(event.getDamage() * (1.0D + Math.min(0.8D, investmentBonus)));
-    }
 
-    int shieldCoreTier = highestEffect80Tier(attackerData, 'B', 1);
-    if (shieldCoreTier > 0 && attacker.getAbsorptionAmount() > 0.0D) {
-      double bonus = switch (Math.max(1, Math.min(4, shieldCoreTier))) {
-        case 1 -> 0.10D;
-        case 2 -> 0.20D;
-        case 3 -> 0.30D;
-        default -> 0.40D;
-      };
-      event.setDamage(event.getDamage() * (1.0D + bonus));
-    }
 
-    int scannerTier = highestEffect80Tier(attackerData, 'B', 16);
-    if (scannerTier > 0 && event.getEntity() != null) {
-      UUID targetId = event.getEntity().getUniqueId();
-      if (scannerMarkedUntilEpochSecondByEntity.getOrDefault(targetId, 0L) > now) {
-        double dealtMultiplier = switch (Math.max(1, Math.min(4, scannerTier))) {
-          case 1 -> 2.0D;
-          case 2 -> 2.5D;
-          case 3 -> 3.0D;
-          default -> 3.5D;
-        };
-        event.setDamage(event.getDamage() * dealtMultiplier);
-      }
-    }
 
-    int raidImmunityTier = highestEffect80Tier(attackerData, 'B', 19);
-    if (raidImmunityTier > 0 && isRaidImmunityTrackedMob(event.getEntity())) {
-      double dealtBoost = switch (Math.max(1, Math.min(4, raidImmunityTier))) {
-        case 1 -> 0.30D;
-        case 2 -> 0.60D;
-        case 3 -> 0.90D;
-        default -> 1.20D;
-      };
-      event.setDamage(event.getDamage() * (1.0D + dealtBoost));
-    }
 
-    List<ActiveSeasonEffect> activeEffects = collectAllActiveEffects(attackerData);
-    boolean weaponMonopolyHandled = false;
-    boolean silenceVowHandled = false;
-    for (ActiveSeasonEffect effect : activeEffects) {
-      EffectGimmickProfile profile = effectGimmicksById.get(normalizeEffectId(effect.getId()));
-      if (profile == null || profile.effect80Id() == null) {
-        continue;
-      }
-      Effect80Id id = profile.effect80Id();
-      int tier = boostedBModTier(effect.getId(), effect.getTier());
 
-      if (id.group() == 'B' && id.index() == 3) {
-        ItemStack mainHand = attacker.getInventory().getItemInMainHand();
-        if (mainHand == null || !isSwordMaterial(mainHand.getType())) {
-          continue;
-        }
-        if (!useEffectCooldown(attackerId, effect.getId(), "line_pull", 1L)) {
-          continue;
-        }
-        double range = switch (tier) {
-          case 1 -> 16.0D;
-          case 2 -> 24.0D;
-          case 3 -> 32.0D;
-          default -> 40.0D;
-        };
-        double halfWidth = switch (tier) {
-          case 1 -> 1.0D;
-          case 2 -> 2.0D;
-          case 3 -> 3.0D;
-          default -> 4.0D;
-        };
-        double pullDistance = switch (tier) {
-          case 1 -> 3.0D;
-          case 2 -> 5.0D;
-          case 3 -> 7.0D;
-          default -> 9.0D;
-        };
-        int cap = switch (tier) {
-          case 1 -> 4;
-          case 2 -> 6;
-          case 3 -> 8;
-          default -> 10;
-        };
-        List<LivingEntity> pulledTargets = pullEntitiesInLineZone(attacker, range, halfWidth, pullDistance, cap);
-        if (!pulledTargets.isEmpty()) {
-          emitBModProcFeedback(attacker, tier, pulledTargets.size() >= 3);
-        }
-        int slowTicks = switch (tier) {
-          case 1 -> 20;
-          case 2 -> 30;
-          case 3 -> 40;
-          default -> 50;
-        };
-        int slowAmp = switch (tier) {
-          case 1 -> 1;
-          case 2 -> 2;
-          case 3 -> 3;
-          default -> 4;
-        };
-        double dotDamage = switch (tier) {
-          case 1 -> 1.0D;
-          case 2 -> 2.0D;
-          case 3 -> 3.0D;
-          default -> 4.0D;
-        };
-        for (LivingEntity pulled : pulledTargets) {
-          pulled.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, slowTicks, slowAmp, true, false, true));
-          applyLinePullDot(attacker, pulled, dotDamage, 4);
-          if (tier >= 3) {
-            pulled.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 20, 0, true, false, true));
-          }
-        }
-      } else if (id.group() == 'C' && id.index() == 5) {
-        if (!(event.getDamager() instanceof Player)) {
-          continue;
-        }
-        if (tier >= 3) {
-          int dynamicLockSeconds = tier >= 4 ? 14 : 10;
-          lockRandomHotbarSlots(attackerId, 1, dynamicLockSeconds);
-        }
-        if (tier >= 4) {
-          int hitCount = gripFractureHitCounterByPlayer.merge(attackerId, 1, Integer::sum);
-          if (hitCount >= 3) {
-            gripFractureHitCounterByPlayer.put(attackerId, 0);
-            rotateHotbar(attacker, true);
-            attacker.sendActionBar(ChatColor.RED + "손아귀 균열: 강제 스왑 발동");
-          }
-        }
-      } else if (id.group() == 'C' && id.index() == 18) {
-        double chance = tier <= 1 ? 0.10D : 0.18D;
-        if (ThreadLocalRandom.current().nextDouble() < chance) {
-          forceSwapToRandomHotbar(attacker);
-        }
-        if (tier >= 3) {
-          int hits = weaponRebellionHitCounterByPlayer.merge(attackerId, 1, Integer::sum);
-          if (hits >= 3) {
-            weaponRebellionHitCounterByPlayer.put(attackerId, 0);
-            forceSwapToRandomHotbar(attacker);
-          }
-        }
-      } else if (id.group() == 'X' && id.index() == 31 && !weaponMonopolyHandled) {
-        weaponMonopolyHandled = true;
-        ItemStack mainHand = attacker.getInventory().getItemInMainHand();
-        String currentGroup = resolveWeaponMonopolyGroup(mainHand);
-        if (currentGroup.isBlank()) {
-          continue;
-        }
-        String selectedGroup = weaponMonopolyGroupByPlayer.getOrDefault(attackerId, "");
-        if (selectedGroup.isBlank()) {
-          weaponMonopolyGroupByPlayer.put(attackerId, currentGroup);
-          selectedGroup = currentGroup;
-        }
-        if (selectedGroup.equals(currentGroup)) {
-          double bonusMultiplier = switch (tier) {
-            case 1 -> 1.18D;
-            case 2 -> 1.32D;
-            case 3 -> 1.48D;
-            default -> 1.62D;
-          };
-          event.setDamage(event.getDamage() * bonusMultiplier);
-          if (tier >= 3 && useEffectCooldown(attackerId, effect.getId(), "weapon_monopoly_focus", tier >= 4 ? 6L : 8L)) {
-            attacker.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 40, tier >= 4 ? 1 : 0, true, false, true));
-            attacker.addPotionEffect(new PotionEffect(PotionEffectType.STRENGTH, 40, 0, true, false, true));
-          }
-        } else {
-          double penaltyMultiplier = switch (tier) {
-            case 1 -> 0.78D;
-            case 2 -> 0.62D;
-            case 3 -> 0.30D;
-            default -> 0.12D;
-          };
-          event.setDamage(Math.max(0.1D, event.getDamage() * penaltyMultiplier));
-          attacker.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 60, tier >= 3 ? 1 : 0, true, false, true));
-          if (tier >= 4) {
-            attacker.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 40, 0, true, false, true));
-          }
-        }
-      } else if (id.group() == 'X' && id.index() == 37 && !silenceVowHandled) {
-        if (!(event.getDamager() instanceof Player)) {
-          continue;
-        }
-        silenceVowHandled = true;
-        long sprintLock = switch (tier) {
-          case 1 -> 3L;
-          case 2 -> 4L;
-          default -> 6L;
-        };
-        cursedSprintLockUntilEpochSecondByPlayer.put(attackerId, now + sprintLock);
-        attacker.setSprinting(false);
-        if (tier >= 3) {
-          attacker.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 120, 0, true, true, true));
-        }
-        if (tier >= 4) {
-          attacker.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 100, 0, true, false, true));
-          attacker.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 160, 0, true, true, true));
-        }
-      } else if (id.group() == 'X' && id.index() == 2) {
-        if (tier >= 2 && event.getEntity() instanceof LivingEntity) {
-          double lifestealRatio = switch (tier) {
-            case 2 -> 0.06D;
-            case 3 -> 0.08D;
-            default -> 0.10D;
-          };
-          double lifesteal = Math.min(3.0D, Math.max(0.2D, event.getDamage() * lifestealRatio));
-          healPlayer(attacker, lifesteal);
-        }
-      } else if (id.group() == 'X' && id.index() == 8 && event.getEntity() instanceof LivingEntity target) {
-        if (!(event.getDamager() instanceof Player)) {
-          continue;
-        }
-        if (!useEffectCooldown(attackerId, effect.getId(), "swap_strike", 12L)) {
-          continue;
-        }
-        double chance = tier <= 1 ? 0.08D : 0.12D;
-        if (ThreadLocalRandom.current().nextDouble() < chance) {
-          performSwapStrike(attacker, target, tier, false);
-        }
-      } else if (id.group() == 'X' && id.index() == 16) {
-        event.setDamage(event.getDamage() * (1.08D + (tier * 0.04D)));
-      } else if (id.group() == 'X' && id.index() == 28) {
-        if (!useEffectCooldown(attackerId, effect.getId(), "shock_chain_knockback", 3L)) {
-          continue;
-        }
-        if (event.getEntity() instanceof LivingEntity hit) {
-          chainShockNearby(attacker, hit, tier);
-        }
-      } else if (id.group() == 'X' && id.index() == 29) {
-        double dealtMultiplier = switch (tier) {
-          case 1 -> 1.15D;
-          case 2 -> 1.25D;
-          case 3 -> 1.35D;
-          default -> 1.50D;
-        };
-        if (tier >= 3) {
-          double maxHealth = playerMaxHealth(attacker);
-          if (attacker.getHealth() <= Math.max(2.0D, maxHealth * 0.35D)) {
-            dealtMultiplier += tier >= 4 ? 0.15D : 0.10D;
-          }
-        }
-        event.setDamage(event.getDamage() * dealtMultiplier);
-      }
-    }
-  }
 
-  private void applyEffect80NaturalRegain(EntityRegainHealthEvent event, Player player, PlayerRoundData data) {
-    if (event == null || player == null || data == null) {
-      return;
-    }
-    long now = nowEpochSecond();
-    if (doomBreathHealLockUntilEpochSecondByPlayer.getOrDefault(player.getUniqueId(), 0L) > now
-        || frenzyHealLockUntilEpochSecondByPlayer.getOrDefault(player.getUniqueId(), 0L) > now) {
-      event.setCancelled(true);
-      return;
-    }
-    List<ActiveSeasonEffect> activeEffects = collectAllActiveEffects(data);
-    for (ActiveSeasonEffect effect : activeEffects) {
-      EffectGimmickProfile profile = effectGimmicksById.get(normalizeEffectId(effect.getId()));
-      if (profile == null || profile.effect80Id() == null) {
-        continue;
-      }
-      Effect80Id id = profile.effect80Id();
-      int tier = boostedBModTier(effect.getId(), effect.getTier());
-      if (id.group() == 'C' && id.index() == 3) {
-        double ratio = switch (tier) {
-          case 1 -> 0.50D;
-          case 2 -> 0.75D;
-          case 3 -> 0.75D;
-          default -> 1.00D;
-        };
-        double reversed = Math.max(0.0D, event.getAmount() * ratio);
-        event.setCancelled(true);
-        player.damage(Math.max(0.1D, reversed), player);
-        if (tier >= 2) {
-          double currentAbsorption = Math.max(0.0D, player.getAbsorptionAmount());
-          if (currentAbsorption > 0.0D) {
-            double absorbLoss = Math.min(
-                currentAbsorption,
-                Math.max(0.5D, reversed * (tier >= 4 ? 0.35D : 0.25D))
-            );
-            player.setAbsorptionAmount(Math.max(0.0D, currentAbsorption - absorbLoss));
-          }
-        }
-        if (tier >= 3) {
-          player.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 60, 0, true, false, true));
-        }
-        if (tier >= 4) {
-          player.addPotionEffect(new PotionEffect(PotionEffectType.NAUSEA, 80, 0, true, false, true));
-        }
-      } else if (id.group() == 'X' && id.index() == 2) {
-        event.setCancelled(true);
-      } else if (id.group() == 'X' && id.index() == 12 && tier >= 3 && isInsideEnderAura(player, 8.0D + (tier * 2.0D))) {
-        event.setAmount(event.getAmount() * 0.35D);
-      } else if (id.group() == 'X' && id.index() == 38) {
-        EntityRegainHealthEvent.RegainReason reason = event.getRegainReason();
-        boolean naturalRegen = reason == EntityRegainHealthEvent.RegainReason.SATIATED
-            || reason == EntityRegainHealthEvent.RegainReason.REGEN;
-        if (tier >= 4) {
-          event.setCancelled(true);
-          continue;
-        }
-        if (!naturalRegen) {
-          continue;
-        }
-        double multiplier = switch (tier) {
-          case 1 -> 0.50D;
-          case 2 -> 0.30D;
-          case 3 -> 0.05D;
-          default -> 0.01D;
-        };
-        event.setAmount(Math.max(0.0D, event.getAmount() * multiplier));
-        if (tier >= 3 && reason == EntityRegainHealthEvent.RegainReason.SATIATED) {
-          event.setCancelled(true);
-        }
-      }
-    }
-  }
 
-  private void applyEffect80FoodLevelChange(FoodLevelChangeEvent event, Player player, PlayerRoundData data) {
-    if (event == null || player == null || data == null) {
-      return;
-    }
-    int current = player.getFoodLevel();
-    int next = Math.max(0, Math.min(20, event.getFoodLevel()));
-    List<ActiveSeasonEffect> activeEffects = collectAllActiveEffects(data);
-    for (ActiveSeasonEffect effect : activeEffects) {
-      EffectGimmickProfile profile = effectGimmicksById.get(normalizeEffectId(effect.getId()));
-      if (profile == null || profile.effect80Id() == null) {
-        continue;
-      }
-      Effect80Id id = profile.effect80Id();
-      int tier = boostedBModTier(effect.getId(), effect.getTier());
-      if (id.group() == 'B' && id.index() == 10 && next < current) {
-        long activeUntil = gravityLadderActiveUntilEpochMilliByPlayer.getOrDefault(player.getUniqueId(), 0L);
-        if (activeUntil > System.currentTimeMillis()) {
-          int loss = Math.max(0, current - next);
-          double keepRatio = switch (tier) {
-            case 1 -> 1.00D;
-            case 2 -> 0.75D;
-            case 3 -> 0.50D;
-            default -> 0.25D;
-          };
-          int adjustedLoss = (int) Math.floor(loss * keepRatio);
-          if (loss > 0 && adjustedLoss <= 0 && tier <= 3) {
-            adjustedLoss = 1;
-          }
-          event.setFoodLevel(Math.max(0, current - adjustedLoss));
-        }
-      } else if (id.group() == 'X' && id.index() == 21) {
-        if (next <= 0) {
-          applyHungerExchangeStarvationPenalty(player, tier);
-        }
-      } else if (id.group() == 'X' && id.index() == 38 && next < current) {
-        int loss = Math.max(0, current - next);
-        double consumeRatio = switch (tier) {
-          case 1 -> 0.60D;
-          case 2 -> 0.40D;
-          case 3 -> 0.10D;
-          default -> 0.02D;
-        };
-        int adjustedLoss = (int) Math.floor(loss * consumeRatio);
-        if (loss > 0 && adjustedLoss <= 0 && tier <= 3) {
-          adjustedLoss = 1;
-        }
-        event.setFoodLevel(Math.max(0, current - adjustedLoss));
-      }
-    }
-  }
 
-  private void applyEffect80ItemDamage(PlayerItemDamageEvent event, Player player, PlayerRoundData data) {
-    if (event == null || player == null || data == null) {
-      return;
-    }
-    ItemStack item = event.getItem();
-    if (item == null || item.getType() == Material.AIR) {
-      return;
-    }
-    boolean armorPiece = isArmorItem(item);
-    String materialName = item.getType().name();
 
-    List<ActiveSeasonEffect> activeEffects = collectAllActiveEffects(data);
-    for (ActiveSeasonEffect effect : activeEffects) {
-      EffectGimmickProfile profile = effectGimmicksById.get(normalizeEffectId(effect.getId()));
-      if (profile == null || profile.effect80Id() == null) {
-        continue;
-      }
-      Effect80Id id = profile.effect80Id();
-      int tier = boostedBModTier(effect.getId(), effect.getTier());
-      if (id.group() == 'B' && id.index() == 4 && materialName.endsWith("_AXE")) {
-        event.setDamage(Math.max(0, event.getDamage() + Math.max(1, tier - 1)));
-      } else if (id.group() == 'C' && id.index() == 6 && isToolBanned(player, item)) {
-        event.setDamage(Math.max(0, event.getDamage() + (1 + tier)));
-      } else if (id.group() == 'X' && id.index() == 23 && armorPiece) {
-        event.setDamage(Math.max(0, event.getDamage() + tier));
-      }
-    }
-  }
 
-  private void applyEffect80PotionMutation(EntityPotionEffectEvent event, Player player, PlayerRoundData data) {
-    if (event == null || player == null || data == null) {
-      return;
-    }
-    PotionEffect newEffect = event.getNewEffect();
-    if (newEffect == null || newEffect.getType() == null) {
-      return;
-    }
-    List<ActiveSeasonEffect> activeEffects = collectAllActiveEffects(data);
-    for (ActiveSeasonEffect effect : activeEffects) {
-      EffectGimmickProfile profile = effectGimmicksById.get(normalizeEffectId(effect.getId()));
-      if (profile == null || profile.effect80Id() == null) {
-        continue;
-      }
-      Effect80Id id = profile.effect80Id();
-      int tier = boostedBModTier(effect.getId(), effect.getTier());
-      if (id.group() == 'C' && id.index() == 3) {
-        if (isHealingPotionType(newEffect.getType())) {
-          applyHealingInversionAttemptSideEffects(player, tier);
-        }
-      } else if (id.group() == 'C' && id.index() == 8) {
-        if (tier <= 2 && isSplashOrLingeringPotionCause(event.getCause())) {
-          continue;
-        }
-        applyAlchemyContamination(player, tier);
-      } else if (id.group() == 'X' && id.index() == 22) {
-        if (event.getCause() == EntityPotionEffectEvent.Cause.PLUGIN) {
-          continue;
-        }
-        if (isBeneficialPotionType(newEffect.getType())) {
-          int ampBonus = switch (tier) {
-            case 1, 2 -> 1;
-            default -> 2;
-          };
-          double durationMultiplier = switch (tier) {
-            case 1 -> 1.00D;
-            case 2 -> 1.15D;
-            case 3 -> 1.30D;
-            default -> 1.45D;
-          };
-          int boostedDuration = Math.max(20, (int) Math.round(newEffect.getDuration() * durationMultiplier));
-          PotionEffect boosted = new PotionEffect(
-              newEffect.getType(),
-              boostedDuration,
-              Math.min(6, newEffect.getAmplifier() + ampBonus),
-              newEffect.isAmbient(),
-              newEffect.hasParticles(),
-              newEffect.hasIcon()
-          );
-          event.setCancelled(true);
-          Bukkit.getScheduler().runTask(this, () -> player.addPotionEffect(boosted, true));
-          double negativeChance = switch (tier) {
-            case 1 -> 0.15D;
-            case 2 -> 0.25D;
-            case 3 -> 0.35D;
-            default -> 1.00D;
-          };
-          if (tier >= 3 && isPlayerInRecentCombat(player.getUniqueId(), 8L)) {
-            negativeChance = Math.min(1.00D, negativeChance + 0.15D);
-          }
-          if (ThreadLocalRandom.current().nextDouble() < negativeChance) {
-            int negativeAmplifier = tier >= 4 ? 1 : 0;
-            applyRandomNegativeEffect(player, 40 + (tier * 20), negativeAmplifier);
-          }
-        }
-      }
-    }
-  }
 
-  private void applyEffect80ItemConsume(PlayerItemConsumeEvent event, Player player, PlayerRoundData data) {
-    if (event == null || player == null || data == null) {
-      return;
-    }
-    ItemStack consumed = event.getItem();
-    if (consumed == null || consumed.getType() == Material.AIR) {
-      return;
-    }
-    List<ActiveSeasonEffect> activeEffects = collectAllActiveEffects(data);
-    for (ActiveSeasonEffect effect : activeEffects) {
-      EffectGimmickProfile profile = effectGimmicksById.get(normalizeEffectId(effect.getId()));
-      if (profile == null || profile.effect80Id() == null) {
-        continue;
-      }
-      Effect80Id id = profile.effect80Id();
-      int tier = boostedBModTier(effect.getId(), effect.getTier());
-      if (id.group() == 'C' && id.index() == 3) {
-        if (isHealingConsumable(consumed)) {
-          applyHealingInversionAttemptSideEffects(player, tier);
-        }
-      } else if (id.group() == 'C' && id.index() == 8) {
-        applyAlchemyContamination(player, tier);
-      } else if (id.group() == 'X' && id.index() == 21 && tier >= 3 && consumed.getType().isEdible()) {
-        player.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 40, 0, true, false, true));
-      }
-    }
-  }
 
-  private void applyEffect80BlockBreak(BlockBreakEvent event, Player player, PlayerRoundData data) {
-    if (event == null || player == null || data == null) {
-      return;
-    }
-    long nowEpoch = nowEpochSecond();
-    String brokenKey = blockKey(event.getBlock().getLocation());
-    long mineLockUntil = burstMineLockUntilEpochSecondByBlockKey.getOrDefault(brokenKey, 0L);
-    if (mineLockUntil > nowEpoch) {
-      event.setCancelled(true);
-      player.sendActionBar(ChatColor.RED + "전투 건축 벽은 아직 채굴할 수 없습니다");
-      return;
-    }
-    Material type = event.getBlock().getType();
-    List<ActiveSeasonEffect> activeEffects = collectAllActiveEffects(data);
-    for (ActiveSeasonEffect effect : activeEffects) {
-      EffectGimmickProfile profile = effectGimmicksById.get(normalizeEffectId(effect.getId()));
-      if (profile == null || profile.effect80Id() == null) {
-        continue;
-      }
-      Effect80Id id = profile.effect80Id();
-      int tier = boostedBModTier(effect.getId(), effect.getTier());
-      if (id.group() == 'B' && id.index() == 5 && isNaturalStone(type)) {
-        ItemStack mainHand = player.getInventory().getItemInMainHand();
-        if (mainHand == null || !isPickaxeMaterial(mainHand.getType())) {
-          continue;
-        }
-        if (!useEffectCooldown(player.getUniqueId(), effect.getId(), "stone_alchemy_break", 5L)) {
-          continue;
-        }
-        int changed = transmuteNearbyStoneByTierTable(player, event.getBlock().getLocation(), tier, effect.getId());
-        if (changed > 0) {
-          emitBModProcFeedback(player, tier, changed >= 2);
-        }
-      } else if (id.group() == 'B' && id.index() == 4 && isTreeCapCoreMaterial(type, tier >= 3)) {
-        ItemStack mainHand = player.getInventory().getItemInMainHand();
-        if (mainHand == null || !isAxeMaterial(mainHand.getType())) {
-          continue;
-        }
-        if (!useEffectCooldownMillis(player.getUniqueId(), effect.getId(), "treecap_chain", 1500L)) {
-          continue;
-        }
-        boolean burstTier4 = false;
-        int cap;
-        if (tier <= 1) {
-          cap = 32;
-        } else if (tier == 2) {
-          cap = 64;
-        } else if (tier == 3) {
-          cap = 96;
-        } else {
-          burstTier4 = useEffectCooldown(player.getUniqueId(), effect.getId(), "treecap_t4_burst", 60L);
-          cap = burstTier4 ? 128 : 96;
-        }
-        cap = scaledBModRangeBlocks(effect.getId(), cap);
-        breakNearbyLogs(event.getBlock(), cap, tier >= 3, tier >= 3);
-        if (tier >= 2) {
-          collectNearbyItemDrops(player, scaledBModRangeBlocks(effect.getId(), 3.0D));
-        }
-        if (burstTier4) {
-          player.addPotionEffect(new PotionEffect(PotionEffectType.MINING_FATIGUE, scaledBModDurationTicks(effect.getId(), 60), 0, true, false, true));
-        }
-        emitBModProcFeedback(player, tier, burstTier4);
-      } else if (id.group() == 'B' && id.index() == 11 && isNaturalStone(type)) {
-        ItemStack mainHand = player.getInventory().getItemInMainHand();
-        if (mainHand == null || mainHand.getType() != Material.WOODEN_PICKAXE) {
-          continue;
-        }
-        UUID playerId = player.getUniqueId();
-        int streak = miningStreakCounterByPlayer.merge(playerId, 1, Integer::sum);
-        int threshold = switch (tier) {
-          case 1 -> 25;
-          case 2 -> 20;
-          case 3 -> 15;
-          default -> 10;
-        };
-        int passiveCap = switch (tier) {
-          case 1 -> 25;
-          case 2 -> 30;
-          case 3 -> 35;
-          default -> 40;
-        };
-        if (streak >= threshold) {
-          miningStreakCounterByPlayer.put(playerId, 0);
-          breakNearbyNaturalStone(event.getBlock(), passiveCap);
-          emitBModProcFeedback(player, tier, false);
-        }
-      } else if (id.group() == 'C' && id.index() == 10 && isNaturalStone(type)) {
-        UUID playerId = player.getUniqueId();
-        long nowMillis = System.currentTimeMillis();
-        long lastMineMillis = rockfallLastMineEpochMilliByPlayer.getOrDefault(playerId, 0L);
-        int streak = (nowMillis - lastMineMillis) <= 3000L
-            ? rockfallMiningStreakByPlayer.getOrDefault(playerId, 0) + 1
-            : 1;
-        rockfallLastMineEpochMilliByPlayer.put(playerId, nowMillis);
-        rockfallMiningStreakByPlayer.put(playerId, Math.min(40, streak));
 
-        double chance = tier <= 1 ? 0.10D : 0.18D;
-        if (tier >= 4) {
-          chance = Math.min(0.45D, chance + (Math.max(0, streak - 1) * 0.02D));
-        }
-        if (ThreadLocalRandom.current().nextDouble() < chance) {
-          int changed = createRockfall(event.getBlock(), tier);
-          if (tier >= 3 && changed > 0) {
-            player.addPotionEffect(new PotionEffect(PotionEffectType.DARKNESS, 40, 0, true, false, true));
-          }
-        }
-      } else if (id.group() == 'X' && id.index() == 14) {
-        long hintInterval = tier <= 1 ? 8L : 6L;
-        if (useEffectCooldown(player.getUniqueId(), effect.getId(), "mine_echo", hintInterval)) {
-          sendScannerHintByTier(player, tier, true);
-        }
-        if (tier >= 3 && isOreMaterial(type)) {
-          player.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 40, 0, true, true, true));
-        }
-        if (tier >= 4
-            && isOreMaterial(type)
-            && useEffectCooldown(player.getUniqueId(), effect.getId(), "mine_echo_precision", 90L)) {
-          performPrecisionScannerPing(player);
-          player.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 200, 0, true, true, true));
-        }
-      } else if (id.group() == 'X' && id.index() == 36) {
-        String key = blockKey(event.getBlock().getLocation());
-        if (collapsingPlacedBlocksUntilEpochSecond.containsKey(key)) {
-          event.getBlock().getWorld().createExplosion(event.getBlock().getLocation(), 1.3F + (tier * 0.4F), false, false);
-          collapsingPlacedBlocksUntilEpochSecond.remove(key);
-          collapsingPlacedBlocksKeepDrop.remove(key);
-        }
-      }
-    }
-  }
 
-  private void applyEffect80BlockPlace(BlockPlaceEvent event, Player player, PlayerRoundData data) {
-    if (event == null || player == null || data == null) {
-      return;
-    }
-    if (isBuildBlockedByTemporaryGimmick(player)) {
-      event.setCancelled(true);
-      return;
-    }
 
-    List<ActiveSeasonEffect> activeEffects = collectAllActiveEffects(data);
-    for (ActiveSeasonEffect effect : activeEffects) {
-      EffectGimmickProfile profile = effectGimmicksById.get(normalizeEffectId(effect.getId()));
-      if (profile == null || profile.effect80Id() == null) {
-        continue;
-      }
-      Effect80Id id = profile.effect80Id();
-      int tier = boostedBModTier(effect.getId(), effect.getTier());
 
-      if (id.group() == 'C' && id.index() == 7) {
-        long now = nowEpochSecond();
-        long collapseAfter;
-        if (tier <= 1) {
-          collapseAfter = 30L;
-        } else {
-          collapseAfter = 20L;
-        }
-        if (tier >= 3 && isPlayerInRecentCombat(player.getUniqueId(), 10L)) {
-          collapseAfter = 10L;
-        }
-        long collapseAt = now + collapseAfter;
-        String key = blockKey(event.getBlockPlaced().getLocation());
-        collapsingPlacedBlocksUntilEpochSecond.put(key, collapseAt);
-        collapsingPlacedBlocksKeepDrop.add(key);
-        if (tier >= 4) {
-          spreadCollapseToAdjacentPlacedBlocks(event.getBlockPlaced(), collapseAt);
-        }
-      } else if (id.group() == 'B' && id.index() == 13) {
-        long now = nowEpochSecond();
-        long burstUntil = buildBurstUntilEpochSecondByPlayer.getOrDefault(player.getUniqueId(), 0L);
-        if (burstUntil <= now) {
-          continue;
-        }
-        int burstTier = Math.max(tier, buildBurstTierByPlayer.getOrDefault(player.getUniqueId(), tier));
-        long reinforceDuration = 30L;
-        long mineLockSeconds = switch (burstTier) {
-          case 1 -> 5L;
-          case 2 -> 6L;
-          case 3 -> 7L;
-          default -> 8L;
-        };
-        Block baseBlock = event.getBlockPlaced();
-        reinforcedBurstBlocksUntilEpochSecond.put(blockKey(baseBlock.getLocation()), now + reinforceDuration);
-        burstMineLockUntilEpochSecondByBlockKey.put(blockKey(baseBlock.getLocation()), now + mineLockSeconds);
-        if (player.isSneaking()) {
-          int maxHeight = Math.max(1, Math.min(4, burstTier));
-          for (int y = 1; y < maxHeight; y++) {
-            Block above = baseBlock.getRelative(BlockFace.UP, y);
-            if (!above.isPassable()) {
-              break;
-            }
-            above.setType(baseBlock.getType(), false);
-            reinforcedBurstBlocksUntilEpochSecond.put(blockKey(above.getLocation()), now + reinforceDuration);
-            burstMineLockUntilEpochSecondByBlockKey.put(blockKey(above.getLocation()), now + mineLockSeconds);
-          }
-        }
-        if (useEffectCooldown(player.getUniqueId(), effect.getId(), "build_burst_fx", 2L)) {
-          emitBModProcFeedback(player, burstTier, false);
-        }
-      } else if (id.group() == 'X' && id.index() == 15) {
-        long now = nowEpochSecond();
-        long reinforceSeconds = tier <= 1 ? 10L : 15L;
-        long overclockUntil = fortressOverclockUntilEpochSecondByPlayer.getOrDefault(player.getUniqueId(), 0L);
-        if (tier >= 4 && overclockUntil > now) {
-          reinforceSeconds = 20L;
-        }
-        String placedKey = blockKey(event.getBlockPlaced().getLocation());
-        reinforcedBurstBlocksUntilEpochSecond.put(placedKey, now + reinforceSeconds);
-        if (tier >= 4 && overclockUntil > now) {
-          reinforceFortressCluster(event.getBlockPlaced(), now + reinforceSeconds);
-        }
 
-        long collapseAfter = -1L;
-        if (tier >= 2) {
-          collapseAfter = 60L;
-          if (tier >= 3 && isPlayerInRecentCombat(player.getUniqueId(), 10L)) {
-            collapseAfter = 20L;
-          }
-          long fortressUntil = fortressModeUntilEpochSecondByPlayer.getOrDefault(player.getUniqueId(), 0L);
-          if (tier >= 4 && fortressUntil > now) {
-            if (overclockUntil > now) {
-              collapseAfter = 10L;
-            } else {
-              collapseAfter = Math.min(collapseAfter, 30L);
-            }
-          }
-        }
-        if (collapseAfter > 0L) {
-          collapsingPlacedBlocksUntilEpochSecond.put(placedKey, now + collapseAfter);
-        }
-      } else if (id.group() == 'X' && id.index() == 36) {
-        long explodeAfter = Math.max(8L, 40L - (tier * 4L));
-        collapsingPlacedBlocksUntilEpochSecond.put(
-            blockKey(event.getBlockPlaced().getLocation()),
-            nowEpochSecond() + explodeAfter
-        );
-      }
-    }
-  }
 
-  private void applyEffect80ItemHeldChange(PlayerItemHeldEvent event, Player player, PlayerRoundData data) {
-    if (event == null || player == null || data == null) {
-      return;
-    }
-    int tier = highestEffect80Tier(data, 'X', 31);
-    if (tier <= 0) {
-      return;
-    }
-
-    UUID playerId = player.getUniqueId();
-    ItemStack nextItem = player.getInventory().getItem(event.getNewSlot());
-    String nextGroup = resolveWeaponMonopolyGroup(nextItem);
-    if (nextGroup.isBlank()) {
-      return;
-    }
-
-    String currentGroup = weaponMonopolyGroupByPlayer.getOrDefault(playerId, "");
-    boolean resetSelection = currentGroup.isBlank() || player.isSneaking();
-    if (resetSelection) {
-      weaponMonopolyGroupByPlayer.put(playerId, nextGroup);
-      if (!nextGroup.equals(currentGroup)) {
-        player.sendActionBar(ChatColor.GOLD + "무기 독주: 주무기군 " + weaponMonopolyGroupNameKo(nextGroup) + " 지정");
-      }
-      return;
-    }
-
-    if (nextGroup.equals(currentGroup)) {
-      if (tier >= 3) {
-        player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 40, 0, true, false, true));
-      }
-      return;
-    }
-
-    int penaltyTicks = switch (tier) {
-      case 1 -> 30;
-      case 2 -> 50;
-      case 3 -> 70;
-      default -> 90;
-    };
-    player.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, penaltyTicks, tier >= 3 ? 1 : 0, true, false, true));
-    if (tier >= 2) {
-      player.addPotionEffect(new PotionEffect(PotionEffectType.MINING_FATIGUE, penaltyTicks, 0, true, false, true));
-    }
-    if (tier >= 4) {
-      long until = nowEpochSecond() + 1L;
-      noAttackUntilEpochSecond.put(playerId, Math.max(noAttackUntilEpochSecond.getOrDefault(playerId, 0L), until));
-      noBuildUntilEpochSecond.put(playerId, Math.max(noBuildUntilEpochSecond.getOrDefault(playerId, 0L), until));
-      player.setSprinting(false);
-    }
-  }
-
-  private void applyEffect80Move(PlayerMoveEvent event, Player player, PlayerRoundData data) {
-    if (event == null || player == null || data == null) {
-      return;
-    }
-    UUID playerId = player.getUniqueId();
-    long now = nowEpochSecond();
-    long sprintLockUntil = cursedSprintLockUntilEpochSecondByPlayer.getOrDefault(playerId, 0L);
-    if (sprintLockUntil > now) {
-      if (player.isSprinting()) {
-        player.setSprinting(false);
-      }
-    } else {
-      cursedSprintLockUntilEpochSecondByPlayer.remove(playerId);
-    }
-
-    long distortionUntil = controlDistortionUntilEpochSecondByPlayer.getOrDefault(playerId, 0L);
-    if (distortionUntil > now) {
-      int distortionTier = Math.max(1, controlDistortionTierByPlayer.getOrDefault(playerId, 1));
-      double jitterChance = switch (distortionTier) {
-        case 1 -> 0.12D;
-        case 2 -> 0.18D;
-        case 3 -> 0.24D;
-        default -> 0.18D;
-      };
-      float jitterRange = switch (distortionTier) {
-        case 1 -> 22.0F;
-        case 2 -> 34.0F;
-        case 3 -> 42.0F;
-        default -> 18.0F;
-      };
-      if (ThreadLocalRandom.current().nextDouble() < jitterChance) {
-        randomizePlayerYaw(player, jitterRange);
-      }
-    } else {
-      controlDistortionTierByPlayer.remove(playerId);
-    }
-
-    List<ActiveSeasonEffect> activeEffects = collectAllActiveEffects(data);
-    if (activeEffects.isEmpty()) {
-      return;
-    }
-
-    for (ActiveSeasonEffect effect : activeEffects) {
-      EffectGimmickProfile profile = effectGimmicksById.get(normalizeEffectId(effect.getId()));
-      if (profile == null || profile.effect80Id() == null) {
-        continue;
-      }
-      Effect80Id id = profile.effect80Id();
-      int tier = boostedBModTier(effect.getId(), effect.getTier());
-      if (id.group() == 'B' && id.index() == 10) {
-        if (!isTouchingSolidWall(player)) {
-          continue;
-        }
-
-        // Player jump input can be unreliable server-side; apply climbing while airborne and wall-contacting.
-        if (!player.isOnGround()) {
-          Vector climb = player.getVelocity();
-          double climbY = tier >= 2 ? 0.22D : 0.17D;
-          if (climb.getY() < climbY) {
-            climb.setY(climbY);
-            player.setVelocity(climb);
-          }
-          player.setFallDistance(0.0F);
-        }
-
-        long wallHangUntil = wallHangUntilEpochSecondByPlayer.getOrDefault(player.getUniqueId(), 0L);
-        if (wallHangUntil > now) {
-          Vector held = player.getVelocity();
-          held.setY(Math.max(-0.03D, Math.min(0.04D, held.getY())));
-          player.setVelocity(held);
-          player.setFallDistance(0.0F);
-        }
-
-        if (tier >= 3
-            && !player.isOnGround()
-            && player.isSprinting()
-            && player.getVelocity().getY() <= 0.20D
-            && useEffectCooldown(player.getUniqueId(), effect.getId(), "wall_jump", 3L)) {
-          Vector jump = player.getLocation().getDirection().normalize().multiply(scaledBModRangeBlocks(effect.getId(), 0.34D + (tier * 0.03D)));
-          jump.setY(0.33D + (tier * 0.02D));
-          player.setVelocity(jump);
-          emitBModProcFeedback(player, tier, false);
-        }
-
-        if (tier >= 4
-            && !player.isOnGround()
-            && player.isSneaking()
-            && wallHangRechargeEpochSecondByPlayer.getOrDefault(player.getUniqueId(), 0L) <= now) {
-          wallHangUntilEpochSecondByPlayer.put(player.getUniqueId(), now + scaledBModDurationSeconds(effect.getId(), 2L));
-          wallHangRechargeEpochSecondByPlayer.put(player.getUniqueId(), now + scaledBModCooldownSeconds(effect.getId(), 12L));
-          emitBModProcFeedback(player, tier, true);
-        }
-      } else if (id.group() == 'X' && id.index() == 17) {
-        boolean onGround = player.isOnGround();
-        boolean wasAirborne = antiGravityAirborneStateByPlayer.getOrDefault(playerId, false);
-        if (!onGround) {
-          antiGravityAirborneStateByPlayer.put(playerId, true);
-        } else {
-          if (tier >= 4 && wasAirborne) {
-            player.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 20, 0, true, false, true));
-          }
-          antiGravityAirborneStateByPlayer.remove(playerId);
-        }
-
-        if (!onGround && tier >= 2) {
-          Vector velocity = player.getVelocity();
-          if (velocity != null) {
-            if (velocity.getY() < -0.20D) {
-              velocity.setY(Math.max(-0.20D, velocity.getY() * 0.85D));
-            }
-            player.setVelocity(velocity);
-          }
-        }
-
-        if (tier >= 3 && !onGround && player.isSneaking() && player.isSprinting()) {
-          boolean dashed;
-          if (tier >= 4) {
-            dashed = consumeRechargeCharge(
-                playerId,
-                antiGravityDashChargesByPlayer,
-                antiGravityDashNextRechargeEpochSecondByPlayer,
-                2,
-                14L,
-                now
-            );
-          } else {
-            dashed = useEffectCooldown(playerId, effect.getId(), "anti_gravity_dash", 10L);
-          }
-          if (dashed) {
-            Vector dash = player.getLocation().getDirection().normalize().multiply(0.55D);
-            dash.setY(Math.max(0.18D, dash.getY() + 0.24D));
-            player.setVelocity(dash);
-            player.setFallDistance(0.0F);
-          }
-        }
-      }
-    }
-  }
-
-  private void applyEffect80DropItem(PlayerDropItemEvent event, Player player, PlayerRoundData data) {
-    if (event == null || player == null || data == null) {
-      return;
-    }
-    List<ActiveSeasonEffect> activeEffects = collectAllActiveEffects(data);
-    for (ActiveSeasonEffect effect : activeEffects) {
-      EffectGimmickProfile profile = effectGimmicksById.get(normalizeEffectId(effect.getId()));
-      if (profile == null || profile.effect80Id() == null) {
-        continue;
-      }
-      Effect80Id id = profile.effect80Id();
-      int tier = boostedBModTier(effect.getId(), effect.getTier());
-      if (id.group() == 'C' && id.index() == 17) {
-        Item item = event.getItemDrop();
-        if (item != null && item.isValid()) {
-          item.setUnlimitedLifetime(false);
-          boolean inCombat = isPlayerInRecentCombat(player.getUniqueId(), 10L);
-          long remainingSeconds = switch (tier) {
-            case 1 -> 150L;
-            case 2, 3 -> 105L;
-            default -> inCombat ? 60L : 105L;
-          };
-          int targetTicksLived = (int) Math.max(0L, 6000L - (remainingSeconds * 20L));
-          item.setTicksLived(Math.max(item.getTicksLived(), targetTicksLived));
-          cursedDropExpireEpochSecondByItem.put(item.getUniqueId(), nowEpochSecond() + remainingSeconds);
-          cursedDropOwnerByItem.put(item.getUniqueId(), player.getUniqueId());
-          dropRotUntilEpochSecondByPlayer.put(player.getUniqueId(), nowEpochSecond() + 5L);
-        }
-      }
-    }
-  }
-
-  private void applyEffect80PickupItem(EntityPickupItemEvent event, Player player, PlayerRoundData data) {
-    if (event == null || player == null || data == null || event.getItem() == null) {
-      return;
-    }
-    int x3Tier = highestEffect80Tier(data, 'X', 3);
-    if (x3Tier > 0) {
-      player.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, x3Tier >= 4 ? 40 : 20, 0, true, true, true));
-      if (x3Tier >= 2) {
-        collectNearbyItemDrops(player, Math.min(3.0D, 1.6D + (x3Tier * 0.4D)));
-      }
-      if (x3Tier >= 3) {
-        player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 1.0F, 0.7F);
-        provokeNearbyMonsters(player, x3Tier);
-      }
-    }
-
-    UUID itemId = event.getItem().getUniqueId();
-    UUID owner = cursedDropOwnerByItem.get(itemId);
-    if (owner == null) {
-      return;
-    }
-    if (!owner.equals(player.getUniqueId())) {
-      return;
-    }
-    int c17Tier = highestEffect80Tier(data, 'C', 17);
-    if (c17Tier <= 0) {
-      cursedDropOwnerByItem.remove(itemId);
-      cursedDropExpireEpochSecondByItem.remove(itemId);
-      return;
-    }
-    if (c17Tier >= 3) {
-      double distance = event.getItem().getLocation().distance(player.getLocation());
-      boolean inCombat = c17Tier >= 4 && isPlayerInRecentCombat(player.getUniqueId(), 10L);
-      double pickupRange = inCombat ? 0.55D : 1.10D;
-      if (distance > pickupRange) {
-        event.setCancelled(true);
-        return;
-      }
-    }
-    cursedDropOwnerByItem.remove(itemId);
-    cursedDropExpireEpochSecondByItem.remove(itemId);
-  }
-
-  private void applyEffect80Craft(CraftItemEvent event, Player player, PlayerRoundData data) {
-    if (event == null || player == null || data == null) {
-      return;
-    }
-    UUID playerId = player.getUniqueId();
-    List<ActiveSeasonEffect> activeEffects = collectAllActiveEffects(data);
-    int b12Tier = 0;
-    String b12EffectId = null;
-    for (ActiveSeasonEffect effect : activeEffects) {
-      EffectGimmickProfile profile = effectGimmicksById.get(normalizeEffectId(effect.getId()));
-      if (profile == null || profile.effect80Id() == null) {
-        continue;
-      }
-      Effect80Id id = profile.effect80Id();
-      int tier = boostedBModTier(effect.getId(), effect.getTier());
-      if (id.group() == 'B' && id.index() == 12) {
-        if (tier >= b12Tier) {
-          b12Tier = tier;
-          b12EffectId = effect.getId();
-        }
-      }
-      if ((id.group() == 'X' && id.index() == 7)) {
-        ItemStack result = event.getRecipe() == null ? null : event.getRecipe().getResult();
-        if (result == null || result.getType() == Material.AIR) {
-          continue;
-        }
-        CraftingInventory craftingInventory = event.getInventory() instanceof CraftingInventory ci ? ci : null;
-        boolean forceSuccess = false;
-        boolean forceFailure = false;
-        if (tier >= 4) {
-          long epochDay = currentEpochDayUtc();
-          if (x7GuaranteedSuccessUsedEpochDayByPlayer.getOrDefault(playerId, -1L) != epochDay) {
-            x7GuaranteedSuccessUsedEpochDayByPlayer.put(playerId, epochDay);
-            x7GuaranteedFailurePendingPlayers.add(playerId);
-            forceSuccess = true;
-          } else if (x7GuaranteedFailurePendingPlayers.remove(playerId)) {
-            forceFailure = true;
-          }
-        }
-
-        double successChance = switch (tier) {
-          case 1 -> 0.10D;
-          case 2 -> 0.15D;
-          default -> 0.20D;
-        };
-        double failChance = successChance;
-
-        boolean success = forceSuccess
-            || (!forceFailure && ThreadLocalRandom.current().nextDouble() < successChance);
-        boolean failure = forceFailure
-            || (!success && ThreadLocalRandom.current().nextDouble() < failChance);
-
-        if (success) {
-          ItemStack bonus = result.clone();
-          bonus.setAmount(Math.min(result.getMaxStackSize(), Math.max(1, result.getAmount())));
-          player.getInventory().addItem(bonus);
-          if (forceSuccess) {
-            player.sendActionBar(ChatColor.GOLD + "도박 제작 확정 성공: 결과 +100% (다음 제작 확정 손해)");
-          } else {
-            player.sendActionBar(ChatColor.GOLD + "도박 제작 성공: 결과 +100%");
-          }
-        } else if (failure) {
-          if (craftingInventory != null) {
-            consumeExtraCraftingIngredients(craftingInventory, 1);
-          }
-          if (tier >= 3) {
-            player.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 100, 0, true, true, true));
-          }
-          if (forceFailure) {
-            player.sendActionBar(ChatColor.RED + "도박 제작 확정 손해: 재료 +100% 소모");
-          } else {
-            player.sendActionBar(ChatColor.RED + "도박 제작 실패: 재료 +100% 소모");
-          }
-        }
-      }
-    }
-    if (b12Tier >= 1 && event.getInventory() instanceof CraftingInventory craftingInventory) {
-      ItemStack[] matrix = craftingInventory.getMatrix();
-      if (b12Tier >= 3) {
-        rememberCraftingMatrix(playerId, matrix);
-      }
-      int usedSlots = 0;
-      for (ItemStack ingredient : matrix) {
-        if (ingredient != null && ingredient.getType() != Material.AIR && ingredient.getAmount() > 0) {
-          usedSlots++;
-        }
-      }
-      double baseChance = switch (b12Tier) {
-        case 1 -> 0.00D;
-        case 2 -> 0.10D;
-        case 3 -> 0.20D;
-        default -> 0.30D;
-      };
-      int thresholdSlots = switch (b12Tier) {
-        case 1 -> 9;
-        case 2 -> 8;
-        case 3 -> 7;
-        default -> 6;
-      };
-      if (usedSlots >= thresholdSlots) {
-        baseChance *= 1.5D;
-      }
-      double chance = Math.max(0.0D, Math.min(1.0D, baseChance));
-      if (chance > 0.0D && ThreadLocalRandom.current().nextDouble() < chance) {
-        refundCraftingIngredientsOnce(player, matrix);
-        player.sendActionBar(ChatColor.GOLD + "즉석 제작대: 재료 미소모 발동");
-        emitBModProcFeedback(player, b12Tier, false);
-      }
-    }
-  }
-
-  private void applyEffect80LootGenerate(LootGenerateEvent event, Player player, PlayerRoundData data) {
-    if (event == null || player == null || data == null) {
-      return;
-    }
-    List<ActiveSeasonEffect> activeEffects = collectAllActiveEffects(data);
-    for (ActiveSeasonEffect effect : activeEffects) {
-      EffectGimmickProfile profile = effectGimmicksById.get(normalizeEffectId(effect.getId()));
-      if (profile == null || profile.effect80Id() == null) {
-        continue;
-      }
-      Effect80Id id = profile.effect80Id();
-      int tier = boostedBModTier(effect.getId(), effect.getTier());
-      if (id.group() == 'C' && id.index() == 17) {
-        dropRotUntilEpochSecondByPlayer.put(player.getUniqueId(), nowEpochSecond() + 5L);
-        if (tier >= 4 && isPlayerInRecentCombat(player.getUniqueId(), 10L)) {
-          List<ItemStack> loot = event.getLoot();
-          if (loot != null && !loot.isEmpty()) {
-            for (ItemStack stack : loot) {
-              if (stack == null || stack.getType() == Material.AIR || stack.getAmount() <= 1) {
-                continue;
-              }
-              if (ThreadLocalRandom.current().nextDouble() < 0.30D) {
-                int reduced = Math.max(1, (int) Math.floor(stack.getAmount() * 0.85D));
-                stack.setAmount(reduced);
-              }
-            }
-          }
-        }
-        continue;
-      }
-      if (id.group() != 'X' || id.index() != 18) {
-        continue;
-      }
-
-      List<ItemStack> loot = new ArrayList<>();
-      for (ItemStack stack : event.getLoot()) {
-        if (stack != null && stack.getType() != Material.AIR) {
-          loot.add(stack.clone());
-        }
-      }
-      if (loot.isEmpty()) {
-        continue;
-      }
-
-      double bonusChance = switch (tier) {
-        case 1 -> 0.18D;
-        case 2 -> 0.26D;
-        case 3 -> 0.34D;
-        default -> 0.40D;
-      };
-      double corruptChance = switch (tier) {
-        case 1 -> 0.10D;
-        case 2 -> 0.15D;
-        case 3 -> 0.20D;
-        default -> 0.25D;
-      };
-
-      int corrupted = 0;
-      for (int i = 0; i < loot.size(); i++) {
-        ItemStack stack = loot.get(i);
-        if (stack == null || stack.getType() == Material.AIR) {
-          continue;
-        }
-        if (ThreadLocalRandom.current().nextDouble() < bonusChance) {
-          int bonusAmount = Math.max(1, (int) Math.ceil(stack.getAmount() * (0.20D + (tier * 0.05D))));
-          stack.setAmount(Math.min(stack.getMaxStackSize(), stack.getAmount() + bonusAmount));
-        }
-        if (ThreadLocalRandom.current().nextDouble() < corruptChance) {
-          Material corruptedType = switch (ThreadLocalRandom.current().nextInt(4)) {
-            case 0 -> Material.ROTTEN_FLESH;
-            case 1 -> Material.POISONOUS_POTATO;
-            case 2 -> Material.COBBLESTONE;
-            default -> Material.DIRT;
-          };
-          int amount = Math.max(1, Math.min(16, stack.getAmount()));
-          loot.set(i, new ItemStack(corruptedType, amount));
-          corrupted++;
-        }
-      }
-
-      if (tier >= 4
-          && player.isSneaking()
-          && event.getLootTable() != null
-          && event.getLootContext() != null
-          && useEffectCooldown(player.getUniqueId(), effect.getId(), "loot_reroll", 180L)) {
-        if (ThreadLocalRandom.current().nextDouble() < 0.65D) {
-          Collection<ItemStack> rerolled = event.getLootTable().populateLoot(
-              new Random(ThreadLocalRandom.current().nextLong()),
-              event.getLootContext()
-          );
-          loot.clear();
-          for (ItemStack stack : rerolled) {
-            if (stack != null && stack.getType() != Material.AIR) {
-              loot.add(stack.clone());
-            }
-          }
-          player.sendActionBar(ChatColor.GOLD + "전리품 룰렛 리롤 성공");
-        } else {
-          loot.clear();
-          long penalty = 80L * tier;
-          adjustPlayerScore(player.getUniqueId(), data, -penalty, false);
-          player.damage(2.0D + tier, player);
-          player.sendActionBar(ChatColor.RED + "전리품 룰렛 리롤 실패");
-        }
-      }
-
-      if (corrupted > 0 && tier >= 3) {
-        player.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 80 + (tier * 20), 0, true, true, true));
-        player.getWorld().playSound(player.getLocation(), Sound.ENTITY_WARDEN_SONIC_BOOM, 0.55F, 1.25F);
-      }
-
-      event.setLoot(loot);
-      return;
-    }
-  }
-
-  private void applyEffect80ProjectileLaunch(ProjectileLaunchEvent event, Player player, PlayerRoundData data) {
-    if (event == null || player == null || data == null || !(event.getEntity() instanceof Projectile projectile)) {
-      return;
-    }
-    long now = nowEpochSecond();
-    List<ActiveSeasonEffect> activeEffects = collectAllActiveEffects(data);
-    for (ActiveSeasonEffect effect : activeEffects) {
-      EffectGimmickProfile profile = effectGimmicksById.get(normalizeEffectId(effect.getId()));
-      if (profile == null || profile.effect80Id() == null) {
-        continue;
-      }
-      Effect80Id id = profile.effect80Id();
-      if (id.group() != 'X' || id.index() != 24) {
-        continue;
-      }
-      int tier = boostedBModTier(effect.getId(), effect.getTier());
-      Vector velocity = projectile.getVelocity();
-      if (velocity == null || velocity.lengthSquared() <= 0.0001D) {
-        return;
-      }
-
-      long alignUntil = projectileAlignUntilEpochSecondByPlayer.getOrDefault(player.getUniqueId(), 0L);
-      if (alignUntil > now && tier >= 3) {
-        double speed = Math.max(0.6D, velocity.length());
-        Vector aligned = player.getEyeLocation().getDirection().normalize().multiply(speed * (1.04D + (tier * 0.03D)));
-        projectile.setVelocity(aligned);
-        return;
-      }
-
-      double jitterChance = 0.20D + (tier * 0.05D);
-      if (ThreadLocalRandom.current().nextDouble() < jitterChance) {
-        double speed = Math.max(0.4D, velocity.length());
-        double yawJitter = Math.toRadians(ThreadLocalRandom.current().nextDouble(-(4.0D + (tier * 2.0D)), 4.0D + (tier * 2.0D)));
-        double pitchJitter = Math.toRadians(ThreadLocalRandom.current().nextDouble(-2.5D, 2.5D));
-        Vector jittered = velocity.normalize().rotateAroundY(yawJitter).rotateAroundX(pitchJitter).multiply(speed);
-        projectile.setVelocity(jittered);
-      }
-      return;
-    }
-  }
-
-  private void applyEffect80EntityDeath(EntityDeathEvent event) {
-    if (event == null) {
-      return;
-    }
-    Player killer = event.getEntity().getKiller();
-    if (killer == null) {
-      return;
-    }
-    PlayerRoundData data = players.get(killer.getUniqueId());
-    if (data == null || data.isOut()) {
-      return;
-    }
-    List<ActiveSeasonEffect> activeEffects = collectAllActiveEffects(data);
-    for (ActiveSeasonEffect effect : activeEffects) {
-      EffectGimmickProfile profile = effectGimmicksById.get(normalizeEffectId(effect.getId()));
-      if (profile == null || profile.effect80Id() == null) {
-        continue;
-      }
-      Effect80Id id = profile.effect80Id();
-      int tier = boostedBModTier(effect.getId(), effect.getTier());
-      if (id.group() == 'X' && id.index() == 2) {
-        long now = nowEpochSecond();
-        long previousKillAt = bloodContractLastKillEpochSecondByPlayer.getOrDefault(killer.getUniqueId(), 0L);
-        double heal = switch (tier) {
-          case 1 -> 2.0D;
-          case 2 -> 3.0D;
-          case 3 -> 4.0D;
-          default -> 5.0D;
-        };
-        healPlayer(killer, heal);
-        killer.removePotionEffect(PotionEffectType.WEAKNESS);
-        killer.removePotionEffect(PotionEffectType.SLOWNESS);
-        bloodContractLastKillEpochSecondByPlayer.put(killer.getUniqueId(), now);
-        if (tier >= 4) {
-          int streak = (previousKillAt > 0L && (now - previousKillAt) <= 16L)
-              ? bloodContractKillStreakByPlayer.getOrDefault(killer.getUniqueId(), 0) + 1
-              : 1;
-          streak = Math.min(6, streak);
-          bloodContractKillStreakByPlayer.put(killer.getUniqueId(), streak);
-          if (streak >= 2) {
-            long frenzyUntil = Math.max(
-                frenzyUntilEpochSecondByPlayer.getOrDefault(killer.getUniqueId(), 0L),
-                now + 10L
-            );
-            frenzyUntilEpochSecondByPlayer.put(killer.getUniqueId(), frenzyUntil);
-            killer.addPotionEffect(new PotionEffect(PotionEffectType.STRENGTH, 120, 1, true, false, true));
-            killer.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 120, 1, true, false, true));
-          }
-        } else {
-          bloodContractKillStreakByPlayer.remove(killer.getUniqueId());
-        }
-      } else if (id.group() == 'X' && id.index() == 10 && tier >= 3) {
-        long now = nowEpochSecond();
-        long extension = tier >= 4 ? 6L : 4L;
-        long extendedUntil = Math.max(frenzyUntilEpochSecondByPlayer.getOrDefault(killer.getUniqueId(), 0L), now + extension);
-        frenzyUntilEpochSecondByPlayer.put(killer.getUniqueId(), extendedUntil);
-        int stacks = Math.min(4, frenzyFatigueStacksByPlayer.getOrDefault(killer.getUniqueId(), 0) + 1);
-        frenzyFatigueStacksByPlayer.put(killer.getUniqueId(), stacks);
-      } else if (id.group() == 'X' && id.index() == 11) {
-        if (event.getEntity().getScoreboardTags().contains(STALKER_TAG)) {
-          long reward = switch (tier) {
-            case 1 -> 40L;
-            case 2 -> 60L;
-            case 3 -> 85L;
-            default -> 120L;
-          };
-          if (tier >= 3) {
-            reward += Math.max(0L, stalkerEmpowerStacks) * 5L;
-          }
-          addGeneratedScore(killer.getUniqueId(), reward);
-        }
-      } else if (id.group() == 'X' && id.index() == 20) {
-        if (event.getEntity() instanceof Monster) {
-          addGeneratedScore(killer.getUniqueId(), 8L * tier);
-        }
-      }
-    }
-  }
-
-  private boolean applyEffect80PlayerDeath(PlayerDeathEvent event, Player victim, PlayerRoundData victimData) {
-    // PlayerDeathEvent is not cancellable. Fatal save mechanics are handled at damage stage.
-    return false;
-  }
-
-  private void tickLegacyNamedGimmicks() {
-    if (!isSeasonGameplayServer()) {
-      return;
-    }
-    if ((tickCounter % 20L) != 0L) {
-      return;
-    }
-    long now = nowEpochSecond();
-    for (Player player : Bukkit.getOnlinePlayers()) {
-      if (player == null || !player.isOnline() || player.isDead() || player.getGameMode() == GameMode.SPECTATOR) {
-        continue;
-      }
-      PlayerRoundData data = players.get(player.getUniqueId());
-      if (data == null || data.isOut()) {
-        continue;
-      }
-      applyLegacyNamedPeriodic(player, data, now);
-    }
-  }
-
-  private void applyLegacyNamedPeriodic(Player player, PlayerRoundData data, long nowEpochSecond) {
-    if (player == null || data == null) {
-      return;
-    }
-    List<LegacyActiveEffect> legacyEffects = collectLegacyActiveEffects(data);
-    if (legacyEffects.isEmpty()) {
-      return;
-    }
-    Map<Integer, Integer> blessingTierByIndex = new HashMap<>();
-    Map<Integer, Integer> curseTierByIndex = new HashMap<>();
-
-    for (LegacyActiveEffect legacy : legacyEffects) {
-      if (legacy == null || legacy.id() == null || legacy.effect() == null) {
-        continue;
-      }
-      int tier = clampTier(legacy.effect().getTier());
-      int index = legacy.id().index();
-      if (legacy.id().group() == 'B') {
-        blessingTierByIndex.merge(index, tier, Math::max);
-        applyLegacyBlessingPeriodic(player, data, legacy, tier, nowEpochSecond);
-      } else if (legacy.id().group() == 'C') {
-        curseTierByIndex.merge(index, tier, Math::max);
-        applyLegacyCursePeriodic(player, data, legacy, tier, nowEpochSecond);
-      }
-    }
-
-    for (Map.Entry<Integer, Integer> blessing : blessingTierByIndex.entrySet()) {
-      if (blessing == null || blessing.getKey() == null || blessing.getValue() == null) {
-        continue;
-      }
-      Integer curseTier = curseTierByIndex.get(blessing.getKey());
-      if (curseTier == null || curseTier <= 0) {
-        continue;
-      }
-      applyLegacyHybridPeriodic(
-          player,
-          data,
-          blessing.getKey(),
-          blessing.getValue(),
-          curseTier,
-          nowEpochSecond
-      );
-    }
-  }
-
-  private void applyLegacyBlessingPeriodic(
-      Player player,
-      PlayerRoundData data,
-      LegacyActiveEffect legacy,
-      int tier,
-      long nowEpochSecond
-  ) {
-    String name = legacy.displayName();
-    int index = legacy.id().index();
-    UUID playerId = player.getUniqueId();
-    if (isLegacyBlessingRuntimeOnlyRange(index)) {
-      applyLegacyBlessingB1To120Periodic(player, data, legacy, tier, nowEpochSecond);
-      return;
-    }
-    if (index <= 15) {
-      player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 40, Math.max(0, tier - 2), true, false, true));
-      if (legacyNameContains(name, "강물", "숨", "수면")) {
-        player.addPotionEffect(new PotionEffect(PotionEffectType.WATER_BREATHING, 60, 0, true, false, true));
-      }
-      if (legacyNameContains(name, "용암", "화염")) {
-        player.addPotionEffect(new PotionEffect(PotionEffectType.FIRE_RESISTANCE, 60, 0, true, false, true));
-      }
-      if (legacyNameContains(name, "순간가속")
-          && useEffectCooldown(playerId, legacy.effect().getId(), "legacy_dash", Math.max(8, 16 - (tier * 2)))) {
-        Vector push = player.getLocation().getDirection().normalize().multiply(0.25D + (tier * 0.08D));
-        push.setY(Math.max(0.05D, player.getVelocity().getY()));
-        player.setVelocity(player.getVelocity().add(push));
-      }
-    } else if (index <= 30) {
-      if (frenzyUntilEpochSecondByPlayer.getOrDefault(playerId, 0L) > nowEpochSecond
-          || useEffectCooldown(playerId, legacy.effect().getId(), "legacy_combat_focus", Math.max(8, 18 - (tier * 2)))) {
-        player.addPotionEffect(new PotionEffect(PotionEffectType.STRENGTH, 50, Math.max(0, tier - 2), true, false, true));
-      }
-      if (legacyNameContains(name, "충격파")
-          && useEffectCooldown(playerId, legacy.effect().getId(), "legacy_shockwave", Math.max(10, 22 - (tier * 2)))) {
-        pulseKnockback(player, 3.0D + tier, 0.3D + (tier * 0.05D), false);
-      }
-      if (legacyNameContains(name, "피의 흡수") && player.getHealth() <= Math.max(4.0D, player.getMaxHealth() * 0.6D)) {
-        healPlayer(player, 0.2D + (tier * 0.2D));
-      }
-    } else if (index <= 45) {
-      player.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, 50, Math.max(0, tier - 2), true, false, true));
-      if (legacyNameContains(name, "재생", "응급", "치유")) {
-        player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 40, 0, true, false, true));
-      }
-      if (legacyNameContains(name, "흡수", "보호막")) {
-        player.setAbsorptionAmount(Math.max(player.getAbsorptionAmount(), 2.0D + tier));
-      }
-      if (legacyNameContains(name, "해독")) {
-        clearSingleNegativeEffect(player);
-      }
-    } else if (index <= 60) {
-      player.addPotionEffect(new PotionEffect(PotionEffectType.HASTE, 50, Math.max(0, tier - 2), true, false, true));
-      if (legacyNameContains(name, "행운", "전리품", "낚시", "수집")
-          && useEffectCooldown(playerId, legacy.effect().getId(), "legacy_gather_score", Math.max(12, 28 - (tier * 3)))) {
-        addGeneratedScore(playerId, 3L * tier);
-      }
-      if (legacyNameContains(name, "광물 직감", "광부")
-          && useEffectCooldown(playerId, legacy.effect().getId(), "legacy_ore_hint", Math.max(10, 20 - (tier * 2)))) {
-        sendScannerHint(player, false);
-      }
-    } else if (index <= 75) {
-      int interval = Math.max(8, 24 - (tier * 3));
-      if (useEffectCooldown(playerId, legacy.effect().getId(), "legacy_score_engine", interval)) {
-        long gain = Math.max(2L, 4L + tier + (index % 4));
-        addGeneratedScore(playerId, gain);
-      }
-      if (legacyNameContains(name, "위험 보상", "중앙 압박자") && isOutsideCurrentBorder(player.getLocation())) {
-        addGeneratedScore(playerId, 2L * tier);
-        player.addPotionEffect(new PotionEffect(PotionEffectType.WITHER, 40, 0, true, false, true));
-      }
-    } else if (index <= 90) {
-      if (player.getHealth() <= Math.max(3.0D, player.getMaxHealth() * 0.45D)) {
-        player.setAbsorptionAmount(Math.max(player.getAbsorptionAmount(), 1.0D + tier));
-        player.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, 60, 0, true, false, true));
-      }
-      if (legacyNameContains(name, "생명", "죽음", "마지막 기회")
-          && useEffectCooldown(playerId, legacy.effect().getId(), "legacy_survival_pulse", Math.max(16, 36 - (tier * 3)))) {
-        healPlayer(player, 0.3D + (tier * 0.3D));
-      }
-    } else if (index <= 105) {
-      if (useEffectCooldown(playerId, legacy.effect().getId(), "legacy_intel_ping", Math.max(10, 24 - (tier * 2)))) {
-        sendScannerHint(player, legacyNameContains(name, "경보", "예보", "신호"));
-      }
-      if (legacyNameContains(name, "흔적 지우기", "암호화", "은신")) {
-        player.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, 40, 0, true, false, true));
-      }
-    } else {
-      if (player.getWorld().getEnvironment() == World.Environment.THE_END) {
-        player.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, 50, Math.max(0, tier - 2), true, false, true));
-      }
-      if (legacyNameContains(name, "오라", "추격자", "레이드")) {
-        weakenNearbyMonsters(player, 8 + tier, 40, 0);
-      }
-      if (legacyNameContains(name, "자기장") && isOutsideCurrentBorder(player.getLocation())) {
-        player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 50, 0, true, false, true));
-      }
-      if (legacyNameContains(name, "시즌의 축복")) {
-        player.addPotionEffect(new PotionEffect(PotionEffectType.STRENGTH, 50, Math.max(0, tier - 2), true, false, true));
-      }
-    }
-  }
-
-  private void applyLegacyBlessingB1To20Periodic(
-      Player player,
-      PlayerRoundData data,
-      LegacyActiveEffect legacy,
-      int tier,
-      long nowEpochSecond
-  ) {
-    if (player == null || data == null || legacy == null || legacy.id() == null || legacy.effect() == null) {
-      return;
-    }
-    int index = legacy.id().index();
-    UUID playerId = player.getUniqueId();
-    switch (index) {
-      case 3 -> {
-        if (player.isInWater() || player.isInRain() || player.getEyeLocation().getBlock().isLiquid()) {
-          player.addPotionEffect(new PotionEffect(PotionEffectType.WATER_BREATHING, 60, 0, true, false, true));
-          player.addPotionEffect(new PotionEffect(PotionEffectType.DOLPHINS_GRACE, 40, Math.max(0, tier - 1), true, false, true));
-        }
-      }
-      case 4 -> {
-        if (player.getFireTicks() > 0 || player.getLocation().getBlock().getType() == Material.LAVA) {
-          player.addPotionEffect(new PotionEffect(PotionEffectType.FIRE_RESISTANCE, 60, 0, true, false, true));
-          if (tier >= 4) {
-            player.setFireTicks(0);
-          }
-        }
-      }
-      case 5 -> {
-        if (isInsideCobweb(player)) {
-          int clampedTier = Math.max(1, Math.min(4, tier));
-          long clearCooldownSeconds = switch (clampedTier) {
-            case 1 -> 5L;
-            case 2 -> 4L;
-            case 3 -> 3L;
-            default -> 2L;
-          };
-          if (useEffectCooldown(playerId, legacy.effect().getId(), "legacy_b005_cobweb_clear", clearCooldownSeconds)) {
-            clearCobwebCrossAtPlayer(player);
-          }
-
-          player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 40, Math.max(0, clampedTier - 1), true, false, true));
-          Vector velocity = player.getVelocity();
-          if (velocity != null && velocity.lengthSquared() > 0.0001D) {
-            player.setVelocity(velocity.clone().multiply(1.20D + (clampedTier * 0.05D)));
-          }
-        }
-      }
-      case 6 -> {
-        if (tier >= 3 && isOnIcySurface(player)) {
-          player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 40, 0, true, false, true));
-          player.setFallDistance(0.0F);
-        }
-      }
-      case 7 -> {
-        if (!player.isOnGround() && player.isSneaking() && isTouchingSolidWall(player)) {
-          Vector velocity = player.getVelocity();
-          if (velocity != null) {
-            velocity.setY(Math.max(velocity.getY(), tier >= 3 ? 0.08D : 0.02D));
-            player.setVelocity(velocity);
-          }
-        }
-      }
-      case 8 -> {
-        if (player.isSprinting()
-            && useEffectCooldown(playerId, legacy.effect().getId(), "legacy_b008_march_ration", Math.max(2L, 6L - tier))) {
-          int food = player.getFoodLevel();
-          if (food < 20) {
-            player.setFoodLevel(Math.min(20, food + 1));
-          }
-          if (tier >= 3) {
-            player.setSaturation(Math.min(20.0F, player.getSaturation() + 0.35F));
-          }
-        }
-      }
-      case 9 -> {
-        if (tier >= 2 && player.isSneaking() && !player.isSprinting() && !isPlayerInRecentCombat(playerId, 8L)) {
-          player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 30, 0, true, false, true));
-        }
-      }
-      case 11 -> {
-        if (player.getLocation().getY() <= 60.0D) {
-          player.addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, 60, 0, true, false, true));
-          if (tier >= 2) {
-            player.addPotionEffect(new PotionEffect(PotionEffectType.HASTE, 40, 0, true, false, true));
-          }
-        }
-      }
-      case 12 -> {
-        if (isInHotBiome(player)) {
-          player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 40, Math.max(0, tier - 2), true, false, true));
-          if (tier >= 4) {
-            player.addPotionEffect(new PotionEffect(PotionEffectType.FIRE_RESISTANCE, 60, 0, true, false, true));
-          }
-        }
-      }
-      case 13 -> {
-        if (isInColdBiome(player)) {
-          if (tier >= 3) {
-            player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 40, 0, true, false, true));
-          }
-          if (tier >= 4) {
-            player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 40, 0, true, false, true));
-          }
-        }
-      }
-      case 14 -> {
-        if (player.getWorld().getEnvironment() == World.Environment.THE_END && tier >= 3) {
-          player.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, 40, 0, true, false, true));
-          if (tier >= 4 && player.isSneaking()) {
-            player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 40, 0, true, false, true));
-          }
-        }
-      }
-      case 15 -> {
-        if (useEffectCooldown(playerId, legacy.effect().getId(), "legacy_dash", Math.max(8, 16 - (tier * 2)))) {
-          Vector push = player.getLocation().getDirection().normalize().multiply(0.25D + (tier * 0.08D));
-          push.setY(Math.max(0.05D, player.getVelocity().getY()));
-          player.setVelocity(player.getVelocity().add(push));
-        }
-      }
-      case 19 -> {
-        if (player.isBlocking()) {
-          player.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, 20, 0, true, false, true));
-        }
-      }
-      default -> {
-      }
-    }
-  }
-
-  private void applyLegacyBlessingB1To20DamageTaken(
-      EntityDamageEvent event,
-      Player victim,
-      LegacyActiveEffect legacy,
-      int tier
-  ) {
-    if (event == null || victim == null || legacy == null || legacy.id() == null) {
-      return;
-    }
-    int index = legacy.id().index();
-    if (index == 15
-        && tier >= 4
-        && event.getCause() == EntityDamageEvent.DamageCause.FALL
-        && event.getDamage() > 0.0D) {
-      event.setCancelled(true);
-      victim.setFallDistance(0.0F);
-      return;
-    }
-    if (index == 19
-        && victim.isBlocking()
-        && event instanceof EntityDamageByEntityEvent byEntityEvent) {
-      Player attacker = resolveAttackingPlayer(byEntityEvent.getDamager());
-      if (attacker != null && !attacker.getUniqueId().equals(victim.getUniqueId())) {
-        double reflected = Math.max(0.3D, event.getFinalDamage() * (0.05D + (tier * 0.02D)));
-        attacker.damage(reflected, victim);
-      }
-    }
-  }
-
-  private void applyLegacyBlessingB1To20DamageByEntity(
-      EntityDamageByEntityEvent event,
-      Player attacker,
-      LegacyActiveEffect legacy,
-      int tier
-  ) {
-    if (event == null || attacker == null || legacy == null || legacy.id() == null) {
-      return;
-    }
-    int index = legacy.id().index();
-    if (index == 18 && event.getDamager() instanceof Projectile) {
-      double precision = 1.0D + (0.015D * tier);
-      event.setDamage(event.getDamage() * precision);
-    }
-    if (index == 17 && event.getDamager() instanceof Player) {
-      attacker.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 30, tier >= 4 ? 1 : 0, true, false, true));
-    }
-  }
-
-  private void applyLegacyBlessingB1To120Periodic(
-      Player player,
-      PlayerRoundData data,
-      LegacyActiveEffect legacy,
-      int tier,
-      long nowEpochSecond
-  ) {
-    if (player == null || legacy == null || legacy.id() == null || legacy.effect() == null) {
-      return;
-    }
-    int index = legacy.id().index();
-    if (index == 94) {
-      highlightNearbyTrapCircuitBlocks(player, legacy.effect().getId(), tier);
-    }
-  }
-
-  private void applyLegacyBlessingB1To120DamageTaken(
-      EntityDamageEvent event,
-      Player victim,
-      LegacyActiveEffect legacy,
-      int tier
-  ) {
-    // B-001~120 are runtime-modifier only; explicit active hooks are intentionally no-op.
-  }
-
-  private void applyLegacyBlessingB1To120DamageByEntity(
-      EntityDamageByEntityEvent event,
-      Player attacker,
-      LegacyActiveEffect legacy,
-      int tier
-  ) {
-    // B-001~120 are runtime-modifier only; explicit active hooks are intentionally no-op.
-  }
-
-  private void applyLegacyCurseC1To120Periodic(
-      Player player,
-      PlayerRoundData data,
-      LegacyActiveEffect legacy,
-      int tier,
-      long nowEpochSecond
-  ) {
-    // C-001~120 are runtime-modifier only; explicit active hooks are intentionally no-op.
-  }
-
-  private void applyLegacyCurseC1To120DamageTaken(
-      EntityDamageEvent event,
-      Player victim,
-      LegacyActiveEffect legacy,
-      int tier
-  ) {
-    // C-001~120 are runtime-modifier only; explicit active hooks are intentionally no-op.
-  }
-
-  private void applyLegacyCurseC1To120DamageByEntity(
-      EntityDamageByEntityEvent event,
-      Player attacker,
-      LegacyActiveEffect legacy,
-      int tier
-  ) {
-    // C-001~120 are runtime-modifier only; explicit active hooks are intentionally no-op.
-  }
 
   private boolean isInsideCobweb(Player player) {
     if (player == null) {
@@ -9205,471 +6307,15 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     return located;
   }
 
-  private void applyLegacyCursePeriodic(
-      Player player,
-      PlayerRoundData data,
-      LegacyActiveEffect legacy,
-      int tier,
-      long nowEpochSecond
-  ) {
-    String name = legacy.displayName();
-    int index = legacy.id().index();
-    UUID playerId = player.getUniqueId();
-    if (isLegacyCurseRuntimeOnlyRange(index)) {
-      applyLegacyCurseC1To120Periodic(player, data, legacy, tier, nowEpochSecond);
-      return;
-    }
-    if (index <= 15) {
-      player.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 40, Math.max(0, tier - 2), true, false, true));
-      if (legacyNameContains(name, "굶주림", "숨 막힘", "탈진")) {
-        player.addPotionEffect(new PotionEffect(PotionEffectType.HUNGER, 40, 0, true, false, true));
-      }
-      if (legacyNameContains(name, "야간", "공포") && player.getWorld().getTime() >= 13000L) {
-        player.addPotionEffect(new PotionEffect(PotionEffectType.DARKNESS, 50, 0, true, false, true));
-      }
-    } else if (index <= 30) {
-      player.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 40, Math.max(0, tier - 2), true, false, true));
-      if (legacyNameContains(name, "마비", "피로")) {
-        player.addPotionEffect(new PotionEffect(PotionEffectType.MINING_FATIGUE, 40, 0, true, false, true));
-      }
-      if (legacyNameContains(name, "광폭 충동")
-          && useEffectCooldown(playerId, legacy.effect().getId(), "legacy_rage_backfire", Math.max(10, 20 - (tier * 2)))) {
-        player.damage(Math.max(0.5D, 0.4D * tier), player);
-      }
-    } else if (index <= 45) {
-      player.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 40, 0, true, false, true));
-      if (legacyNameContains(name, "출혈", "중독", "취약")) {
-        player.addPotionEffect(new PotionEffect(PotionEffectType.WITHER, 40, 0, true, false, true));
-      }
-      if (legacyNameContains(name, "공황", "실패", "붕괴")) {
-        player.addPotionEffect(new PotionEffect(PotionEffectType.NAUSEA, 40, 0, true, false, true));
-      }
-    } else if (index <= 60) {
-      player.addPotionEffect(new PotionEffect(PotionEffectType.MINING_FATIGUE, 40, Math.max(0, tier - 2), true, false, true));
-      if (legacyNameContains(name, "채굴 소음")
-          && useEffectCooldown(playerId, legacy.effect().getId(), "legacy_noise_ping", Math.max(8, 16 - tier))) {
-        sendScannerHint(player, true);
-      }
-      if (legacyNameContains(name, "누수", "불운", "저주")
-          && useEffectCooldown(playerId, legacy.effect().getId(), "legacy_gather_tax", Math.max(12, 24 - (tier * 2)))) {
-        adjustPlayerScore(playerId, data, -Math.max(1L, tier * 3L), false);
-      }
-    } else if (index <= 75) {
-      int interval = Math.max(8, 22 - (tier * 2));
-      if (useEffectCooldown(playerId, legacy.effect().getId(), "legacy_score_decay", interval)) {
-        long tax = Math.max(1L, 6L + (tier * 3L));
-        adjustPlayerScore(playerId, data, -tax, false);
-      }
-    } else if (index <= 90) {
-      if (player.getHealth() <= Math.max(4.0D, player.getMaxHealth() * 0.50D)) {
-        player.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 60, 0, true, false, true));
-        player.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 60, 0, true, false, true));
-      }
-      if (legacyNameContains(name, "최후 통첩", "OUT 가속")
-          && useEffectCooldown(playerId, legacy.effect().getId(), "legacy_survival_tax", Math.max(14, 32 - (tier * 2)))) {
-        adjustPlayerScore(playerId, data, -Math.max(1L, tier * 4L), false);
-      }
-    } else if (index <= 105) {
-      if (useEffectCooldown(playerId, legacy.effect().getId(), "legacy_reveal", Math.max(10, 22 - (tier * 2)))) {
-        player.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 60 + (tier * 20), 0, true, true, true));
-      }
-      if (legacyNameContains(name, "실명", "블라인드", "시야 봉쇄")) {
-        player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 40 + (tier * 20), 0, true, false, true));
-      }
-    } else {
-      if (player.getWorld().getEnvironment() == World.Environment.THE_END) {
-        player.addPotionEffect(new PotionEffect(PotionEffectType.WITHER, 40, Math.max(0, tier - 2), true, false, true));
-      }
-      if (legacyNameContains(name, "추격자", "집착")
-          && useEffectCooldown(playerId, legacy.effect().getId(), "legacy_spawn_stalker", Math.max(18, 40 - (tier * 3)))) {
-        spawnHostileNearPlayer(player);
-      }
-      if (legacyNameContains(name, "자기장", "취약") && isOutsideCurrentBorder(player.getLocation())) {
-        player.addPotionEffect(new PotionEffect(PotionEffectType.WITHER, 40, Math.max(0, tier - 1), true, false, true));
-      }
-    }
-  }
 
-  private void applyLegacyHybridPeriodic(
-      Player player,
-      PlayerRoundData data,
-      int index,
-      int blessingTier,
-      int curseTier,
-      long nowEpochSecond
-  ) {
-    if (player == null || data == null || index <= 0) {
-      return;
-    }
-    int tier = Math.max(1, Math.min(4, Math.max(blessingTier, curseTier)));
-    UUID playerId = player.getUniqueId();
-    int interval = Math.max(8, 24 - (tier * 2));
-    if (!useEffectCooldown(playerId, "LEGACY-HYBRID-" + String.format(Locale.ROOT, "%03d", index), "pulse", interval)) {
-      return;
-    }
-    if (index <= 15) {
-      player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 60, 0, true, false, true));
-      player.addPotionEffect(new PotionEffect(PotionEffectType.HUNGER, 40, 0, true, false, true));
-    } else if (index <= 30) {
-      player.addPotionEffect(new PotionEffect(PotionEffectType.STRENGTH, 60, 0, true, false, true));
-      player.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 40, 0, true, false, true));
-    } else if (index <= 45) {
-      player.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, 60, 0, true, false, true));
-      player.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 40, 0, true, false, true));
-    } else if (index <= 60) {
-      player.addPotionEffect(new PotionEffect(PotionEffectType.HASTE, 60, 0, true, false, true));
-      player.addPotionEffect(new PotionEffect(PotionEffectType.MINING_FATIGUE, 40, 0, true, false, true));
-    } else if (index <= 75) {
-      addGeneratedScore(playerId, 6L * tier);
-      adjustPlayerScore(playerId, data, -Math.max(1L, tier * 3L), false);
-    } else if (index <= 90) {
-      player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 50, 0, true, false, true));
-      player.addPotionEffect(new PotionEffect(PotionEffectType.HUNGER, 40, 0, true, false, true));
-    } else if (index <= 105) {
-      sendScannerHint(player, true);
-      player.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 60, 0, true, true, true));
-    } else {
-      player.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, 60, 0, true, false, true));
-      player.addPotionEffect(new PotionEffect(PotionEffectType.WITHER, 40, 0, true, false, true));
-      if (player.getWorld().getEnvironment() == World.Environment.THE_END && tier >= 3) {
-        spawnHostileNearPlayer(player);
-      }
-    }
-  }
 
-  private void applyLegacyNamedDamageTaken(EntityDamageEvent event, Player victim, PlayerRoundData victimData) {
-    if (event == null || victim == null || victimData == null) {
-      return;
-    }
-    List<LegacyActiveEffect> legacyEffects = collectLegacyActiveEffects(victimData);
-    if (legacyEffects.isEmpty()) {
-      return;
-    }
-    UUID victimId = victim.getUniqueId();
-    for (LegacyActiveEffect legacy : legacyEffects) {
-      int index = legacy.id().index();
-      int tier = clampTier(legacy.effect().getTier());
-      String name = legacy.displayName();
-      if (legacy.id().group() == 'B') {
-        if (isLegacyBlessingRuntimeOnlyRange(index)) {
-          applyLegacyBlessingB1To120DamageTaken(event, victim, legacy, tier);
-          continue;
-        }
-        if (index >= 31 && index <= 45) {
-          event.setDamage(Math.max(0.2D, event.getDamage() * (1.0D - (0.02D * tier))));
-        }
-        if (legacyNameContains(name, "응급", "죽음 완충", "마지막 기회")
-            && victim.getHealth() - event.getFinalDamage() <= Math.max(2.0D, victim.getMaxHealth() * 0.25D)
-            && useEffectCooldown(victimId, legacy.effect().getId(), "legacy_emergency_guard", Math.max(45, 90 - (tier * 10)))) {
-          event.setDamage(Math.max(0.2D, event.getDamage() * 0.55D));
-          victim.setAbsorptionAmount(Math.max(victim.getAbsorptionAmount(), 2.0D + tier));
-        }
-      } else {
-        if (isLegacyCurseRuntimeOnlyRange(index)) {
-          applyLegacyCurseC1To120DamageTaken(event, victim, legacy, tier);
-          continue;
-        }
-        if (index >= 31 && index <= 45) {
-          event.setDamage(event.getDamage() * (1.0D + (0.03D * tier)));
-        }
-        if (legacyNameContains(name, "유리몸", "유리뼈", "취약")) {
-          event.setDamage(event.getDamage() * (1.0D + (0.02D * tier)));
-        }
-        if (legacyNameContains(name, "피격 출혈", "출혈")) {
-          victim.addPotionEffect(new PotionEffect(PotionEffectType.WITHER, 60, 0, true, false, true));
-        }
-      }
-    }
-  }
 
-  private void applyLegacyNamedDamageByEntity(
-      EntityDamageByEntityEvent event,
-      Player attacker,
-      PlayerRoundData attackerData
-  ) {
-    if (event == null || attacker == null || attackerData == null) {
-      return;
-    }
-    List<LegacyActiveEffect> legacyEffects = collectLegacyActiveEffects(attackerData);
-    if (legacyEffects.isEmpty()) {
-      return;
-    }
-    UUID attackerId = attacker.getUniqueId();
-    for (LegacyActiveEffect legacy : legacyEffects) {
-      int index = legacy.id().index();
-      int tier = clampTier(legacy.effect().getTier());
-      String name = legacy.displayName();
-      if (legacy.id().group() == 'B') {
-        if (isLegacyBlessingRuntimeOnlyRange(index)) {
-          applyLegacyBlessingB1To120DamageByEntity(event, attacker, legacy, tier);
-          continue;
-        }
-        if (index >= 16 && index <= 30) {
-          event.setDamage(event.getDamage() * (1.0D + (0.02D * tier)));
-        }
-        if (legacyNameContains(name, "화염")) {
-          event.getEntity().setFireTicks(Math.max(event.getEntity().getFireTicks(), 20 + (tier * 20)));
-        }
-        if (legacyNameContains(name, "맹독") && event.getEntity() instanceof LivingEntity living) {
-          living.addPotionEffect(new PotionEffect(PotionEffectType.POISON, 40 + (tier * 20), 0, true, false, true));
-        }
-        if (legacyNameContains(name, "충격파")
-            && useEffectCooldown(attackerId, legacy.effect().getId(), "legacy_hit_shock", Math.max(10, 24 - (tier * 2)))) {
-          pulseKnockback(attacker, 3.0D + tier, 0.28D + (tier * 0.05D), false);
-        }
-      } else {
-        if (isLegacyCurseRuntimeOnlyRange(index)) {
-          applyLegacyCurseC1To120DamageByEntity(event, attacker, legacy, tier);
-          continue;
-        }
-        if (index >= 16 && index <= 30) {
-          event.setDamage(Math.max(0.2D, event.getDamage() * (1.0D - (0.02D * tier))));
-        }
-        if (legacyNameContains(name, "반동 과다", "광폭 충동")) {
-          attacker.damage(Math.max(0.2D, 0.3D * tier), attacker);
-        }
-        if (legacyNameContains(name, "마비", "전투 피로")) {
-          attacker.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 40, 0, true, false, true));
-        }
-      }
-    }
-  }
 
-  private void applyLegacyNamedNaturalRegain(EntityRegainHealthEvent event, Player player, PlayerRoundData data) {
-    if (event == null || player == null || data == null) {
-      return;
-    }
-    List<LegacyActiveEffect> legacyEffects = collectLegacyActiveEffects(data);
-    for (LegacyActiveEffect legacy : legacyEffects) {
-      int index = legacy.id().index();
-      int tier = clampTier(legacy.effect().getTier());
-      String name = legacy.displayName();
-      if (legacy.id().group() == 'B' && isLegacyBlessingRuntimeOnlyRange(index)) {
-        continue;
-      }
-      if (legacy.id().group() == 'C' && isLegacyCurseRuntimeOnlyRange(index)) {
-        continue;
-      }
-      if (legacy.id().group() == 'B' && legacyNameContains(name, "재생", "응급", "치유", "생존")) {
-        event.setAmount(event.getAmount() * (1.0D + (0.08D * tier)));
-      } else if (legacy.id().group() == 'C' && legacyNameContains(name, "회복 봉인", "회복 역전", "상처 고정")) {
-        event.setAmount(event.getAmount() * Math.max(0.0D, 1.0D - (0.25D + (tier * 0.1D))));
-      }
-    }
-  }
 
-  private void applyLegacyNamedItemDamage(PlayerItemDamageEvent event, Player player, PlayerRoundData data) {
-    if (event == null || player == null || data == null) {
-      return;
-    }
-    List<LegacyActiveEffect> legacyEffects = collectLegacyActiveEffects(data);
-    if (legacyEffects.isEmpty()) {
-      return;
-    }
-    ItemStack item = event.getItem();
-    String material = item == null ? "" : item.getType().name();
-    for (LegacyActiveEffect legacy : legacyEffects) {
-      int index = legacy.id().index();
-      int tier = clampTier(legacy.effect().getTier());
-      String name = legacy.displayName();
-      if (legacy.id().group() == 'B' && isLegacyBlessingRuntimeOnlyRange(index)) {
-        continue;
-      }
-      if (legacy.id().group() == 'C' && isLegacyCurseRuntimeOnlyRange(index)) {
-        continue;
-      }
-      if (legacy.id().group() == 'B') {
-        if (legacyNameContains(name, "내구", "장인", "화로", "지킴이")) {
-          event.setDamage(Math.max(0, event.getDamage() - tier));
-        }
-      } else {
-        if (legacyNameContains(name, "부식", "부러지는", "수리 지옥", "봉인", "금지")) {
-          event.setDamage(event.getDamage() + tier);
-        }
-        if (legacyNameContains(name, "부러지는")
-            && material.endsWith("_PICKAXE")
-            && ThreadLocalRandom.current().nextDouble() < (0.05D * tier)) {
-          event.setDamage(event.getDamage() + (tier * 2));
-        }
-      }
-    }
-  }
 
-  private void applyLegacyNamedBlockBreak(BlockBreakEvent event, Player player, PlayerRoundData data) {
-    if (event == null || player == null || data == null) {
-      return;
-    }
-    List<LegacyActiveEffect> legacyEffects = collectLegacyActiveEffects(data);
-    if (legacyEffects.isEmpty()) {
-      return;
-    }
-    ItemStack tool = player.getInventory().getItemInMainHand();
-    for (LegacyActiveEffect legacy : legacyEffects) {
-      int index = legacy.id().index();
-      if (legacy.id().group() == 'B' && isLegacyBlessingRuntimeOnlyRange(index)) {
-        continue;
-      }
-      if (legacy.id().group() == 'C' && isLegacyCurseRuntimeOnlyRange(index)) {
-        continue;
-      }
-      int tier = clampTier(legacy.effect().getTier());
-      String name = legacy.displayName();
-      if (legacy.id().group() == 'B') {
-        if (index >= 46 && index <= 60) {
-          if (ThreadLocalRandom.current().nextDouble() < (0.06D + (tier * 0.03D))) {
-            for (ItemStack drop : event.getBlock().getDrops(tool)) {
-              if (drop == null || drop.getType() == Material.AIR) {
-                continue;
-              }
-              ItemStack bonus = drop.clone();
-              bonus.setAmount(Math.max(1, Math.min(drop.getMaxStackSize(), drop.getAmount())));
-              event.getBlock().getWorld().dropItemNaturally(event.getBlock().getLocation(), bonus);
-            }
-          }
-          if (legacyNameContains(name, "광물 직감", "광부")
-              && useEffectCooldown(player.getUniqueId(), legacy.effect().getId(), "legacy_break_hint", Math.max(8, 18 - tier))) {
-            sendScannerHint(player, false);
-          }
-        }
-      } else if (index >= 46 && index <= 60) {
-        if (ThreadLocalRandom.current().nextDouble() < (0.04D + (tier * 0.03D))) {
-          event.getBlock().getWorld().playSound(event.getBlock().getLocation(), Sound.ENTITY_ITEM_BREAK, 0.7F, 0.6F);
-          event.setExpToDrop(0);
-        }
-        if (legacyNameContains(name, "채굴 소음", "전리품 누수")) {
-          sendScannerHint(player, true);
-        }
-      }
-    }
-  }
 
-  private void applyLegacyNamedEntityDeath(EntityDeathEvent event) {
-    if (event == null) {
-      return;
-    }
-    Player killer = event.getEntity().getKiller();
-    if (killer == null) {
-      return;
-    }
-    PlayerRoundData data = players.get(killer.getUniqueId());
-    if (data == null || data.isOut()) {
-      return;
-    }
-    List<LegacyActiveEffect> legacyEffects = collectLegacyActiveEffects(data);
-    for (LegacyActiveEffect legacy : legacyEffects) {
-      int index = legacy.id().index();
-      int tier = clampTier(legacy.effect().getTier());
-      String name = legacy.displayName();
-      if (legacy.id().group() == 'B' && isLegacyBlessingRuntimeOnlyRange(index)) {
-        continue;
-      }
-      if (legacy.id().group() == 'C' && isLegacyCurseRuntimeOnlyRange(index)) {
-        continue;
-      }
-      if (legacy.id().group() == 'B') {
-        if (index >= 61 && index <= 75) {
-          addGeneratedScore(killer.getUniqueId(), Math.max(1L, tier * 4L));
-        }
-        if (legacyNameContains(name, "현상금")) {
-          addGeneratedScore(killer.getUniqueId(), 2L * tier);
-        }
-      } else if (index >= 61 && index <= 75) {
-        adjustPlayerScore(killer.getUniqueId(), data, -Math.max(1L, tier * 2L), false);
-      }
-    }
-  }
 
-  private void applyLegacyNamedRespawn(Player player, PlayerRoundData data) {
-    if (player == null || data == null) {
-      return;
-    }
-    List<LegacyActiveEffect> legacyEffects = collectLegacyActiveEffects(data);
-    for (LegacyActiveEffect legacy : legacyEffects) {
-      int index = legacy.id().index();
-      int tier = clampTier(legacy.effect().getTier());
-      String name = legacy.displayName();
-      if (index < 76 || index > 90) {
-        continue;
-      }
-      if (legacy.id().group() == 'B' && isLegacyBlessingRuntimeOnlyRange(index)) {
-        continue;
-      }
-      if (legacy.id().group() == 'C' && isLegacyCurseRuntimeOnlyRange(index)) {
-        continue;
-      }
-      if (legacy.id().group() == 'B') {
-        player.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, 120 + (tier * 20), 0, true, false, true));
-        player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 120, 0, true, false, true));
-        if (legacyNameContains(name, "무덤", "응급")) {
-          player.setAbsorptionAmount(Math.max(player.getAbsorptionAmount(), 2.0D + tier));
-        }
-      } else {
-        player.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 120 + (tier * 20), 0, true, false, true));
-        player.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 120, 0, true, false, true));
-        if (legacyNameContains(name, "비용", "세금")) {
-          adjustPlayerScore(player.getUniqueId(), data, -Math.max(1L, tier * 6L), false);
-        }
-      }
-    }
-  }
 
-  private void applyLegacyNamedLootGenerate(LootGenerateEvent event, Player player, PlayerRoundData data) {
-    if (event == null || player == null || data == null) {
-      return;
-    }
-    List<LegacyActiveEffect> legacyEffects = collectLegacyActiveEffects(data);
-    if (legacyEffects.isEmpty()) {
-      return;
-    }
-    List<ItemStack> loot = null;
-    for (LegacyActiveEffect legacy : legacyEffects) {
-      int index = legacy.id().index();
-      if (index < 46 || index > 60) {
-        continue;
-      }
-      if (legacy.id().group() == 'B' && isLegacyBlessingRuntimeOnlyRange(index)) {
-        continue;
-      }
-      if (legacy.id().group() == 'C' && isLegacyCurseRuntimeOnlyRange(index)) {
-        continue;
-      }
-      int tier = clampTier(legacy.effect().getTier());
-      String name = legacy.displayName();
-      if (loot == null) {
-        loot = new ArrayList<>();
-        for (ItemStack stack : event.getLoot()) {
-          if (stack != null && stack.getType() != Material.AIR) {
-            loot.add(stack.clone());
-          }
-        }
-      }
-      if (legacy.id().group() == 'B') {
-        if (legacyNameContains(name, "전리품", "행운", "수집", "낚시")) {
-          for (ItemStack stack : loot) {
-            if (stack == null || stack.getType() == Material.AIR) {
-              continue;
-            }
-            if (ThreadLocalRandom.current().nextDouble() < (0.08D + (tier * 0.03D))) {
-              stack.setAmount(Math.min(stack.getMaxStackSize(), stack.getAmount() + 1));
-            }
-          }
-        }
-      } else if (legacyNameContains(name, "불운", "누수", "조잡")) {
-        for (int i = 0; i < loot.size(); i++) {
-          ItemStack stack = loot.get(i);
-          if (stack == null || stack.getType() == Material.AIR) {
-            continue;
-          }
-          if (ThreadLocalRandom.current().nextDouble() < (0.08D + (tier * 0.04D))) {
-            loot.set(i, new ItemStack(Material.COBBLESTONE, Math.max(1, Math.min(16, stack.getAmount()))));
-          }
-        }
-      }
-    }
-    if (loot != null) {
-      event.setLoot(loot);
-    }
-  }
 
   private AbilityToken detectAbilityToken(ItemStack item) {
     if (item == null || item.getType() == Material.AIR) {
@@ -9890,7 +6536,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     if (player == null) {
       return;
     }
-    if (data != null && highestEffect80Tier(data, 'B', 1) > 0) {
+    if (data != null && hasForcedAbsorptionCapacityGimmick(data)) {
       return;
     }
     EnumMap<RuntimeModifierType, Double> totals = computeRuntimeModifierTotals(data, player.getWorld(), player);
@@ -12511,7 +9157,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
         monster.damage(periodicDamage, player);
       }
     }
-    if (inversionActive && useEffectCooldown(player.getUniqueId(), "B-MOD-17", "aura_inverse_fx", 2L)) {
+    if (inversionActive && useEffectCooldown(player.getUniqueId(), "B-099", "aura_inverse_fx", 2L)) {
       emitBModProcFeedback(player, tier, false);
     }
   }
@@ -14603,11 +11249,13 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     for (Player player : Bukkit.getOnlinePlayers()) {
       if (!player.isOnline() || player.getGameMode() == GameMode.SPECTATOR) {
         restoreRuntimeAttributeStates(player);
+        restoreAbsorptionShieldCapacity(player);
         continue;
       }
       PlayerRoundData data = players.get(player.getUniqueId());
       if (data == null || data.isOut()) {
         restoreRuntimeAttributeStates(player);
+        restoreAbsorptionShieldCapacity(player);
         continue;
       }
 
@@ -14632,6 +11280,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
       return;
     }
     EnumMap<RuntimeModifierType, Double> totals = computeRuntimeModifierTotals(data, player.getWorld(), player);
+    boolean forceAbsorptionCapacity = hasForcedAbsorptionCapacityGimmick(data);
     double walkRatio = runtimeModifierValue(totals, RuntimeModifierType.WALK_SPEED_RATIO);
     applyRuntimeWalkSpeed(player, walkRatio);
     applyRuntimeAttributeRatio(
@@ -14682,14 +11331,16 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
         2.0D,
         80.0D
     );
-    applyRuntimeAttributeRatio(
-        player,
-        totals,
-        RuntimeModifierType.MAX_ABSORPTION_RATIO,
-        Attribute.MAX_ABSORPTION,
-        0.0D,
-        40.0D
-    );
+    if (!forceAbsorptionCapacity) {
+      applyRuntimeAttributeRatio(
+          player,
+          totals,
+          RuntimeModifierType.MAX_ABSORPTION_RATIO,
+          Attribute.MAX_ABSORPTION,
+          0.0D,
+          40.0D
+      );
+    }
     applyRuntimeAttributeRatio(
         player,
         totals,
@@ -14708,11 +11359,153 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     );
   }
 
+  private boolean hasForcedAbsorptionCapacityGimmick(PlayerRoundData data) {
+    if (data == null) {
+      return false;
+    }
+    ActiveSeasonEffect absorptionShield = data.getBlessingEffect("B-023");
+    return absorptionShield != null && clampTier(absorptionShield.getTier()) > 0;
+  }
+
   private void applyRuntimeGimmicks(Player player, PlayerRoundData data) {
     if (player == null || data == null) {
       return;
     }
+    long nowEpochSecond = nowEpochSecond();
+    tickEffect80PerPlayer(player, data, nowEpochSecond);
+    applyRuntimeEffect80PeriodicGimmicks(player, data, nowEpochSecond);
+    applyRuntimeBlessingB023AbsorptionShield(player, data, nowEpochSecond);
     applyRuntimeBlessingB099AuraDetect(player, data);
+  }
+
+  private void applyRuntimeEffect80PeriodicGimmicks(Player player, PlayerRoundData data, long nowEpochSecond) {
+    if (player == null || data == null) {
+      return;
+    }
+    for (ActiveSeasonEffect effect : collectAllActiveEffects(data)) {
+      if (effect == null || effect.getId() == null || effect.getId().isBlank()) {
+        continue;
+      }
+      String normalizedId = normalizeEffectId(effect.getId());
+      Effect80Id id = parseEffect80Id(normalizedId);
+      if (id == null) {
+        continue;
+      }
+      EffectGimmickProfile profile = effectGimmicksById.get(normalizedId);
+      if (id.group() == 'B') {
+        applyBlessingEffect80Periodic(player, data, effect, profile, id.index(), nowEpochSecond);
+        continue;
+      }
+      if (id.group() == 'C') {
+        applyCurseEffect80Periodic(player, data, effect, profile, id.index(), nowEpochSecond);
+        continue;
+      }
+      if (id.group() == 'X') {
+        applyHybridEffect80Periodic(player, data, effect, profile, id.index(), nowEpochSecond);
+      }
+    }
+  }
+
+  private void applyRuntimeBlessingB023AbsorptionShield(Player player, PlayerRoundData data, long nowEpochSecond) {
+    if (player == null || data == null) {
+      return;
+    }
+    UUID playerId = player.getUniqueId();
+    ActiveSeasonEffect effect = data.getBlessingEffect("B-023");
+    if (effect == null) {
+      restoreAbsorptionShieldCapacity(player);
+      return;
+    }
+
+    int tier = clampTier(effect.getTier());
+    double refillAmount = switch (tier) {
+      case 1 -> 5.0D;
+      case 2 -> 10.0D;
+      case 3 -> 15.0D;
+      default -> 20.0D;
+    };
+    long refillInterval = 10L;
+    // Keep a large technical cap so periodic absorption gain works reliably without exposing tiered max-cap options.
+    double technicalCapacity = 200.0D;
+
+    ensureAbsorptionShieldCapacity(player, technicalCapacity);
+    if (useEffectCooldown(playerId, effect.getId(), "b023_refill", refillInterval)) {
+      double currentAbsorption = Math.max(0.0D, player.getAbsorptionAmount());
+      if (currentAbsorption + 0.0001D < technicalCapacity) {
+        player.setAbsorptionAmount(Math.min(technicalCapacity, currentAbsorption + refillAmount));
+      }
+    }
+
+    double currentAbsorption = Math.max(0.0D, player.getAbsorptionAmount());
+    double lastAbsorption = Math.max(
+        0.0D,
+        absorptionShieldLastAbsorptionByPlayer.getOrDefault(playerId, currentAbsorption)
+    );
+    if (tier >= 4 && lastAbsorption > 0.0D && currentAbsorption <= 0.0D) {
+      long immuneUntil = nowEpochSecond + 10L;
+      knockbackImmuneUntilEpochSecondByPlayer.put(
+          playerId,
+          Math.max(knockbackImmuneUntilEpochSecondByPlayer.getOrDefault(playerId, 0L), immuneUntil)
+      );
+    }
+    absorptionShieldLastAbsorptionByPlayer.put(playerId, currentAbsorption);
+  }
+
+  private void ensureAbsorptionShieldCapacity(Player player, double targetCapacity) {
+    if (player == null) {
+      return;
+    }
+    AttributeInstance maxAbsorptionAttribute = player.getAttribute(Attribute.MAX_ABSORPTION);
+    if (maxAbsorptionAttribute == null) {
+      return;
+    }
+    UUID playerId = player.getUniqueId();
+    absorptionShieldOriginalMaxAbsorptionBaseByPlayer.putIfAbsent(playerId, maxAbsorptionAttribute.getBaseValue());
+    double clampedTarget = Math.max(0.0D, targetCapacity);
+    if (Math.abs(maxAbsorptionAttribute.getBaseValue() - clampedTarget) > 0.0001D) {
+      maxAbsorptionAttribute.setBaseValue(clampedTarget);
+    }
+    if (player.getAbsorptionAmount() > clampedTarget) {
+      player.setAbsorptionAmount(clampedTarget);
+    }
+  }
+
+  private void restoreAbsorptionShieldCapacity(Player player) {
+    if (player == null) {
+      return;
+    }
+    UUID playerId = player.getUniqueId();
+    absorptionShieldLastAbsorptionByPlayer.remove(playerId);
+    AttributeInstance maxAbsorptionAttribute = player.getAttribute(Attribute.MAX_ABSORPTION);
+    Double original = absorptionShieldOriginalMaxAbsorptionBaseByPlayer.remove(playerId);
+    if (maxAbsorptionAttribute != null && original != null) {
+      maxAbsorptionAttribute.setBaseValue(Math.max(0.0D, original));
+      double maxAbsorption = Math.max(0.0D, maxAbsorptionAttribute.getValue());
+      if (player.getAbsorptionAmount() > maxAbsorption) {
+        player.setAbsorptionAmount(maxAbsorption);
+      }
+    }
+  }
+
+  private void applyAbsorptionShieldDamageMitigation(Player victim, PlayerRoundData victimData, EntityDamageEvent event) {
+    if (victim == null || victimData == null || event == null) {
+      return;
+    }
+    ActiveSeasonEffect effect = victimData.getBlessingEffect("B-023");
+    if (effect == null || victim.getAbsorptionAmount() <= 0.0D) {
+      return;
+    }
+    int tier = clampTier(effect.getTier());
+    double extraReduction = switch (tier) {
+      case 1 -> 0.10D;
+      case 2 -> 0.15D;
+      case 3 -> 0.20D;
+      default -> 0.25D;
+    };
+    double multiplier = boundedMultiplier(1.0D - extraReduction, 0.05D, 4.0D);
+    if (Math.abs(multiplier - 1.0D) > 0.0001D) {
+      event.setDamage(event.getDamage() * multiplier);
+    }
   }
 
   private void applyRuntimeBlessingB099AuraDetect(Player player, PlayerRoundData data) {
@@ -15026,6 +11819,9 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
           value *= B_MOD_RUNTIME_RATIO_SCALE;
         }
         double adjusted = applyLegacyB1To120BalanceScaling(active.getId(), resolvedKind, rule.type(), value);
+        if (resolvedKind == EffectKind.CURSE) {
+          adjusted = softenCursePlayerStatReduction(rule.type(), adjusted);
+        }
         if (adjusted == 0.0D) {
           continue;
         }
@@ -15112,6 +11908,9 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
       Player player,
       EnumMap<RuntimeModifierType, Double> totals
   ) {
+    if (!cardsHardcodedIdHandlersEnabled()) {
+      return;
+    }
     if (data == null || player == null || totals == null) {
       return;
     }
@@ -15288,6 +12087,9 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
       Player player,
       EnumMap<RuntimeModifierType, Double> totals
   ) {
+    if (!cardsHardcodedIdHandlersEnabled()) {
+      return;
+    }
     if (data == null || player == null || totals == null) {
       return;
     }
@@ -15320,6 +12122,9 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
       Player player,
       EnumMap<RuntimeModifierType, Double> totals
   ) {
+    if (!cardsHardcodedIdHandlersEnabled()) {
+      return;
+    }
     if (data == null || player == null || totals == null) {
       return;
     }
@@ -15421,55 +12226,8 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     return 0.06D * clamped;
   }
 
-  private void registerRhythmComboIfEligible(PlayerRoundData attackerData, Player attacker) {
-    if (attackerData == null || attacker == null) {
-      return;
-    }
-    ActiveSeasonEffect rhythm = attackerData.getBlessingEffect("B-017");
-    if (rhythm == null) {
-      return;
-    }
-    registerRhythmComboHit(attacker);
-  }
 
-  private double b018DistanceBonusRatio(PlayerRoundData attackerData, Player attacker, Entity target) {
-    if (attackerData == null || attacker == null || target == null) {
-      return 0.0D;
-    }
-    ActiveSeasonEffect sniperBreath = attackerData.getBlessingEffect("B-018");
-    if (sniperBreath == null) {
-      return 0.0D;
-    }
-    int tier = clampTier(sniperBreath.getTier());
-    double baseRatio = b018BaseRatio(tier);
-    if (baseRatio <= 0.0D) {
-      return 0.0D;
-    }
-    double distance = attacker.getLocation().distance(target.getLocation());
-    double scale;
-    if (distance <= 3.0D) {
-      scale = 1.0D;
-    } else if (distance >= 30.0D) {
-      scale = 3.0D;
-    } else {
-      double normalized = (distance - 3.0D) / 27.0D;
-      scale = 1.0D + (normalized * 2.0D);
-    }
-    if (scale <= 1.0D) {
-      return 0.0D;
-    }
-    return baseRatio * (scale - 1.0D);
-  }
 
-  private double b018BaseRatio(int tier) {
-    int clamped = Math.max(1, Math.min(4, tier));
-    return switch (clamped) {
-      case 1 -> 0.15D;
-      case 2 -> 0.25D;
-      case 3 -> 0.35D;
-      default -> 0.45D;
-    };
-  }
 
   private Double runtimeModifierRuleValue(RuntimeModifierRule rule, int sourceTier) {
     if (rule == null || sourceTier <= 0) {
@@ -15488,6 +12246,9 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
       RuntimeModifierType type,
       double value
   ) {
+    if (!cardsHardcodedIdHandlersEnabled()) {
+      return value;
+    }
     if (type == null || value == 0.0D) {
       return value;
     }
@@ -15517,6 +12278,36 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
       return value * LEGACY_B1_TO_120_GENERAL_BUFF_SCALE;
     }
     return value;
+  }
+
+  private double softenCursePlayerStatReduction(RuntimeModifierType type, double value) {
+    if (value >= 0.0D || !isCursePlayerStatReductionType(type)) {
+      return value;
+    }
+    return value * CURSE_PLAYER_STAT_REDUCTION_SOFTEN_SCALE;
+  }
+
+  private boolean isCursePlayerStatReductionType(RuntimeModifierType type) {
+    if (type == null) {
+      return false;
+    }
+    return switch (type) {
+      case DAMAGE_DEALT_RATIO,
+          PVP_DAMAGE_DEALT_RATIO,
+          MOB_DAMAGE_DEALT_RATIO,
+          LOW_HEALTH_DAMAGE_DEALT_RATIO,
+          WALK_SPEED_RATIO,
+          ATTACK_SPEED_RATIO,
+          STEP_HEIGHT_RATIO,
+          SNEAK_SPEED_RATIO,
+          BLOCK_BREAK_SPEED_RATIO,
+          WATER_MOVEMENT_RATIO,
+          MAX_HEALTH_RATIO,
+          MAX_ABSORPTION_RATIO,
+          NATURAL_REGEN_RATIO,
+          FOOD_GAIN_RATIO -> true;
+      default -> false;
+    };
   }
 
   private boolean isLegacyBlessingEffectInRange(String effectId, int min, int max) {
@@ -15781,6 +12572,10 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
       double dz = player.getLocation().getZ() - centerZ;
       double distance = Math.hypot(dx, dz);
       PlayerRoundData data = players.get(uuid);
+      EnumMap<RuntimeModifierType, Double> runtimeTotals = null;
+      if (data != null && !data.isOut()) {
+        runtimeTotals = computeRuntimeModifierTotals(data, player.getWorld(), player);
+      }
       int c14Tier = highestEffect80Tier(data, 'C', 14);
       int x13Tier = highestEffect80Tier(data, 'X', 13);
       int curseExtraLevel = switch (Math.max(0, c14Tier)) {
@@ -15840,11 +12635,8 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
       }
       int level = Math.min(witherMaxLevel, (int) (elapsed / stepSeconds) + 1);
       level = Math.min(witherMaxLevel, level + curseExtraLevel + hybridExtraLevel);
-      if (data != null && !data.isOut()) {
-        double borderRatio = runtimeModifierValue(
-            computeRuntimeModifierTotals(data, player.getWorld(), player),
-            RuntimeModifierType.BORDER_WITHER_RATIO
-        );
+      if (runtimeTotals != null) {
+        double borderRatio = runtimeModifierValue(runtimeTotals, RuntimeModifierType.BORDER_WITHER_RATIO);
         double borderMultiplier = boundedMultiplier(1.0D + borderRatio, 0.1D, 4.0D);
         level = Math.max(1, Math.min(witherMaxLevel, (int) Math.round(level * borderMultiplier)));
       }
@@ -15857,9 +12649,41 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
           false,
           true
       ));
+      applyBorderWitherExtraDamage(player, level, runtimeTotals);
     }
 
     borderOutsideSinceEpochSecond.keySet().removeIf(uuid -> !online.contains(uuid));
+  }
+
+  private void applyBorderWitherExtraDamage(
+      Player player,
+      int witherLevel,
+      EnumMap<RuntimeModifierType, Double> runtimeTotals
+  ) {
+    if (player == null || witherLevel <= 0 || player.isDead() || player.getHealth() <= 0.0D) {
+      return;
+    }
+    double perLevelDamage = borderWitherExtraDamagePerLevelPerSecond();
+    if (perLevelDamage <= 0.0D) {
+      return;
+    }
+
+    double extraDamage = Math.max(0.1D, witherLevel * perLevelDamage);
+    if (runtimeTotals != null) {
+      double witherTakenRatio = runtimeModifierValue(runtimeTotals, RuntimeModifierType.WITHER_DAMAGE_TAKEN_RATIO);
+      double witherTakenMultiplier = boundedMultiplier(1.0D + witherTakenRatio, 0.05D, 5.0D);
+      extraDamage *= witherTakenMultiplier;
+    }
+
+    if (extraDamage <= 0.0D || !Double.isFinite(extraDamage)) {
+      return;
+    }
+
+    // Border hazard extra tick should always apply once per second regardless of recent hit i-frames.
+    if (player.getNoDamageTicks() > 0) {
+      player.setNoDamageTicks(0);
+    }
+    player.damage(extraDamage);
   }
 
   private void tickBorderParticles() {
@@ -17251,6 +14075,10 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     data.setBlessingSlotsUnlocked(newBlessing);
     data.setCurseSlotsUnlocked(newCurse);
 
+    // Keep active effects bounded by currently unlocked slots.
+    trimToSlotCount(data.getBlessingEffects(), newBlessing);
+    trimToSlotCount(data.getCurseEffects(), newCurse);
+
     if (!notifySlotUnlock || !slotAnnounceUnlock()) {
       return;
     }
@@ -17325,8 +14153,6 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     tickNewbieProtectionEffects();
     tickDailyCardDraw();
     tickActiveSeasonEffects();
-    tickEffects80Gimmicks();
-    tickLegacyNamedGimmicks();
     tickPlacedBlockDecay();
     tickStalkerSystem();
     tickDragonRaid();
@@ -17954,6 +14780,9 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
   }
 
   private void migrateLegacyStacksToEffects(PlayerRoundData data) {
+    if (!cardsLegacyStackMigrationEnabled()) {
+      return;
+    }
     if (data == null) {
       return;
     }
@@ -18132,6 +14961,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
       sender.sendMessage("[Season] /slot [player]");
       sender.sendMessage("[Season] /season debug [on|off]");
       sender.sendMessage("[Season] /season effect give <player> <B-xxx|C-xxx> [tier]");
+      sender.sendMessage("[Season] /season catalog [show|reload]");
       sender.sendMessage("[Season] /season profile [show|reload|set <name>]");
       sender.sendMessage("[Season] /season reset now");
       return true;
@@ -18224,6 +15054,10 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
       return onSeasonProfileCommand(sender, args);
     }
 
+    if ("catalog".equals(sub)) {
+      return onSeasonCatalogCommand(sender, args);
+    }
+
     if ("debug".equals(sub)) {
       return onSeasonDebugCommand(sender, args);
     }
@@ -18287,13 +15121,61 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     return true;
   }
 
+  private boolean onSeasonCatalogCommand(CommandSender sender, String[] args) {
+    String action = args.length >= 2 ? args[1].toLowerCase(Locale.ROOT) : "show";
+    if ("show".equals(action)) {
+      File catalogDir = new File(getDataFolder(), "catalogs");
+      List<String> appendFiles = cardsCatalogAppendFileNames();
+      List<String> patchFiles = resolveCatalogPatchFileNames(catalogDir);
+      sender.sendMessage("[Season] catalog.file=" + cardsCatalogFileName());
+      sender.sendMessage(
+          "[Season] catalog.append_files=" + (appendFiles.isEmpty() ? "(none)" : String.join(", ", appendFiles))
+      );
+      sender.sendMessage(
+          "[Season] catalog.patch_dir=" + cardsCatalogPatchDirName()
+              + " auto_discover=" + cardsCatalogPatchAutoDiscover()
+      );
+      sender.sendMessage(
+          "[Season] catalog.patch_files=" + (patchFiles.isEmpty() ? "(none)" : String.join(", ", patchFiles))
+      );
+      sender.sendMessage(
+          "[Season] catalog.loaded blessings=" + blessingEffectsCatalog.size()
+              + " curses=" + curseEffectsCatalog.size()
+      );
+      sender.sendMessage("[Season] /season catalog reload");
+      return true;
+    }
+
+    if ("reload".equals(action)) {
+      reloadEffectCatalog();
+      syncAllParticipantSlots(false);
+      saveState();
+      sender.sendMessage(
+          "[Season] catalog reloaded. blessings=" + blessingEffectsCatalog.size()
+              + ", curses=" + curseEffectsCatalog.size()
+      );
+      return true;
+    }
+
+    sender.sendMessage("[Season] /season catalog [show|reload]");
+    return true;
+  }
+
   private boolean onSeasonSlotCommand(CommandSender sender, String[] args) {
     OfflinePlayer target;
+    boolean admin = sender.hasPermission("seasonmanager.admin");
+    UUID senderUuid = sender instanceof Player viewer ? viewer.getUniqueId() : null;
     if (args.length >= 2) {
       target = resolvePlayer(args[1]);
       if (target == null) {
         sender.sendMessage("[Season] Unknown player: " + args[1]);
         return true;
+      }
+      if (!admin) {
+        if (senderUuid == null || !senderUuid.equals(target.getUniqueId())) {
+          sender.sendMessage("[Season] You can only open your own slot. (관리자 권한 필요)");
+          return true;
+        }
       }
     } else if (sender instanceof Player player) {
       target = player;
@@ -18331,8 +15213,6 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
         "[Season] 저주 활성 카드=" + data.getActiveCurseEffectCount()
             + " (티어합=" + data.getTotalCurseEffectTier() + ")"
     );
-    sender.sendMessage("[Season] 레거시 스택(축복)=" + data.getTotalBlessingCardStacks());
-    sender.sendMessage("[Season] 레거시 스택(저주)=" + data.getTotalCurseCardStacks());
     if (cardsOneTimeRollEnabled()) {
       sender.sendMessage("[Season] 추첨 모드=최초 1회 + 점수 리롤");
       sender.sendMessage(
@@ -18389,7 +15269,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
 
     UUID targetUuid = target.getUniqueId();
     String targetName = playerDisplayName(targetUuid);
-    int currentPage = page == SLOT_GUI_PAGE_RESIDUAL ? SLOT_GUI_PAGE_RESIDUAL : SLOT_GUI_PAGE_PRIMARY;
+    int currentPage = SLOT_GUI_PAGE_PRIMARY;
     int resolvedFilterMode = normalizeResidualFilterMode(residualFilterMode);
     int resolvedResidualPage = Math.max(0, residualPage);
     long currentDay = currentIngameDay();
@@ -18462,8 +15342,10 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
 
     inventory.setItem(SLOT_GUI_PAGE_INFO_SLOT, seasonSlotPageInfoItem(currentPage, resolvedResidualPage, residualMaxPage, resolvedFilterMode));
     inventory.setItem(SLOT_GUI_REROLL_BUTTON_SLOT, seasonSlotRerollButtonItem(viewer, targetUuid, data));
-    inventory.setItem(SLOT_GUI_PAGE_BUTTON_SLOT, seasonSlotPageSwitchItem(currentPage));
     inventory.setItem(SLOT_GUI_UPGRADE_BUTTON_SLOT, seasonSlotTierUpgradeButtonItem(viewer, targetUuid, data));
+    if (seasonDebugModeEnabled()) {
+      inventory.setItem(SLOT_GUI_DEBUG_OP_BUTTON_SLOT, seasonSlotDebugOpButtonItem(viewer, targetUuid));
+    }
     if (currentPage == SLOT_GUI_PAGE_RESIDUAL) {
       inventory.setItem(SLOT_GUI_RESIDUAL_PREV_PAGE_SLOT, seasonSlotResidualPrevPageItem(resolvedResidualPage));
       inventory.setItem(SLOT_GUI_RESIDUAL_FILTER_SLOT, seasonSlotResidualFilterItem(resolvedFilterMode));
@@ -18481,11 +15363,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     }
 
     viewer.openInventory(inventory);
-    if (currentPage == SLOT_GUI_PAGE_RESIDUAL) {
-      viewer.sendMessage("[Season] " + targetName + "의 슬롯 외 잔여 효과를 열었습니다.");
-    } else {
-      viewer.sendMessage("[Season] " + targetName + "의 슬롯 현황을 열었습니다.");
-    }
+    viewer.sendMessage("[Season] " + targetName + "의 슬롯 현황을 열었습니다.");
   }
 
   private void populateSlotOverviewPrimaryPage(
@@ -18531,9 +15409,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
         Material.NETHER_STAR,
         ChatColor.YELLOW + "점수 배율",
         List.of(
-            ChatColor.GRAY + "생성 점수 x" + String.format(Locale.ROOT, "%.2f", generatedScoreMultiplier(targetUuid, data)),
-            ChatColor.DARK_GRAY + "레거시 스택 B/C: "
-                + data.getTotalBlessingCardStacks() + "/" + data.getTotalCurseCardStacks()
+            ChatColor.GRAY + "생성 점수 x" + String.format(Locale.ROOT, "%.2f", generatedScoreMultiplier(targetUuid, data))
         )
     ));
     inventory.setItem(8, makeGuiItem(
@@ -18641,9 +15517,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
         Material.NETHER_STAR,
         ChatColor.YELLOW + "점수 배율",
         List.of(
-            ChatColor.GRAY + "생성 점수 x" + String.format(Locale.ROOT, "%.2f", generatedScoreMultiplier(targetUuid, data)),
-            ChatColor.DARK_GRAY + "레거시 스택 B/C: "
-                + data.getTotalBlessingCardStacks() + "/" + data.getTotalCurseCardStacks()
+            ChatColor.GRAY + "생성 점수 x" + String.format(Locale.ROOT, "%.2f", generatedScoreMultiplier(targetUuid, data))
         )
     ));
     inventory.setItem(8, makeGuiItem(
@@ -18691,21 +15565,9 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
   }
 
   private ItemStack seasonSlotPageInfoItem(int page, int residualPage, int residualMaxPage, int residualFilterMode) {
-    if (page == SLOT_GUI_PAGE_RESIDUAL) {
-      return makeGuiItem(
-          Material.WRITTEN_BOOK,
-          ChatColor.AQUA + "페이지 2/2: 잔여 효과",
-          List.of(
-              ChatColor.GRAY + "슬롯 밖에 있는 카드만 표시됩니다",
-              ChatColor.GRAY + "잔여 페이지: " + (residualPage + 1) + "/" + (residualMaxPage + 1),
-              ChatColor.GRAY + "필터: " + residualFilterLabel(residualFilterMode),
-              ChatColor.DARK_GRAY + "상단=축복 / 하단=저주"
-          )
-      );
-    }
     return makeGuiItem(
         Material.BOOK,
-        ChatColor.AQUA + "페이지 1/2: 슬롯 현황",
+        ChatColor.AQUA + "페이지 1/1: 슬롯 현황",
         List.of(
             ChatColor.GRAY + "현재 활성 슬롯 구조를 표시합니다",
             ChatColor.DARK_GRAY + "잠금 슬롯 포함"
@@ -19118,6 +15980,65 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     return makeGuiItem(Material.BARRIER, ChatColor.RED + "티어 강화 불가", lore);
   }
 
+  private ItemStack seasonSlotDebugOpButtonItem(Player viewer, UUID targetUuid) {
+    OfflinePlayer target = targetUuid == null ? null : Bukkit.getOfflinePlayer(targetUuid);
+    boolean targetOp = target != null && target.isOp();
+    String targetName = targetUuid == null ? "unknown" : playerDisplayName(targetUuid);
+
+    List<String> lore = new ArrayList<>();
+    lore.add(ChatColor.DARK_RED + "DEBUG MODE 전용");
+    lore.add(ChatColor.GRAY + "서버 단위 OP 지정/해제");
+    lore.add(ChatColor.GRAY + "대상: " + ChatColor.WHITE + targetName);
+    lore.add(ChatColor.GRAY + "현재 OP 상태: " + (targetOp ? ChatColor.GREEN + "ON" : ChatColor.RED + "OFF"));
+    lore.add(ChatColor.YELLOW + "좌클릭: OP 상태 토글");
+
+    Material type = targetOp ? Material.REDSTONE_BLOCK : Material.EMERALD_BLOCK;
+    String title = targetOp
+        ? ChatColor.RED + "DEBUG: 서버 OP 해제"
+        : ChatColor.GREEN + "DEBUG: 서버 OP 지정";
+    return makeGuiItem(type, title, lore);
+  }
+
+  private void trySeasonSlotDebugToggleOp(Player viewer, SeasonSlotInventoryHolder holder) {
+    if (viewer == null || holder == null) {
+      return;
+    }
+    if (!seasonDebugModeEnabled()) {
+      viewer.sendMessage("[Season][DEBUG] debug_mode가 비활성화되어 있습니다.");
+      return;
+    }
+
+    UUID targetUuid = holder.targetUuid();
+    if (targetUuid == null) {
+      viewer.sendMessage("[Season][DEBUG] 대상 플레이어 정보를 찾을 수 없습니다.");
+      return;
+    }
+
+    OfflinePlayer target = Bukkit.getOfflinePlayer(targetUuid);
+    boolean nextOp = !target.isOp();
+    target.setOp(nextOp);
+    viewer.sendMessage(
+        "[Season][DEBUG] OP "
+            + (nextOp ? "부여" : "해제")
+            + ": "
+            + playerDisplayName(targetUuid)
+            + " -> "
+            + (nextOp ? "ON" : "OFF")
+    );
+
+    PlayerRoundData data = players.get(targetUuid);
+    if (data != null) {
+      openSeasonSlotOverview(
+          viewer,
+          target,
+          data,
+          holder.page(),
+          holder.residualPage(),
+          holder.residualFilterMode()
+      );
+    }
+  }
+
   private List<ActiveSeasonEffect> sortedActiveEffects(Map<String, ActiveSeasonEffect> effects) {
     List<ActiveSeasonEffect> sorted = new ArrayList<>();
     if (effects == null || effects.isEmpty()) {
@@ -19245,12 +16166,16 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
         ? null
         : effectGimmicksById.get(normalizeEffectId(definition.id()));
     String rawTriggerLine = extractRuntimeTriggerLine(runtimeDetails);
+    String resolvedTrigger = null;
     if (rawTriggerLine != null && !rawTriggerLine.isBlank()) {
-      String resolvedTrigger = humanReadableTriggerLine(rawTriggerLine);
-      if (resolvedTrigger != null && !resolvedTrigger.isBlank()) {
-        lines.add(ChatColor.GOLD + "발동 조건: " + resolvedTrigger);
-        detailLinesAdded++;
-      }
+      resolvedTrigger = humanReadableTriggerLine(rawTriggerLine);
+    }
+    if (resolvedTrigger == null || resolvedTrigger.isBlank()) {
+      resolvedTrigger = deriveTriggerSummary(rules, gimmickProfile);
+    }
+    if (resolvedTrigger != null && !resolvedTrigger.isBlank()) {
+      lines.add(ChatColor.GOLD + "발동 조건: " + resolvedTrigger);
+      detailLinesAdded++;
     }
 
     if (gimmickProfile != null && gimmickProfile.hasActiveTrigger()) {
@@ -19261,24 +16186,24 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
       }
     }
 
-    if (!rules.isEmpty()) {
-      lines.add(ChatColor.DARK_GRAY + "실시간 적용 수치(서버 기준):");
-      for (RuntimeModifierRule rule : rules) {
-        if (rule == null) {
-          continue;
-        }
-        int sourceTier = rule.scalingMode() == TierScalingMode.CARD_TIER
-            ? Math.max(0, ownTier)
-            : Math.max(0, totalTier);
-        Double value = runtimeModifierRuleValue(rule, sourceTier);
-        if (value != null) {
-          String effectId = definition == null ? null : definition.id();
-          value = applyDisplayRuntimeRuleScaling(effectId, kind, rule.type(), value);
-        }
-        lines.add(mainColor + modifierRuleDetailLine(rule, sourceTier, value));
+    List<String> tierDetails = runtimeDetailTierLines(runtimeDetails, ownTier);
+    if (!tierDetails.isEmpty()) {
+      for (String detail : tierDetails) {
+        lines.add(mainColor + "· " + detail);
+        detailLinesAdded++;
       }
-    } else if (detailLinesAdded <= 0) {
-      lines.add(mainColor + "실제 적용: 상시 수치 보정 없음 (전용 기믹 중심)");
+    }
+
+    if (detailLinesAdded <= 0) {
+      if (!rules.isEmpty()) {
+        String effectId = definition == null ? null : definition.id();
+        List<String> ruleLines = runtimeModifierSummaryLines(rules, ownTier, totalTier, effectId, kind);
+        for (String line : ruleLines) {
+          lines.add(mainColor + "· " + line);
+        }
+      } else {
+        lines.add(mainColor + "· 상시 수치 보정 없음 (전용 기믹 중심)");
+      }
     }
 
     if (cardsMultiplierEnabled()) {
@@ -19289,8 +16214,346 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
       }
     }
 
-    lines.add(ChatColor.DARK_GRAY + "효과 수치는 카드/계열 티어 조건을 만족할 때만 발동됩니다");
     return lines;
+  }
+
+  private String deriveTriggerSummary(List<RuntimeModifierRule> rules, EffectGimmickProfile gimmickProfile) {
+    LinkedHashSet<String> parts = new LinkedHashSet<>();
+    if (rules != null && !rules.isEmpty()) {
+      parts.add("상시");
+    }
+    if (gimmickProfile != null && gimmickProfile.hasActiveTrigger()) {
+      parts.add("능동 입력");
+    }
+
+    LinkedHashSet<String> worlds = new LinkedHashSet<>();
+    LinkedHashSet<String> conditions = new LinkedHashSet<>();
+    boolean hasTierGate = false;
+    if (rules != null) {
+      for (RuntimeModifierRule rule : rules) {
+        if (rule == null) {
+          continue;
+        }
+        if (rule.worldScope() != null && rule.worldScope() != RuntimeWorldScope.ANY) {
+          String label = runtimeWorldScopeLabel(rule.worldScope());
+          if (label != null && !label.isBlank()) {
+            worlds.add(label);
+          }
+        }
+        String condition = runtimeConditionLabel(rule.conditions());
+        if (condition != null && !condition.isBlank()) {
+          conditions.add(condition);
+        }
+        if (rule.minTotalTier() > 1) {
+          hasTierGate = true;
+        }
+      }
+    }
+
+    if (!worlds.isEmpty()) {
+      parts.add("세계: " + String.join(", ", worlds));
+    }
+    if (!conditions.isEmpty()) {
+      parts.add("조건: " + String.join(", ", conditions));
+    }
+    if (hasTierGate) {
+      parts.add("일부 효과는 티어 조건 충족 시 발동");
+    }
+
+    if (parts.isEmpty()) {
+      return "상시";
+    }
+    return String.join(" / ", parts);
+  }
+
+  private List<String> runtimeDetailTierLines(List<String> runtimeDetails, int ownTier) {
+    if (runtimeDetails == null || runtimeDetails.isEmpty()) {
+      return List.of();
+    }
+    int tier = clampTier(ownTier);
+    LinkedHashSet<String> normalized = new LinkedHashSet<>();
+    for (String line : runtimeDetails) {
+      if (line == null || line.isBlank()) {
+        continue;
+      }
+      String trimmed = line.trim();
+      if (isRuntimeTriggerLine(trimmed)) {
+        continue;
+      }
+      if (trimmed.startsWith("-")) {
+        trimmed = trimmed.substring(1).trim();
+      }
+      if (trimmed.startsWith("카드 기믹:")) {
+        trimmed = "기믹: " + trimmed.substring("카드 기믹:".length()).trim();
+      }
+      Matcher tierGateMatcher = DETAIL_TIER_GATE_PATTERN.matcher(trimmed);
+      boolean gatedOut = false;
+      while (tierGateMatcher.find()) {
+        Integer parsedRequiredTier = parseInt(tierGateMatcher.group(1));
+        int requiredTier = parsedRequiredTier == null ? 1 : parsedRequiredTier;
+        if (tier < requiredTier) {
+          gatedOut = true;
+          break;
+        }
+      }
+      if (gatedOut) {
+        continue;
+      }
+      trimmed = trimmed.replaceAll("T([1-4])\\+\\s*", "");
+      trimmed = trimmed.replaceAll("\\(\\s*발동\\s*시작\\s*T[1-4]\\s*\\)", "");
+      trimmed = trimmed.replace("T1~T4 공통", "공통");
+      trimmed = trimmed.replace("T1~T4", "공통");
+      trimmed = collapseSlashQuadTokens(trimmed, tier);
+      trimmed = collapseTierTokenRuns(trimmed, tier);
+      trimmed = collapseSingleTierPrefix(trimmed, tier);
+      if (trimmed == null || trimmed.isBlank()) {
+        continue;
+      }
+      trimmed = trimmed.replaceAll("\\s+", " ").trim();
+      trimmed = trimmed.replaceAll("\\(\\s*\\)", "");
+      if (trimmed.endsWith(":")) {
+        trimmed = trimmed.substring(0, trimmed.length() - 1).trim();
+      }
+      if (trimmed.isBlank() || isRuntimeTierLineInactive(trimmed)) {
+        continue;
+      }
+      normalized.add(trimmed);
+    }
+    return normalized.isEmpty() ? List.of() : new ArrayList<>(normalized);
+  }
+
+  private String collapseTierTokenRuns(String raw, int tier) {
+    if (raw == null || raw.isBlank()) {
+      return "";
+    }
+    String collapsed = raw;
+    for (int i = 0; i < 16; i++) {
+      Matcher runMatcher = DETAIL_TIER_TOKEN_RUN_PATTERN.matcher(collapsed);
+      if (!runMatcher.find()) {
+        break;
+      }
+      String run = runMatcher.group();
+      String selected = selectTierTokenValue(run, tier);
+      if (selected == null || selected.isBlank()) {
+        return null;
+      }
+      collapsed = collapsed.substring(0, runMatcher.start())
+          + selected.trim()
+          + collapsed.substring(runMatcher.end());
+    }
+    return collapsed;
+  }
+
+  private String selectTierTokenValue(String run, int tier) {
+    if (run == null || run.isBlank()) {
+      return "";
+    }
+    Map<Integer, String> values = new LinkedHashMap<>();
+    Matcher tokenMatcher = DETAIL_TIER_TOKEN_PATTERN.matcher(run);
+    while (tokenMatcher.find()) {
+      Integer parsedTier = parseInt(tokenMatcher.group(1));
+      if (parsedTier == null || parsedTier < 1 || parsedTier > 4) {
+        continue;
+      }
+      String value = tokenMatcher.group(2);
+      if (value == null || value.isBlank()) {
+        continue;
+      }
+      values.put(parsedTier, value.trim());
+    }
+    if (values.isEmpty()) {
+      return run;
+    }
+
+    int selectedTier = -1;
+    for (Integer key : values.keySet()) {
+      if (key != null && key <= tier) {
+        selectedTier = Math.max(selectedTier, key);
+      }
+    }
+    if (selectedTier < 0) {
+      return null;
+    }
+    String selected = values.get(selectedTier);
+    return selected == null ? null : selected;
+  }
+
+  private String collapseSingleTierPrefix(String raw, int tier) {
+    if (raw == null || raw.isBlank()) {
+      return "";
+    }
+    Matcher matcher = DETAIL_SINGLE_TIER_PREFIX_PATTERN.matcher(raw);
+    if (!matcher.find()) {
+      return raw;
+    }
+    String boundary = matcher.group(1);
+    Integer requiredTier = parseInt(matcher.group(2));
+    if (requiredTier != null && tier < requiredTier) {
+      return "";
+    }
+    String replacementBoundary = boundary == null ? "" : boundary;
+    return matcher.replaceFirst(Matcher.quoteReplacement(replacementBoundary));
+  }
+
+  private boolean isRuntimeTriggerLine(String line) {
+    if (line == null || line.isBlank()) {
+      return false;
+    }
+    String trimmed = line.trim();
+    return trimmed.regionMatches(true, 0, "Trigger:", 0, "Trigger:".length())
+        || trimmed.startsWith("능동 트리거:")
+        || trimmed.startsWith("발동 조건:");
+  }
+
+  private String collapseTierSeriesTokens(String raw, int tier) {
+    if (raw == null || raw.isBlank()) {
+      return "";
+    }
+    String collapsed = raw;
+    for (int i = 0; i < 12; i++) {
+      Matcher matcher = DETAIL_TIER_SERIES_PATTERN.matcher(collapsed);
+      if (!matcher.find()) {
+        break;
+      }
+      String selected = switch (tier) {
+        case 1 -> matcher.group(1);
+        case 2 -> matcher.group(2);
+        case 3 -> matcher.group(3);
+        default -> matcher.group(4);
+      };
+      if (selected == null) {
+        selected = "";
+      }
+      collapsed = matcher.replaceFirst(Matcher.quoteReplacement(selected.trim()));
+    }
+    return collapsed;
+  }
+
+  private String collapseSlashQuadTokens(String raw, int tier) {
+    if (raw == null || raw.isBlank()) {
+      return "";
+    }
+    String collapsed = raw;
+    for (int i = 0; i < 12; i++) {
+      Matcher matcher = DETAIL_SLASH_QUAD_PATTERN.matcher(collapsed);
+      if (!matcher.find()) {
+        break;
+      }
+      String selected = switch (tier) {
+        case 1 -> matcher.group(1);
+        case 2 -> matcher.group(2);
+        case 3 -> matcher.group(3);
+        default -> matcher.group(4);
+      };
+      if (selected == null) {
+        selected = "";
+      }
+      collapsed = matcher.replaceFirst(Matcher.quoteReplacement(selected.trim()));
+    }
+    return collapsed;
+  }
+
+  private boolean isRuntimeTierLineInactive(String line) {
+    if (line == null || line.isBlank()) {
+      return true;
+    }
+    String normalized = line.replace(" ", "");
+    return normalized.contains("없음") || normalized.contains("비활성");
+  }
+
+  private List<String> runtimeModifierSummaryLines(
+      List<RuntimeModifierRule> rules,
+      int ownTier,
+      int totalTier,
+      String effectId,
+      EffectKind kind
+  ) {
+    if (rules == null || rules.isEmpty()) {
+      return List.of();
+    }
+
+    Map<String, RuntimeModifierSummaryBucket> buckets = new LinkedHashMap<>();
+    for (RuntimeModifierRule rule : rules) {
+      if (rule == null) {
+        continue;
+      }
+      int sourceTier = rule.scalingMode() == TierScalingMode.CARD_TIER
+          ? Math.max(0, ownTier)
+          : Math.max(0, totalTier);
+      String key = rule.type().name()
+          + "|" + rule.scalingMode().name()
+          + "|" + rule.worldScope().name()
+          + "|" + runtimeConditionLabel(rule.conditions());
+      RuntimeModifierSummaryBucket bucket = buckets.computeIfAbsent(
+          key,
+          ignored -> new RuntimeModifierSummaryBucket(rule, sourceTier)
+      );
+      bucket.accept(rule, sourceTier);
+    }
+
+    List<String> lines = new ArrayList<>();
+    for (RuntimeModifierSummaryBucket bucket : buckets.values()) {
+      Double value = bucket.hasActive() ? bucket.valueSum() : null;
+      if (value != null) {
+        value = applyDisplayRuntimeRuleScaling(effectId, kind, bucket.type(), value);
+      }
+      lines.add(
+          modifierRuleSummaryLine(
+              bucket.labelKo(),
+              bucket.scalingMode(),
+              bucket.sourceTier(),
+              bucket.minRequiredTier(),
+              bucket.worldScope(),
+              bucket.conditions(),
+              value
+          )
+      );
+    }
+    return lines;
+  }
+
+  private String modifierRuleSummaryLine(
+      String label,
+      TierScalingMode scalingMode,
+      int sourceTier,
+      int minRequiredTier,
+      RuntimeWorldScope worldScope,
+      Set<RuntimeCondition> conditions,
+      Double value
+  ) {
+    String safeLabel = (label == null || label.isBlank()) ? "효과" : label;
+    String scaling = scalingMode == TierScalingMode.CARD_TIER ? "카드티어" : "계열누적";
+    String scope = runtimeWorldScopeLabel(worldScope);
+    String condition = runtimeConditionLabel(conditions);
+    String scopeSuffix = scope.isBlank() ? "" : " [" + scope + "]";
+    String conditionSuffix = condition.isBlank() ? "" : " {" + condition + "}";
+
+    if (value == null) {
+      return safeLabel
+          + " 미발동 (필요 "
+          + scaling
+          + " "
+          + minRequiredTier
+          + ", 현재 "
+          + sourceTier
+          + ")"
+          + scopeSuffix
+          + conditionSuffix;
+    }
+
+    String direction = value > 0.0D ? "증가" : (value < 0.0D ? "감소" : "변화 없음");
+    return safeLabel
+        + " "
+        + formatSignedPercent(value)
+        + "% ("
+        + direction
+        + ", 기준 "
+        + scaling
+        + " "
+        + sourceTier
+        + ")"
+        + scopeSuffix
+        + conditionSuffix;
   }
 
   private String extractRuntimeTriggerLine(List<String> runtimeDetails) {
@@ -19304,6 +16567,12 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
       String trimmed = line.trim();
       if (trimmed.regionMatches(true, 0, "Trigger:", 0, "Trigger:".length())) {
         return trimmed;
+      }
+      if (trimmed.startsWith("능동 트리거:")) {
+        return "Trigger: " + trimmed.substring("능동 트리거:".length()).trim();
+      }
+      if (trimmed.startsWith("발동 조건:")) {
+        return "Trigger: " + trimmed.substring("발동 조건:".length()).trim();
       }
     }
     return null;
@@ -19423,7 +16692,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
       return line == null ? "" : line;
     }
     String id = normalizeEffectId(definition.id());
-    if (!"X-MOD-07-B".equals(id) && !"X-MOD-07-C".equals(id)) {
+    if (!"X-007-B".equals(id) && !"X-007-C".equals(id)) {
       return line;
     }
 
@@ -19912,9 +17181,10 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
       player.sendMessage("[Season] Round data unavailable.");
       return true;
     }
-    int tier = highestActiveEffectTier(data, "B-103");
+    String requiredEffectId = INFORMATION_REQUIRED_EFFECT_ID;
+    int tier = highestActiveEffectTier(data, requiredEffectId);
     if (tier <= 0) {
-      player.sendMessage("[Season] B-103 효과 활성화 상태에서만 사용할 수 있습니다.");
+      player.sendMessage("[Season] " + effectDisplayName(requiredEffectId) + " 활성화 상태에서만 사용할 수 있습니다.");
       return true;
     }
 
@@ -19936,7 +17206,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     }
 
     UUID playerId = player.getUniqueId();
-    String effectId = "B-103";
+    String effectId = requiredEffectId;
     if (!useEffectCooldown(playerId, effectId, "information_command", 120L)) {
       long remain = effectCooldownRemaining(playerId, effectId, "information_command");
       player.sendMessage("[Season] /information 대기시간: " + remain + "s");
@@ -19998,6 +17268,15 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
       best = Math.max(best, Math.max(1, Math.min(4, effect.getTier())));
     }
     return best;
+  }
+
+  private String effectDisplayName(String effectId) {
+    String normalized = normalizeEffectId(effectId);
+    EffectDefinition definition = effectDefinitionsById.get(normalized);
+    if (definition == null || definition.displayName() == null || definition.displayName().isBlank()) {
+      return normalized;
+    }
+    return normalized + " (" + definition.displayName() + ")";
   }
 
   private StructureType resolveStructureType(String token) {
@@ -20216,7 +17495,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
 
     if ("season".equals(cmd)) {
       if (args.length == 1) {
-        return complete(args[0], List.of("state", "round", "slot", "effect", "profile", "debug", "reset"));
+        return complete(args[0], List.of("state", "round", "slot", "effect", "catalog", "profile", "debug", "reset"));
       }
       if (args.length == 2 && "state".equalsIgnoreCase(args[0])) {
         List<String> options = new ArrayList<>();
@@ -20233,6 +17512,9 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
       }
       if (args.length == 2 && "profile".equalsIgnoreCase(args[0])) {
         return complete(args[1], List.of("show", "reload", "set"));
+      }
+      if (args.length == 2 && "catalog".equalsIgnoreCase(args[0])) {
+        return complete(args[1], List.of("show", "reload"));
       }
       if (args.length == 2 && "debug".equalsIgnoreCase(args[0])) {
         return complete(args[1], List.of("on", "off"));
@@ -20817,6 +18099,59 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
 
   private boolean cardsCatalogAutoCreate() {
     return getConfig().getBoolean("cards.catalog.auto_create", true);
+  }
+
+  private boolean cardsLegacyStackMigrationEnabled() {
+    return false;
+  }
+
+  private boolean cardsCatalogSyncFromResource() {
+    return getConfig().getBoolean("cards.catalog.sync_from_resource", true);
+  }
+
+  private boolean cardsCatalogLegacyFallbackEnabled() {
+    // Locked off: catalog fallback to legacy pools is deprecated for this server profile.
+    return false;
+  }
+
+  private boolean cardsHardcodedIdHandlersEnabled() {
+    return false;
+  }
+
+  private String cardsCatalogPatchDirName() {
+    String configured = getConfig().getString("cards.catalog.patch_dir", "patches");
+    if (configured == null || configured.isBlank()) {
+      return "patches";
+    }
+    return configured.trim();
+  }
+
+  private boolean cardsCatalogPatchAutoDiscover() {
+    return getConfig().getBoolean("cards.catalog.patch_auto_discover", true);
+  }
+
+  private List<String> cardsCatalogPatchFileNames() {
+    List<String> configured = getConfig().getStringList("cards.catalog.patch_files");
+    if (configured == null || configured.isEmpty()) {
+      return List.of();
+    }
+
+    List<String> files = new ArrayList<>();
+    Set<String> seen = new HashSet<>();
+    for (String entry : configured) {
+      if (entry == null || entry.isBlank()) {
+        continue;
+      }
+      String normalized = entry.trim();
+      if (normalized.isEmpty()) {
+        continue;
+      }
+      String dedupeKey = normalized.toLowerCase(Locale.ROOT);
+      if (seen.add(dedupeKey)) {
+        files.add(normalized);
+      }
+    }
+    return files;
   }
 
   private int cardsEffectDurationDays() {
@@ -21466,6 +18801,10 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     return Math.max(1, getConfig().getInt("border.wither.max_level", 20));
   }
 
+  private double borderWitherExtraDamagePerLevelPerSecond() {
+    return Math.max(0.0D, getConfig().getDouble("border.wither.extra_damage_per_level_per_second", 2.0D));
+  }
+
   private boolean borderParticlesEnabled() {
     return getConfig().getBoolean("border.particles.enabled", true);
   }
@@ -21796,6 +19135,83 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
   ) {
     private boolean isEmpty() {
       return expiredCount <= 0 && addedCount <= 0 && upgradedCount <= 0 && overflowCount <= 0 && severeBonus <= 0L;
+    }
+  }
+
+  private static final class RuntimeModifierSummaryBucket {
+    private final RuntimeModifierType type;
+    private final String labelKo;
+    private final TierScalingMode scalingMode;
+    private final RuntimeWorldScope worldScope;
+    private final Set<RuntimeCondition> conditions;
+    private final int sourceTier;
+    private int minRequiredTier;
+    private double valueSum;
+    private boolean hasActive;
+
+    private RuntimeModifierSummaryBucket(RuntimeModifierRule seedRule, int sourceTier) {
+      RuntimeModifierRule safeRule = Objects.requireNonNull(seedRule, "seedRule");
+      this.type = safeRule.type();
+      this.labelKo = safeRule.labelKo();
+      this.scalingMode = safeRule.scalingMode();
+      this.worldScope = safeRule.worldScope();
+      this.conditions = safeRule.conditions() == null
+          ? Set.of()
+          : Collections.unmodifiableSet(new LinkedHashSet<>(safeRule.conditions()));
+      this.sourceTier = Math.max(0, sourceTier);
+      this.minRequiredTier = Math.max(1, safeRule.minTotalTier());
+      this.valueSum = 0.0D;
+      this.hasActive = false;
+    }
+
+    private void accept(RuntimeModifierRule rule, int sourceTier) {
+      if (rule == null) {
+        return;
+      }
+      this.minRequiredTier = Math.min(this.minRequiredTier, Math.max(1, rule.minTotalTier()));
+      Double value = sourceTier < rule.minTotalTier()
+          ? null
+          : rule.valuePerTier() * sourceTier;
+      if (value != null) {
+        this.valueSum += value;
+        this.hasActive = true;
+      }
+    }
+
+    private RuntimeModifierType type() {
+      return type;
+    }
+
+    private String labelKo() {
+      return labelKo;
+    }
+
+    private TierScalingMode scalingMode() {
+      return scalingMode;
+    }
+
+    private RuntimeWorldScope worldScope() {
+      return worldScope;
+    }
+
+    private Set<RuntimeCondition> conditions() {
+      return conditions;
+    }
+
+    private int sourceTier() {
+      return sourceTier;
+    }
+
+    private int minRequiredTier() {
+      return minRequiredTier;
+    }
+
+    private double valueSum() {
+      return valueSum;
+    }
+
+    private boolean hasActive() {
+      return hasActive;
     }
   }
 

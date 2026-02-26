@@ -1,0 +1,38 @@
+blessings:
+  B-901:
+    name: 패치 축복 예시
+    type: BLESSING
+    weight: 1.0
+    archetype: UTILITY
+    runtime:
+      detail_ko:
+      - '이동 속도: T1 +5.0%, T2 +10.0%, T3 +15.0%, T4 +20.0%'
+      - '카드 기믹: 상시 패시브'
+      modifiers:
+      - type: WALK_SPEED_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.05
+        min_total_tier: 1
+        world: ANY
+
+curses:
+  C-901:
+    name: 패치 저주 예시
+    type: CURSE
+    weight: 1.0
+    archetype: COMBAT
+    severe: false
+    runtime:
+      detail_ko:
+      - '받는 피해: T1 +5.0%, T2 +10.0%, T3 +15.0%, T4 +20.0%'
+      - '카드 기믹: 상시 패시브'
+      modifiers:
+      - type: DAMAGE_TAKEN_RATIO
+        scaling: CARD_TIER
+        value_per_tier: 0.05
+        min_total_tier: 1
+        world: ANY
+
+remove:
+  ids:
+  - B-001

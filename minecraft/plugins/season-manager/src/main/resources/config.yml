@@ -62,14 +62,14 @@ slots:
   enabled: true
   progress_score_source: PEAK_SCORE
   start: 1
-  max: 5
+  max: 1
   progress_per_unlock: 10000
   blessing:
     enabled: true
-    max: 5
+    max: 1
   curse:
     enabled: true
-    max: 5
+    max: 1
   announce_unlock: true
 
 cards:
@@ -88,7 +88,11 @@ cards:
   catalog:
     file: ender_shadow_s1.yml
     auto_create: true
+    sync_from_resource: true
     append_files: []
+    patch_dir: patches
+    patch_auto_discover: true
+    patch_files: []
   effect_duration_ingame_days: 7
   max_tier: 4
   draws:
@@ -245,6 +249,7 @@ border:
   wither:
     step_seconds: 30
     max_level: 20
+    extra_damage_per_level_per_second: 2.0
   particles:
     enabled: true
     interval_ticks: 6
