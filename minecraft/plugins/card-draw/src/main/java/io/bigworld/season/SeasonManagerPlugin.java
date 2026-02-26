@@ -142,9 +142,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
   private static final int SLOT_GUI_PAGE_RESIDUAL = 2;
   private static final int SLOT_GUI_RESIDUAL_FILTER_ALL = 0;
   private static final int SLOT_GUI_RESIDUAL_FILTER_TIER_3_PLUS = 1;
-  private static final int SLOT_GUI_RESIDUAL_FILTER_EXPIRES_SOON = 2;
-  private static final int SLOT_GUI_RESIDUAL_FILTER_MAX = SLOT_GUI_RESIDUAL_FILTER_EXPIRES_SOON;
-  private static final int SLOT_GUI_RESIDUAL_EXPIRES_SOON_DAYS = 3;
+  private static final int SLOT_GUI_RESIDUAL_FILTER_MAX = SLOT_GUI_RESIDUAL_FILTER_TIER_3_PLUS;
   private static final int[] SLOT_GUI_BLESSING_DETAIL_BLOCK_STARTS = {9, 18};
   private static final int[] SLOT_GUI_CURSE_DETAIL_BLOCK_STARTS = {27, 36};
   private static final int[] SLOT_GUI_DETAIL_ROW_INFO_SLOTS = {14, 23, 32, 41};
@@ -161,14 +159,14 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
   private static final Pattern DETAIL_GAMBLE_RATIO_PATTERN = Pattern.compile(
       "^T(?<tier>[1-4]):\\s*(?<success>\\d+)\\s*/\\s*(?<fail>\\d+)\\s*$"
   );
-  private static final Pattern DETAIL_TIER_GATE_PATTERN = Pattern.compile("T([1-4])\\+");
+  private static final Pattern DETAIL_TIER_GATE_PATTERN = Pattern.compile("T([1-6])\\+");
   private static final Pattern DETAIL_TIER_TOKEN_RUN_PATTERN = Pattern.compile(
-      "(?:T[1-4]\\s*(?:(?!T[1-4]\\s)[^,])+\\s*,\\s*)+T[1-4]\\s*(?:(?!T[1-4]\\s)[^,])+"
+      "(?:T[1-6]\\s*(?:(?!T[1-6]\\s)[^,])+\\s*,\\s*)+T[1-6]\\s*(?:(?!T[1-6]\\s)[^,])+"
   );
   private static final Pattern DETAIL_TIER_TOKEN_PATTERN = Pattern.compile(
-      "T([1-4])\\s*((?:(?!T[1-4]\\s)[^,])+?)\\s*(?=,\\s*T[1-4]\\s|$)"
+      "T([1-6])\\s*((?:(?!T[1-6]\\s)[^,])+?)\\s*(?=,\\s*T[1-6]\\s|$)"
   );
-  private static final Pattern DETAIL_SINGLE_TIER_PREFIX_PATTERN = Pattern.compile("(^|[:(\\s])T([2-4])\\s+");
+  private static final Pattern DETAIL_SINGLE_TIER_PREFIX_PATTERN = Pattern.compile("(^|[:(\\s])T([2-6])\\s+");
   private static final Pattern DETAIL_SLASH_QUAD_PATTERN = Pattern.compile(
       "([+-]?\\d+(?:\\.\\d+)?(?:%p?|%|[A-Za-z가-힣]+)?)\\s*/\\s*"
           + "([+-]?\\d+(?:\\.\\d+)?(?:%p?|%|[A-Za-z가-힣]+)?)\\s*/\\s*"
@@ -4071,7 +4069,10 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
 
     AbilityToken token = inferAbilityToken(sourceText);
     AbilityMode mode = inferAbilityMode(sourceText);
-    boolean hasActiveTrigger = containsTextTag(sourceText, "ACTIVE(", "TOKEN_");
+    boolean hasManualAbilityHint = containsTextTag(sourceText, "(발동:", "궁극:", "SHIFT+F");
+    boolean hasAutoAbilityOnly = containsTextTag(sourceText, "자동 발동");
+    boolean hasActiveTrigger = containsTextTag(sourceText, "ACTIVE(", "TOKEN_")
+        || (hasManualAbilityHint && !hasAutoAbilityOnly);
     int baseCooldownSeconds = inferCooldownSecondsFromText(sourceText, 60);
     if (effect80Id.group() == 'X') {
       if (effect80Id.index() == 8) {
@@ -4448,7 +4449,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
   }
 
   private int clampTier(int tier) {
-    return Math.max(1, Math.min(4, tier));
+    return Math.max(1, Math.min(cardsMaxTier(), tier));
   }
 
   private List<ActiveSeasonEffect> collectAllActiveEffects(PlayerRoundData data) {
@@ -11679,7 +11680,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     }
 
     int totalExpired = expired + trimmed;
-    String summary = "만료=" + totalExpired
+    String summary = "정리=" + totalExpired
         + ", 신규=" + added
         + ", 강화=" + upgraded
         + (overflowConverted > 0 ? ", 점수전환=" + overflowConverted : "");
@@ -16551,7 +16552,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
         List.of(
             ChatColor.GRAY + "현재: " + label,
             ChatColor.GRAY + "좌클릭: 필터 순환",
-            ChatColor.DARK_GRAY + "전체 -> T3+ -> 만료임박"
+            ChatColor.DARK_GRAY + "전체 -> T3+"
         )
     );
   }
@@ -16622,7 +16623,6 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     int normalized = normalizeResidualFilterMode(mode);
     return switch (normalized) {
       case SLOT_GUI_RESIDUAL_FILTER_TIER_3_PLUS -> "티어 3+";
-      case SLOT_GUI_RESIDUAL_FILTER_EXPIRES_SOON -> "만료 " + SLOT_GUI_RESIDUAL_EXPIRES_SOON_DAYS + "일 이내";
       default -> "전체";
     };
   }
@@ -16679,11 +16679,6 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
         if (effect.getTier() >= 3) {
           filtered.add(effect);
         }
-        continue;
-      }
-      long remainingDays = Math.max(0L, effect.getExpireIngameDay() - currentDay);
-      if (remainingDays <= SLOT_GUI_RESIDUAL_EXPIRES_SOON_DAYS) {
-        filtered.add(effect);
       }
     }
     return filtered;
@@ -16747,14 +16742,13 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
       String displayName = (definition != null && definition.displayName() != null && !definition.displayName().isBlank())
           ? definition.displayName()
           : ((effect.getDisplayName() == null || effect.getDisplayName().isBlank()) ? effect.getId() : effect.getDisplayName());
-      String remainingLabel = effectRemainingLabel(effect, currentDay);
       int archetypeTotalTier = Math.max(0, archetypeTierTotals == null
           ? 0
           : archetypeTierTotals.getOrDefault(archetype, 0));
 
       List<String> lore = new ArrayList<>();
       lore.add(ChatColor.DARK_GRAY + effect.getId() + " · " + effectArchetypeLabel(archetype));
-      lore.add(ChatColor.GRAY + "티어 T" + Math.max(1, effect.getTier()) + " · 만료 " + remainingLabel);
+      lore.add(ChatColor.GRAY + "티어 T" + Math.max(1, effect.getTier()));
       lore.add(ChatColor.YELLOW + "상태: 슬롯 외");
       lore.addAll(effectDetailLines(definition, kind, archetype, archetypeTotalTier, effect.getTier()));
       if (kind == EffectKind.CURSE && effect.isSevereCurse()) {
@@ -16827,14 +16821,13 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
       String displayName = (definition != null && definition.displayName() != null && !definition.displayName().isBlank())
           ? definition.displayName()
           : ((effect.getDisplayName() == null || effect.getDisplayName().isBlank()) ? effect.getId() : effect.getDisplayName());
-      String remainingLabel = effectRemainingLabel(effect, currentDay);
       int archetypeTotalTier = Math.max(0, archetypeTierTotals == null
           ? 0
           : archetypeTierTotals.getOrDefault(archetype, 0));
 
       List<String> lore = new ArrayList<>();
       lore.add(ChatColor.DARK_GRAY + effect.getId() + " · " + effectArchetypeLabel(archetype));
-      lore.add(ChatColor.GRAY + "티어 T" + Math.max(1, effect.getTier()) + " · 만료 " + remainingLabel);
+      lore.add(ChatColor.GRAY + "티어 T" + Math.max(1, effect.getTier()));
       lore.addAll(effectDetailLines(definition, kind, archetype, archetypeTotalTier, effect.getTier()));
       if (kind == EffectKind.CURSE && effect.isSevereCurse()) {
         lore.add(ChatColor.DARK_RED + "중대 저주 보너스 +" + severeBonusFor(effect) + " 점수");
@@ -16983,7 +16976,6 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
         : archetypeTierTotals.getOrDefault(archetype, 0));
 
     EffectLoreSections sections = effectLoreSections(definition, kind, archetype, archetypeTotalTier, ownTier);
-    String remainingLabel = effectRemainingLabel(effect, currentDay);
 
     ChatColor mainColor = kind == EffectKind.BLESSING ? ChatColor.GREEN : ChatColor.RED;
     ChatColor accentColor = kind == EffectKind.BLESSING ? ChatColor.AQUA : ChatColor.GOLD;
@@ -16991,10 +16983,18 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
 
     List<String> titleLore = new ArrayList<>();
     titleLore.add(ChatColor.DARK_GRAY + effect.getId() + " · " + effectArchetypeLabel(archetype));
-    titleLore.add(ChatColor.GRAY + "티어 T" + ownTier + " · 만료 " + remainingLabel);
-    titleLore.add(accentColor + "스탯: " + truncateLoreDetail(sections.stat(), 72));
+    titleLore.add(ChatColor.GRAY + "티어 T" + ownTier);
+    titleLore.add(accentColor + "상시 효과");
+    for (String statLine : splitStatLoreLines(sections.stat(), 44)) {
+      titleLore.add(ChatColor.GRAY + statLine);
+    }
     if (kind == EffectKind.CURSE && effect.isSevereCurse()) {
       titleLore.add(ChatColor.DARK_RED + "중대 저주 보너스 +" + severeBonusFor(effect) + " 점수");
+    }
+
+    List<String> specialLore = new ArrayList<>();
+    for (String line : wrapLoreDetailLines(sections.special(), 44)) {
+      specialLore.add(ChatColor.GRAY + line);
     }
 
     inventory.setItem(startSlot, makeGuiItem(
@@ -17005,7 +17005,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     inventory.setItem(startSlot + 1, makeGuiItem(
         specialMaterial,
         accentColor + "특수 효과",
-        List.of(ChatColor.GRAY + truncateLoreDetail(sections.special(), 74))
+        specialLore
     ));
     inventory.setItem(startSlot + 2, makeGuiItem(
         Material.BLAZE_POWDER,
@@ -17032,7 +17032,9 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     } else {
       lore.add(ChatColor.DARK_GRAY + "잠김 (T" + unlockTier + " 해금)");
     }
-    lore.add(ChatColor.GRAY + truncateLoreDetail(safeDetail, 74));
+    for (String line : wrapLoreDetailLines(safeDetail, 44)) {
+      lore.add(ChatColor.GRAY + line);
+    }
     return lore;
   }
 
@@ -17595,6 +17597,57 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     return normalized.substring(0, limit - 3) + "...";
   }
 
+  private List<String> splitStatLoreLines(String raw, int maxLength) {
+    if (raw == null || raw.isBlank()) {
+      return List.of("상시 효과 정보 없음");
+    }
+    List<String> lines = new ArrayList<>();
+    String[] segments = raw.split("\\s*,\\s*");
+    for (String segment : segments) {
+      if (segment == null || segment.isBlank()) {
+        continue;
+      }
+      lines.addAll(wrapLoreDetailLines(segment.trim(), maxLength));
+    }
+    if (lines.isEmpty()) {
+      return wrapLoreDetailLines(raw, maxLength);
+    }
+    return lines;
+  }
+
+  private List<String> wrapLoreDetailLines(String raw, int maxLength) {
+    if (raw == null || raw.isBlank()) {
+      return List.of();
+    }
+    int limit = Math.max(18, maxLength);
+    String normalized = raw.replaceAll("\\s+", " ").trim();
+    if (normalized.length() <= limit) {
+      return List.of(normalized);
+    }
+
+    List<String> lines = new ArrayList<>();
+    StringBuilder current = new StringBuilder();
+    for (String token : normalized.split(" ")) {
+      if (token == null || token.isBlank()) {
+        continue;
+      }
+      if (current.isEmpty()) {
+        current.append(token);
+        continue;
+      }
+      if ((current.length() + 1 + token.length()) <= limit) {
+        current.append(' ').append(token);
+        continue;
+      }
+      lines.add(current.toString());
+      current = new StringBuilder(token);
+    }
+    if (!current.isEmpty()) {
+      lines.add(current.toString());
+    }
+    return lines;
+  }
+
   private String deriveTriggerSummary(List<RuntimeModifierRule> rules, EffectGimmickProfile gimmickProfile) {
     LinkedHashSet<String> parts = new LinkedHashSet<>();
     if (rules != null && !rules.isEmpty()) {
@@ -17681,12 +17734,14 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
       if (gatedOut) {
         continue;
       }
-      trimmed = trimmed.replaceAll("T([1-4])\\+\\s*", "");
-      trimmed = trimmed.replaceAll("\\(\\s*발동\\s*시작\\s*T[1-4]\\s*\\)", "");
+      trimmed = trimmed.replaceAll("T([1-6])\\+\\s*", "");
+      trimmed = trimmed.replaceAll("\\(\\s*발동\\s*시작\\s*T[1-6]\\s*\\)", "");
+      trimmed = trimmed.replace("T1~T6 공통", "공통");
+      trimmed = trimmed.replace("T1~T6", "공통");
       trimmed = trimmed.replace("T1~T4 공통", "공통");
       trimmed = trimmed.replace("T1~T4", "공통");
       // Normalize " / T2 ..." style separators so tier token runs are parsed consistently.
-      trimmed = trimmed.replaceAll("\\s*/\\s*(?=T[1-4]\\s)", ", ");
+        trimmed = trimmed.replaceAll("\\s*/\\s*(?=T[1-6]\\s)", ", ");
       trimmed = collapseSlashQuadTokens(trimmed, tier);
       trimmed = collapseTierTokenRuns(trimmed, tier);
       trimmed = collapseSingleTierPrefix(trimmed, tier);
@@ -17737,7 +17792,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
     Matcher tokenMatcher = DETAIL_TIER_TOKEN_PATTERN.matcher(run);
     while (tokenMatcher.find()) {
       Integer parsedTier = parseInt(tokenMatcher.group(1));
-      if (parsedTier == null || parsedTier < 1 || parsedTier > 4) {
+      if (parsedTier == null || parsedTier < 1 || parsedTier > 6) {
         continue;
       }
       String value = tokenMatcher.group(2);
@@ -19703,7 +19758,7 @@ public final class SeasonManagerPlugin extends JavaPlugin implements Listener, C
   }
 
   private int cardsMaxTier() {
-    return Math.max(1, getConfig().getInt("cards.max_tier", 4));
+    return Math.max(1, getConfig().getInt("cards.max_tier", 6));
   }
 
   private long cardsUpgradeOverflowBonusPoints() {

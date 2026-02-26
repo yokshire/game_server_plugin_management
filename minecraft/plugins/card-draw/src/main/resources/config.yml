@@ -85,7 +85,7 @@ slots:
 
 cards:
   enabled: true
-  effect_logic_enabled: false
+  effect_logic_enabled: true
   states:
     - HARDCORE
     - CLIMAX
@@ -106,7 +106,7 @@ cards:
     patch_auto_discover: true
     patch_files: []
   effect_duration_ingame_days: 7
-  max_tier: 4
+  max_tier: 6
   draws:
     bonus_enabled: true
     score_source: CURRENT_SCORE
@@ -135,7 +135,7 @@ cards:
     min: 1.0
     max: 3.0
   runtime_effects:
-    enabled: false
+    enabled: true
     interval_seconds: 1
     refresh_duration_seconds: 3
     score_decay_interval_seconds: 60
